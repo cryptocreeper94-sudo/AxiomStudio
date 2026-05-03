@@ -23,7 +23,7 @@ interface Message {
 }
 
 export default function IDELayout() {
-  const { token, user, login, signup, logout, biometricsAvailable, biometricsEnrolled, enrollBiometrics, loginWithBiometrics } = useAuth();
+  const { token, user, login, signup, loginWithGoogle, loginWithGitHub, logout, biometricsAvailable, biometricsEnrolled, enrollBiometrics, loginWithBiometrics } = useAuth();
   const queryClient = useQueryClient();
 
   // IDE state
@@ -183,6 +183,8 @@ export default function IDELayout() {
     <LoginScreen
       onLogin={login}
       onSignup={signup}
+      onGoogleLogin={loginWithGoogle}
+      onGitHubLogin={loginWithGitHub}
       biometricsAvailable={biometricsAvailable}
       biometricsEnrolled={biometricsEnrolled}
       onBiometricLogin={loginWithBiometrics}

@@ -1,15 +1,27 @@
 /**
  * Axiom Studio — Auth Hook
+ * Unified auth: Firebase (Google/GitHub) + legacy username/password.
  * 30-day persistent sessions with optional WebAuthn biometrics.
  * DarkWave Studios LLC — Copyright 2026
  */
 import { useState, useEffect, useCallback } from "react";
+import {
+  auth,
+  signInWithGoogle,
+  signInWithGitHub,
+  getFirebaseIdToken,
+  firebaseSignOut,
+  onAuthStateChanged,
+  type User as FirebaseUser,
+} from "../lib/firebase";
 
 interface AuthUser {
   id: string;
   username: string;
   displayName: string;
   role?: string;
+  photoURL?: string;
+  authMethod?: "firebase" | "legacy";
 }
 
 interface AuthState {
@@ -18,6 +30,8 @@ interface AuthState {
   user: AuthUser | null;
   login: (username: string, password: string, remember?: boolean) => Promise<string | null>;
   signup: (username: string, email: string, password: string, displayName: string) => Promise<string | null>;
+  loginWithGoogle: () => Promise<string | null>;
+  loginWithGitHub: () => Promise<string | null>;
   logout: () => void;
   biometricsAvailable: boolean;
   biometricsEnrolled: boolean;
@@ -75,6 +89,7 @@ export function useAuth(): AuthState {
     }
   }, []);
 
+  // ── Common response handler ──
   const handleAuthResponse = useCallback((data: any, persist = true) => {
     if (data.success && data.token) {
       setToken(data.token);
@@ -83,7 +98,6 @@ export function useAuth(): AuthState {
         setTokenWithExpiry(data.token);
         localStorage.setItem(USER_KEY, JSON.stringify(data.user));
       } else {
-        // Session-only (cleared when browser closes)
         sessionStorage.setItem(STORAGE_KEY, data.token);
         sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
       }
@@ -92,26 +106,87 @@ export function useAuth(): AuthState {
     return data.error || "Authentication failed";
   }, []);
 
+  // ── Legacy username/password login ──
   const login = useCallback(async (username: string, password: string, remember = true): Promise<string | null> => {
-    const res = await fetch("/api/agent/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
-    return handleAuthResponse(data, remember);
+    try {
+      const res = await fetch("/api/agent/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      return handleAuthResponse(data, remember);
+    } catch (err: any) {
+      return err.message || "Network error";
+    }
   }, [handleAuthResponse]);
 
+  // ── Legacy signup ──
   const signup = useCallback(async (username: string, email: string, password: string, displayName: string): Promise<string | null> => {
-    const res = await fetch("/api/agent/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password, displayName }),
-    });
-    const data = await res.json();
-    return handleAuthResponse(data, true); // Always persist on signup
+    try {
+      const res = await fetch("/api/agent/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password, displayName }),
+      });
+      const data = await res.json();
+      return handleAuthResponse(data, true);
+    } catch (err: any) {
+      return err.message || "Network error";
+    }
   }, [handleAuthResponse]);
 
+  // ── Firebase Auth: exchange Firebase ID token for app JWT ──
+  const exchangeFirebaseToken = useCallback(async (firebaseUser: FirebaseUser): Promise<string | null> => {
+    try {
+      const idToken = await firebaseUser.getIdToken();
+      const res = await fetch("/api/agent/auth/firebase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        data.user.photoURL = firebaseUser.photoURL;
+        data.user.authMethod = "firebase";
+      }
+      return handleAuthResponse(data, true);
+    } catch (err: any) {
+      return err.message || "Firebase authentication failed";
+    }
+  }, [handleAuthResponse]);
+
+  // ── Google Sign-In ──
+  const loginWithGoogle = useCallback(async (): Promise<string | null> => {
+    try {
+      const firebaseUser = await signInWithGoogle();
+      return await exchangeFirebaseToken(firebaseUser);
+    } catch (err: any) {
+      if (err.code === "auth/popup-closed-by-user") return "Sign-in cancelled";
+      if (err.code === "auth/account-exists-with-different-credential") {
+        return "An account already exists with this email using a different sign-in method";
+      }
+      console.error("[Auth] Google sign-in error:", err);
+      return err.message || "Google sign-in failed";
+    }
+  }, [exchangeFirebaseToken]);
+
+  // ── GitHub Sign-In ──
+  const loginWithGitHub = useCallback(async (): Promise<string | null> => {
+    try {
+      const firebaseUser = await signInWithGitHub();
+      return await exchangeFirebaseToken(firebaseUser);
+    } catch (err: any) {
+      if (err.code === "auth/popup-closed-by-user") return "Sign-in cancelled";
+      if (err.code === "auth/account-exists-with-different-credential") {
+        return "An account already exists with this email using a different sign-in method";
+      }
+      console.error("[Auth] GitHub sign-in error:", err);
+      return err.message || "GitHub sign-in failed";
+    }
+  }, [exchangeFirebaseToken]);
+
+  // ── Logout ──
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
@@ -120,6 +195,8 @@ export function useAuth(): AuthState {
     localStorage.removeItem(EXPIRY_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(USER_KEY);
+    // Also sign out of Firebase
+    firebaseSignOut().catch(() => {});
   }, []);
 
   // ── WebAuthn Biometrics ──
@@ -156,7 +233,6 @@ export function useAuth(): AuthState {
       }) as PublicKeyCredential;
 
       if (credential) {
-        // Store credential ID locally for future auth
         const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
         localStorage.setItem(BIO_CRED_KEY, JSON.stringify({
           credId,
@@ -165,7 +241,7 @@ export function useAuth(): AuthState {
           enrolledAt: Date.now(),
         }));
         setBiometricsEnrolled(true);
-        return null; // success
+        return null;
       }
       return "Biometric enrollment failed";
     } catch (err: any) {
@@ -193,7 +269,6 @@ export function useAuth(): AuthState {
       }) as PublicKeyCredential;
 
       if (assertion) {
-        // Biometric verified — restore the saved session
         const savedToken = localStorage.getItem(STORAGE_KEY);
         const savedUser = localStorage.getItem(USER_KEY);
 
@@ -203,7 +278,6 @@ export function useAuth(): AuthState {
           return null;
         }
 
-        // Token expired — user needs to re-login with password
         return "Session expired. Please log in with your password to re-authenticate.";
       }
       return "Biometric verification failed";
@@ -216,7 +290,7 @@ export function useAuth(): AuthState {
   const userId = user?.id || null;
 
   return {
-    token, userId, user, login, signup, logout,
+    token, userId, user, login, signup, loginWithGoogle, loginWithGitHub, logout,
     biometricsAvailable, biometricsEnrolled,
     enrollBiometrics, loginWithBiometrics,
   };

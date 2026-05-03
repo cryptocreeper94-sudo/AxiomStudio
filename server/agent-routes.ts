@@ -22,6 +22,7 @@ import {
 import { getProviderStream, type ChatMessage } from "./agent-providers.js";
 import { AGENT_PROMPTS, AGENT_SEEDS } from "./agent-prompts.js";
 import { classifyMessage, ROUTE_MODELS } from "./auto-router.js";
+import { verifyFirebaseToken } from "./firebase-admin.js";
 
 // ─── Whitelist Check ─────────────────────────────────────────────────
 
@@ -297,6 +298,119 @@ export function registerAgentRoutes(app: Express): void {
     } catch (err: any) {
       console.error("[Auth Signup] Error:", err.message, err.stack);
       res.status(500).json({ success: false, error: "Server error during signup", detail: err.message });
+    }
+  });
+
+  // ── Firebase Auth (Google/GitHub OAuth) ─────────────────────────────
+  app.post("/api/agent/auth/firebase", async (req: Request, res: Response) => {
+    try {
+      const { idToken } = req.body;
+      if (!idToken) {
+        res.status(400).json({ success: false, error: "Firebase ID token required" });
+        return;
+      }
+
+      // Verify the Firebase ID token
+      const decoded = await verifyFirebaseToken(idToken);
+      if (!decoded) {
+        res.status(401).json({ success: false, error: "Invalid Firebase token" });
+        return;
+      }
+
+      const firebaseUid = decoded.uid;
+      const email = decoded.email || "";
+      const name = decoded.name || decoded.email?.split("@")[0] || "User";
+      const picture = decoded.picture || "";
+
+      if (!email) {
+        res.status(400).json({ success: false, error: "No email associated with this account" });
+        return;
+      }
+
+      // Check if user exists by email
+      let [user] = await db
+        .select()
+        .from(chatUsers)
+        .where(eq(chatUsers.email, email.toLowerCase().trim()))
+        .limit(1);
+
+      if (!user) {
+        // Auto-create user from Firebase profile
+        // Check whitelist for access level
+        const { allowed, entry } = await checkWhitelist(email, "axiom-studio");
+        const isOwner = entry?.access_level === "owner";
+        const preGrantMatch = entry?.notes?.match(/pre-granted\s+(\d+)\s+credits/i);
+        const preGrantedCredits = preGrantMatch ? parseInt(preGrantMatch[1]) : 0;
+        const startingCredits = isOwner ? 999999 : preGrantedCredits > 0 ? preGrantedCredits : entry?.access_level === "full" ? 100 : allowed ? 10 : 10;
+
+        // Generate a unique username from email
+        const baseUsername = email.split("@")[0].replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 20);
+        let username = baseUsername;
+        let suffix = 1;
+        while (true) {
+          const [existing] = await db.select().from(chatUsers).where(eq(chatUsers.username, username)).limit(1);
+          if (!existing) break;
+          username = `${baseUsername}${suffix++}`;
+        }
+
+        const colors = ["#06b6d4", "#14b8a6", "#a855f7", "#3b82f6", "#ec4899", "#f97316"];
+        const avatarColor = colors[Math.floor(Math.random() * colors.length)];
+
+        // Create with a random password hash (user will sign in via Firebase only)
+        const randomPass = await bcrypt.hash(crypto.randomUUID(), 10);
+
+        [user] = await db
+          .insert(chatUsers)
+          .values({
+            username,
+            email: email.toLowerCase().trim(),
+            passwordHash: randomPass,
+            displayName: name,
+            avatarColor,
+            role: isOwner ? "owner" : "member",
+            trustLayerId: `firebase:${firebaseUid}`,
+          })
+          .returning();
+
+        // Seed credits
+        await db.insert(aiCreditBalances).values({
+          userId: user.id,
+          credits: startingCredits,
+          totalPurchased: startingCredits,
+          totalUsed: 0,
+        });
+
+        console.log(`[Firebase Auth] New user created: ${email} (username: ${username}, credits: ${startingCredits})`);
+      } else {
+        // Link Firebase UID if not already linked
+        if (!user.trustLayerId?.startsWith("firebase:")) {
+          await db
+            .update(chatUsers)
+            .set({ trustLayerId: `firebase:${firebaseUid}` })
+            .where(eq(chatUsers.id, user.id));
+        }
+      }
+
+      // Issue app JWT
+      const token = jwt.sign(
+        { userId: user.id, username: user.username },
+        process.env.JWT_SECRET || "",
+        { expiresIn: "30d" }
+      );
+
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          role: user.role,
+        },
+      });
+    } catch (err: any) {
+      console.error("[Firebase Auth] Error:", err.message, err.stack);
+      res.status(500).json({ success: false, error: "Firebase authentication error", detail: err.message });
     }
   });
 
