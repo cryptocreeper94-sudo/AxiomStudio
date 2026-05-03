@@ -1,17 +1,88 @@
 /**
- * Axiom Studio — Subscription Tiers
- * Defines tier limits, pricing, and usage tracking.
+ * Axiom Studio — Pricing & Credit Packs
+ * Pay-as-you-go credit system with volume discounts.
  * 
  * DarkWave Studios LLC — Copyright 2026
  */
 
+// ── Credit Costs Per Agent ──────────────────────────────────────────
+export const AGENT_COSTS: Record<string, { credits: number; label: string }> = {
+  opus:   { credits: 3, label: "Axiom (Opus)" },
+  sonnet: { credits: 1, label: "Axiom Quick (Sonnet)" },
+  gpt4:   { credits: 2, label: "Axiom GPT (GPT-4.1)" },
+  lume:   { credits: 3, label: "Lume Agent (Opus)" },
+  mini:   { credits: 0, label: "Axiom Free (Mini)" },
+  auto:   { credits: 0, label: "Auto-routed (varies)" },  // cost determined at route time
+};
+
+// ── Credit Packs (Pay-As-You-Go) ────────────────────────────────────
+export interface CreditPack {
+  id: string;
+  name: string;
+  credits: number;
+  price: number;           // cents
+  priceDisplay: string;    // e.g. "$5"
+  bonus: number;           // bonus percentage
+  perCredit: string;       // e.g. "$0.10"
+  popular?: boolean;
+  stripePriceId: string;   // Stripe one-time price ID
+}
+
+export const CREDIT_PACKS: CreditPack[] = [
+  {
+    id: "starter",
+    name: "Starter",
+    credits: 50,
+    price: 500,
+    priceDisplay: "$5",
+    bonus: 0,
+    perCredit: "$0.10",
+    stripePriceId: process.env.STRIPE_PRICE_STARTER || "",
+  },
+  {
+    id: "builder",
+    name: "Builder",
+    credits: 225,
+    price: 2000,
+    priceDisplay: "$20",
+    bonus: 12,
+    perCredit: "$0.089",
+    popular: true,
+    stripePriceId: process.env.STRIPE_PRICE_BUILDER || "",
+  },
+  {
+    id: "power",
+    name: "Power",
+    credits: 600,
+    price: 5000,
+    priceDisplay: "$50",
+    bonus: 20,
+    perCredit: "$0.083",
+    stripePriceId: process.env.STRIPE_PRICE_POWER || "",
+  },
+  {
+    id: "studio",
+    name: "Studio",
+    credits: 1300,
+    price: 10000,
+    priceDisplay: "$100",
+    bonus: 30,
+    perCredit: "$0.077",
+    stripePriceId: process.env.STRIPE_PRICE_STUDIO || "",
+  },
+];
+
+// ── Free Tier ───────────────────────────────────────────────────────
+export const FREE_MONTHLY_CREDITS = 30;
+
+// ── Legacy Tier Compat (for existing users) ─────────────────────────
 export interface TierConfig {
   id: string;
   name: string;
-  price: number;            // monthly price in cents
-  messagesPerMonth: number; // total auto-routed messages
-  forceOpus: boolean;       // can force Opus manually
-  overflowRate: number;     // cents per overflow message
+  price: number;
+  messagesPerMonth: number;
+  forceOpus: boolean;
+  overflowRate: number;
   features: string[];
 }
 
@@ -22,93 +93,52 @@ export const TIERS: Record<string, TierConfig> = {
     price: 0,
     messagesPerMonth: 30,
     forceOpus: false,
-    overflowRate: 0, // no overflow, hard cap
+    overflowRate: 0,
     features: [
-      "30 messages/month",
+      "30 free credits/month",
       "Auto-routed (Mini only)",
       "Basic chat",
     ],
   },
+  // Legacy tiers kept for existing subscribers
   developer: {
     id: "developer",
     name: "Developer",
-    price: 2900, // $29
+    price: 2900,
     messagesPerMonth: 300,
     forceOpus: false,
-    overflowRate: 25, // $0.25/msg
-    features: [
-      "300 messages/month",
-      "Auto-routed (Sonnet + Mini)",
-      "Error forwarding",
-      "Artifact viewer",
-      "Overflow: $0.25/msg",
-    ],
+    overflowRate: 25,
+    features: ["300 messages/month", "Auto-routed (Sonnet + Mini)"],
   },
   professional: {
     id: "professional",
     name: "Professional",
-    price: 5900, // $59
+    price: 5900,
     messagesPerMonth: 1000,
     forceOpus: true,
-    overflowRate: 20, // $0.20/msg
-    features: [
-      "1,000 messages/month",
-      "Auto-routed (Opus + Sonnet + Mini)",
-      "Force Opus mode",
-      "Error forwarding",
-      "Artifact viewer",
-      "Overflow: $0.20/msg",
-    ],
-  },
-  business: {
-    id: "business",
-    name: "Business",
-    price: 12900, // $129
-    messagesPerMonth: 3000,
-    forceOpus: true,
-    overflowRate: 15, // $0.15/msg
-    features: [
-      "3,000 messages/month",
-      "All models + Force Opus",
-      "Priority routing",
-      "Error forwarding",
-      "Artifact viewer",
-      "Overflow: $0.15/msg",
-    ],
-  },
-  enterprise: {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 24900, // $249
-    messagesPerMonth: 999999, // effectively unlimited
-    forceOpus: true,
-    overflowRate: 0,
-    features: [
-      "Unlimited messages",
-      "All models + Force Opus",
-      "Priority routing",
-      "Custom system prompts",
-      "Dedicated support",
-    ],
+    overflowRate: 20,
+    features: ["1,000 messages/month", "All models"],
   },
 };
 
-// Stripe price IDs — populate after creating products in Stripe dashboard
+// Stripe price IDs for legacy subscriptions (kept for existing subscribers)
 export const STRIPE_PRICE_IDS: Record<string, string> = {
-  developer: "",     // Fill after Stripe setup
-  professional: "",  // Fill after Stripe setup
-  business: "",      // Fill after Stripe setup
-  enterprise: "",    // Fill after Stripe setup
+  developer: "",
+  professional: "",
+  business: "",
+  enterprise: "",
 };
 
 export function getTierForUser(tier: string | null): TierConfig {
   return TIERS[tier || "free"] || TIERS.free;
 }
 
-export function canUseAgent(tier: TierConfig, agentId: string): boolean {
-  if (agentId === "mini") return true;
-  if (agentId === "auto") return true; // auto-router handles restrictions
-  if (tier.id === "free") return agentId === "mini";
-  if (tier.id === "developer") return agentId !== "opus" && agentId !== "lume";
-  return true; // professional+ gets everything
+export function canUseAgent(creditBalance: number, agentId: string): boolean {
+  const cost = AGENT_COSTS[agentId]?.credits || 0;
+  if (cost === 0) return true; // Free agents always available
+  return creditBalance >= cost;
+}
+
+export function getPackById(packId: string): CreditPack | undefined {
+  return CREDIT_PACKS.find(p => p.id === packId);
 }

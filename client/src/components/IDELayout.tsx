@@ -11,6 +11,7 @@ import EditorArea, { type OpenFile } from "./EditorArea";
 import TerminalPanel from "./TerminalPanel";
 import ChatView from "./ChatView";
 import LoginScreen from "./LoginScreen";
+import CreditStore from "./CreditStore";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
 import * as api from "../lib/api";
@@ -32,6 +33,7 @@ export default function IDELayout() {
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showCreditStore, setShowCreditStore] = useState(false);
 
   // Chat state (preserved from AgentPanel)
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
@@ -235,6 +237,14 @@ export default function IDELayout() {
     />
   );
   if (showAnalytics) return <AnalyticsDashboard onBack={() => setShowAnalytics(false)} token={token} />;
+  if (showCreditStore) return (
+    <CreditStore
+      token={token}
+      currentCredits={creditData?.credits ?? 0}
+      onBack={() => setShowCreditStore(false)}
+      onPurchased={() => queryClient.invalidateQueries({ queryKey: ["credits"] })}
+    />
+  );
 
   return (
     <div className="ax-ide">
@@ -269,6 +279,20 @@ export default function IDELayout() {
                 <p style={{ marginBottom: 8 }}>Credits: {creditData?.credits ?? "—"}</p>
                 <p style={{ marginBottom: 8 }}>User: {user?.displayName || user?.username}</p>
                 <p style={{ marginBottom: 12 }}>Role: {user?.role || "member"}</p>
+
+                {/* Buy Credits */}
+                <button
+                  onClick={() => setShowCreditStore(true)}
+                  style={{
+                    width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700,
+                    background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                    border: "none", color: "#fff", cursor: "pointer", marginBottom: 12,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  ⚡ Buy Credits
+                </button>
 
                 {/* Biometric enrollment */}
                 {biometricsAvailable && (
