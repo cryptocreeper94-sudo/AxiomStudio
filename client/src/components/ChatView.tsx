@@ -1,9 +1,15 @@
 /**
  * Axiom Studio — Chat View
- * Streaming chat interface with markdown rendering.
+ * Streaming chat with Apply-to-File code blocks, file context badges,
+ * and @-file mention support.
+ * 
+ * DarkWave Studios LLC — Copyright 2026
  */
-import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, AlertTriangle, Copy, Check, Brain, User, RotateCcw } from "lucide-react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import {
+  Send, Loader2, AlertTriangle, Copy, Check, Brain, User, RotateCcw,
+  FileCode, FileDown, ChevronDown, Paperclip, X as XIcon,
+} from "lucide-react";
 import { marked } from "marked";
 
 interface Message {
@@ -15,6 +21,12 @@ interface Message {
   outputTokens?: number;
   errorContext?: string;
   createdAt: string;
+  contextFiles?: string[];
+}
+
+interface FileContextItem {
+  path: string;
+  name: string;
 }
 
 interface Props {
@@ -24,26 +36,191 @@ interface Props {
   agentName: string;
   agentColor: string;
   routeInfo: { model: string; agent: string; score: number; reason: string } | null;
-  onSend: (message: string) => void;
+  onSend: (message: string, contextFiles?: string[]) => void;
   onRetry: () => void;
+  onApplyCode?: (code: string, filename: string, language: string) => void;
+  activeFileName?: string;
+  openFiles?: FileContextItem[];
+  workspaceFiles?: FileContextItem[];
 }
 
-function CopyButton({ text }: { text: string }) {
+// ── Code Block with Apply Button ──
+
+interface CodeBlockData {
+  language: string;
+  code: string;
+  filename?: string;
+}
+
+function extractCodeBlocks(content: string): { segments: Array<{ type: "text" | "code"; content: string; codeData?: CodeBlockData }>; } {
+  const segments: Array<{ type: "text" | "code"; content: string; codeData?: CodeBlockData }> = [];
+  const regex = /```(\w*)\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    // Text before code block
+    if (match.index > lastIndex) {
+      segments.push({ type: "text", content: content.slice(lastIndex, match.index) });
+    }
+
+    const language = match[1] || "text";
+    const code = match[2].trim();
+
+    // Try to detect filename from preceding line
+    const beforeBlock = content.slice(Math.max(0, match.index - 200), match.index);
+    const filenameMatch = beforeBlock.match(/[`"']([^`"']+\.\w{1,6})[`"']\s*[:.]?\s*$/m)
+      || beforeBlock.match(/(?:file|create|update|modify|edit)\s+[`"']?([^\s`"':]+\.\w{1,6})/i)
+      || beforeBlock.match(/####?\s+.*?([a-zA-Z0-9_\-/.]+\.\w{1,6})/);
+
+    segments.push({
+      type: "code",
+      content: match[0],
+      codeData: {
+        language,
+        code,
+        filename: filenameMatch?.[1],
+      },
+    });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text
+  if (lastIndex < content.length) {
+    segments.push({ type: "text", content: content.slice(lastIndex) });
+  }
+
+  return { segments };
+}
+
+function CodeBlock({ data, onApply, activeFileName }: {
+  data: CodeBlockData;
+  onApply?: (code: string, filename: string, language: string) => void;
+  activeFileName?: string;
+}) {
   const [copied, setCopied] = useState(false);
+  const [applied, setApplied] = useState(false);
+  const targetFile = data.filename || activeFileName;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(data.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleApply = () => {
+    if (onApply && targetFile) {
+      onApply(data.code, targetFile, data.language);
+      setApplied(true);
+      setTimeout(() => setApplied(false), 3000);
+    }
+  };
+
   return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      className="p-1 rounded hover:bg-white/10 transition text-white/30 hover:text-white/60"
-      title="Copy"
-    >
-      {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-    </button>
+    <div style={{
+      borderRadius: "10px", overflow: "hidden", margin: "12px 0",
+      border: "1px solid rgba(255,255,255,0.06)",
+      background: "#0d1117",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "6px 12px", background: "rgba(255,255,255,0.03)",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{
+            fontSize: "10px", fontWeight: 700, textTransform: "uppercase",
+            padding: "2px 8px", borderRadius: "4px",
+            background: "rgba(6,182,212,0.1)", color: "#67e8f9",
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>
+            {data.language}
+          </span>
+          {data.filename && (
+            <span style={{
+              fontSize: "11px", color: "rgba(255,255,255,0.4)",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}>
+              {data.filename}
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: "4px" }}>
+          {/* Copy button */}
+          <button
+            onClick={handleCopy}
+            style={{
+              display: "flex", alignItems: "center", gap: "4px",
+              padding: "4px 10px", borderRadius: "6px",
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+              color: copied ? "#4ade80" : "rgba(255,255,255,0.4)",
+              fontSize: "10px", fontWeight: 600, cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+          >
+            {copied ? <Check style={{ width: 11, height: 11 }} /> : <Copy style={{ width: 11, height: 11 }} />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+
+          {/* Apply to File button */}
+          {onApply && targetFile && (
+            <button
+              onClick={handleApply}
+              style={{
+                display: "flex", alignItems: "center", gap: "4px",
+                padding: "4px 10px", borderRadius: "6px",
+                background: applied ? "rgba(34,197,94,0.15)" : "rgba(6,182,212,0.1)",
+                border: `1px solid ${applied ? "rgba(34,197,94,0.3)" : "rgba(6,182,212,0.2)"}`,
+                color: applied ? "#4ade80" : "#06b6d4",
+                fontSize: "10px", fontWeight: 600, cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {applied
+                ? <><Check style={{ width: 11, height: 11 }} /> Applied</>
+                : <><FileDown style={{ width: 11, height: 11 }} /> Apply to {targetFile.split("/").pop()}</>
+              }
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Code content */}
+      <pre style={{
+        margin: 0, padding: "14px 16px", fontSize: "12px", lineHeight: 1.6,
+        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        color: "#e6edf3", overflowX: "auto", whiteSpace: "pre",
+      }}>
+        {data.code}
+      </pre>
+    </div>
   );
 }
 
-function MessageBubble({ msg, agentName }: { msg: Message; agentName: string }) {
+// ── Message Bubble ──
+
+function MessageBubble({ msg, agentName, onApply, activeFileName }: {
+  msg: Message;
+  agentName: string;
+  onApply?: (code: string, filename: string, language: string) => void;
+  activeFileName?: string;
+}) {
   const isUser = msg.role === "user";
-  const html = !isUser ? marked.parse(msg.content, { async: false }) as string : "";
+
+  const rendered = useMemo(() => {
+    if (isUser) return null;
+    const { segments } = extractCodeBlocks(msg.content);
+    return segments.map((seg, i) => {
+      if (seg.type === "code" && seg.codeData) {
+        return <CodeBlock key={i} data={seg.codeData} onApply={onApply} activeFileName={activeFileName} />;
+      }
+      // Render non-code markdown
+      const html = marked.parse(seg.content, { async: false }) as string;
+      return <div key={i} className="agent-message text-sm text-white/80" dangerouslySetInnerHTML={{ __html: html }} />;
+    });
+  }, [msg.content, isUser, onApply, activeFileName]);
 
   return (
     <div className={`flex gap-3 py-4 px-4 ${isUser ? "" : "bg-white/[0.015]"}`}>
@@ -68,19 +245,160 @@ function MessageBubble({ msg, agentName }: { msg: Message; agentName: string }) 
             <span className="truncate">Error context attached</span>
           </div>
         )}
+        {/* Context files badge */}
+        {msg.contextFiles && msg.contextFiles.length > 0 && (
+          <div style={{
+            display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px",
+          }}>
+            {msg.contextFiles.map((f, i) => (
+              <span key={i} style={{
+                display: "inline-flex", alignItems: "center", gap: "4px",
+                padding: "2px 8px", borderRadius: "6px", fontSize: "10px",
+                background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.15)",
+                color: "rgba(168,85,247,0.6)", fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                <FileCode style={{ width: 10, height: 10 }} />
+                {f.split("/").pop()}
+              </span>
+            ))}
+          </div>
+        )}
         {isUser ? (
           <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
         ) : (
-          <div className="agent-message text-sm text-white/80" dangerouslySetInnerHTML={{ __html: html }} />
+          <div>{rendered}</div>
         )}
       </div>
-      {!isUser && <CopyButton text={msg.content} />}
+      {!isUser && (
+        <button
+          onClick={() => { navigator.clipboard.writeText(msg.content); }}
+          className="p-1 rounded hover:bg-white/10 transition text-white/30 hover:text-white/60 flex-shrink-0 self-start mt-1"
+          title="Copy full response"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 }
 
-export default function ChatView({ messages, streamingContent, isStreaming, agentName, agentColor, routeInfo, onSend, onRetry }: Props) {
+// ── File Context Selector (@mentions) ──
+
+function FileContextBar({ files, selected, onToggle, onClear }: {
+  files: FileContextItem[];
+  selected: string[];
+  onToggle: (path: string) => void;
+  onClear: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (selected.length === 0 && !open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px",
+          borderRadius: "8px", background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)",
+          fontSize: "11px", cursor: "pointer", transition: "all 0.2s",
+        }}
+        title="Attach files as context"
+      >
+        <Paperclip style={{ width: 12, height: 12 }} />
+        Add context
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", alignItems: "center" }}>
+      {selected.map(path => (
+        <span key={path} style={{
+          display: "inline-flex", alignItems: "center", gap: "4px",
+          padding: "3px 8px", borderRadius: "6px", fontSize: "10px",
+          background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.15)",
+          color: "#67e8f9", fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          <FileCode style={{ width: 10, height: 10 }} />
+          {path.split("/").pop()}
+          <button
+            onClick={() => onToggle(path)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", padding: 0, display: "flex" }}
+          >
+            <XIcon style={{ width: 10, height: 10 }} />
+          </button>
+        </span>
+      ))}
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex", alignItems: "center", gap: "2px", padding: "3px 8px",
+          borderRadius: "6px", background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.25)",
+          fontSize: "10px", cursor: "pointer",
+        }}
+      >
+        <Paperclip style={{ width: 10, height: 10 }} />
+        <ChevronDown style={{ width: 10, height: 10, transform: open ? "rotate(180deg)" : "" }} />
+      </button>
+      {selected.length > 0 && (
+        <button
+          onClick={onClear}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: "rgba(255,255,255,0.15)", fontSize: "10px", padding: "2px 4px",
+          }}
+        >
+          Clear all
+        </button>
+      )}
+
+      {/* Dropdown */}
+      {open && (
+        <div style={{
+          position: "absolute", bottom: "100%", left: 0, right: 0,
+          maxHeight: "200px", overflowY: "auto", marginBottom: "4px",
+          background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "10px", padding: "4px", zIndex: 50,
+        }}>
+          {files.length === 0 ? (
+            <div style={{ padding: "12px", fontSize: "11px", color: "rgba(255,255,255,0.2)", textAlign: "center" }}>
+              No files open. Open files in the editor to attach as context.
+            </div>
+          ) : (
+            files.map(f => (
+              <button
+                key={f.path}
+                onClick={() => { onToggle(f.path); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: "6px", width: "100%",
+                  padding: "6px 10px", borderRadius: "6px", border: "none",
+                  background: selected.includes(f.path) ? "rgba(6,182,212,0.08)" : "transparent",
+                  color: selected.includes(f.path) ? "#67e8f9" : "rgba(255,255,255,0.5)",
+                  fontSize: "11px", cursor: "pointer", textAlign: "left",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                <FileCode style={{ width: 12, height: 12, flexShrink: 0 }} />
+                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.path}</span>
+                {selected.includes(f.path) && <Check style={{ width: 12, height: 12, color: "#06b6d4" }} />}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Chat View ──
+
+export default function ChatView({
+  messages, streamingContent, isStreaming, agentName, agentColor,
+  routeInfo, onSend, onRetry, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
+}: Props) {
   const [input, setInput] = useState("");
+  const [contextFiles, setContextFiles] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -88,10 +406,26 @@ export default function ChatView({ messages, streamingContent, isStreaming, agen
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
 
+  // Auto-attach current file as context
+  useEffect(() => {
+    if (activeFileName && !contextFiles.includes(activeFileName)) {
+      setContextFiles(prev => {
+        if (prev.includes(activeFileName)) return prev;
+        return [...prev, activeFileName];
+      });
+    }
+  }, [activeFileName]);
+
+  const toggleContextFile = useCallback((path: string) => {
+    setContextFiles(prev =>
+      prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]
+    );
+  }, []);
+
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
-    onSend(trimmed);
+    onSend(trimmed, contextFiles.length > 0 ? contextFiles : undefined);
     setInput("");
     if (inputRef.current) inputRef.current.style.height = "auto";
   };
@@ -109,7 +443,19 @@ export default function ChatView({ messages, streamingContent, isStreaming, agen
     e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
   };
 
-  const streamHtml = streamingContent ? marked.parse(streamingContent, { async: false }) as string : "";
+  const streamSegments = useMemo(() => {
+    if (!streamingContent) return null;
+    const { segments } = extractCodeBlocks(streamingContent);
+    return segments.map((seg, i) => {
+      if (seg.type === "code" && seg.codeData) {
+        return <CodeBlock key={i} data={seg.codeData} onApply={onApplyCode} activeFileName={activeFileName} />;
+      }
+      const html = marked.parse(seg.content, { async: false }) as string;
+      return <div key={i} className="agent-message text-sm text-white/80" dangerouslySetInnerHTML={{ __html: html }} />;
+    });
+  }, [streamingContent, onApplyCode, activeFileName]);
+
+  const availableFiles = openFiles.length > 0 ? openFiles : workspaceFiles;
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -122,13 +468,33 @@ export default function ChatView({ messages, streamingContent, isStreaming, agen
                 <Brain className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-xl font-bold gradient-text mb-2">{agentName}</h2>
-              <p className="text-sm text-white/30 max-w-md">Ask me anything — architecture, debugging, code generation, Lume programming, or just thinking through a problem.</p>
+              <p className="text-sm text-white/30 max-w-md">
+                Ask me anything — architecture, debugging, code generation, Lume programming, or just thinking through a problem.
+              </p>
+              {activeFileName && (
+                <div style={{
+                  marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "6px 14px", borderRadius: "8px",
+                  background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.1)",
+                  color: "rgba(6,182,212,0.5)", fontSize: "11px",
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                  <FileCode style={{ width: 12, height: 12 }} />
+                  Editing: {activeFileName.split("/").pop()}
+                </div>
+              )}
             </div>
           </div>
         ) : (
           <div>
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} msg={msg} agentName={agentName} />
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                agentName={agentName}
+                onApply={onApplyCode}
+                activeFileName={activeFileName}
+              />
             ))}
             {isStreaming && streamingContent && (
               <div className="flex gap-3 py-4 px-4 bg-white/[0.015]">
@@ -144,7 +510,7 @@ export default function ChatView({ messages, streamingContent, isStreaming, agen
                       </span>
                     )}
                   </div>
-                  <div className="agent-message text-sm text-white/80 cursor-blink" dangerouslySetInnerHTML={{ __html: streamHtml }} />
+                  <div>{streamSegments}</div>
                 </div>
               </div>
             )}
@@ -168,37 +534,52 @@ export default function ChatView({ messages, streamingContent, isStreaming, agen
         )}
       </div>
 
-      {/* Input */}
+      {/* Input Area */}
       <div className="border-t border-white/[0.06] p-4 bg-[#080c15]">
-        <div className="flex items-end gap-2 max-w-4xl mx-auto">
-          <div className="flex-1 relative">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={handleInput}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask Axiom anything..."
-              rows={1}
-              className="w-full resize-none rounded-xl px-4 py-3 pr-12 text-sm bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40 transition leading-relaxed"
-              disabled={isStreaming}
+        <div style={{ maxWidth: "56rem", margin: "0 auto" }}>
+          {/* File context bar */}
+          <div style={{ position: "relative", marginBottom: contextFiles.length > 0 || availableFiles.length > 0 ? "8px" : "0" }}>
+            <FileContextBar
+              files={availableFiles}
+              selected={contextFiles}
+              onToggle={toggleContextFile}
+              onClear={() => setContextFiles([])}
             />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isStreaming}
-              className="absolute right-2 bottom-2 p-2 rounded-lg bg-gradient-to-r from-cyan-600 to-purple-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:from-cyan-500 hover:to-purple-500 transition"
-            >
-              {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </button>
           </div>
-          {messages.length > 0 && !isStreaming && (
-            <button onClick={onRetry} className="p-3 rounded-xl glass text-white/30 hover:text-white/60 transition" title="Retry last">
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          )}
+
+          <div className="flex items-end gap-2">
+            <div className="flex-1 relative">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={handleInput}
+                onKeyDown={handleKeyDown}
+                placeholder={activeFileName
+                  ? `Ask about ${activeFileName.split("/").pop()}...`
+                  : "Ask Axiom anything..."
+                }
+                rows={1}
+                className="w-full resize-none rounded-xl px-4 py-3 pr-12 text-sm bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40 transition leading-relaxed"
+                disabled={isStreaming}
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isStreaming}
+                className="absolute right-2 bottom-2 p-2 rounded-lg bg-gradient-to-r from-cyan-600 to-purple-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:from-cyan-500 hover:to-purple-500 transition"
+              >
+                {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </div>
+            {messages.length > 0 && !isStreaming && (
+              <button onClick={onRetry} className="p-3 rounded-xl glass text-white/30 hover:text-white/60 transition" title="Retry last">
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-white/15 text-center mt-2">
+            Axiom Studio by DarkWave Studios · Auto-routes to optimal model · Shift+Enter for new line
+          </p>
         </div>
-        <p className="text-[10px] text-white/15 text-center mt-2">
-          Axiom Studio by DarkWave Studios · Auto-routes to optimal model · Shift+Enter for new line
-        </p>
       </div>
     </div>
   );

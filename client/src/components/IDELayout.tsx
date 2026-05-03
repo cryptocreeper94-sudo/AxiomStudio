@@ -113,7 +113,7 @@ export default function IDELayout() {
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
   }, [token, activeAgentId, agents, queryClient]);
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string, contextFilePaths?: string[]) => {
     if (!token || !content.trim()) return;
     let convoId = activeConvoId;
     if (!convoId) {
@@ -123,7 +123,26 @@ export default function IDELayout() {
       setActiveConvoId(convoId);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
-    const userMsg: Message = { id: `temp-${Date.now()}`, role: "user", content, createdAt: new Date().toISOString() };
+
+    // Build message with file context
+    let enrichedContent = content;
+    if (contextFilePaths && contextFilePaths.length > 0) {
+      const fileContents: string[] = [];
+      for (const path of contextFilePaths) {
+        const openFile = openFiles.find(f => f.path === path);
+        if (openFile) {
+          fileContents.push(`### File: ${path}\n\`\`\`${openFile.language}\n${openFile.content}\n\`\`\``);
+        }
+      }
+      if (fileContents.length > 0) {
+        enrichedContent = `**Context Files:**\n\n${fileContents.join("\n\n")}\n\n---\n\n${content}`;
+      }
+    }
+
+    const userMsg: Message = {
+      id: `temp-${Date.now()}`, role: "user", content, createdAt: new Date().toISOString(),
+      contextFiles: contextFilePaths,
+    } as any;
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
     setStreamingContent("");
@@ -131,7 +150,7 @@ export default function IDELayout() {
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ conversationId: convoId, agentId: activeAgentId, message: content }),
+        body: JSON.stringify({ conversationId: convoId, agentId: activeAgentId, message: enrichedContent }),
       });
       if (!res.body) throw new Error("No response body");
       const reader = res.body.getReader();
@@ -161,7 +180,32 @@ export default function IDELayout() {
     } catch (err) { console.error("Chat error:", err); }
     setIsStreaming(false);
     setStreamingContent("");
-  }, [token, activeConvoId, activeAgentId, agents, queryClient, routeInfo]);
+  }, [token, activeConvoId, activeAgentId, agents, queryClient, routeInfo, openFiles]);
+
+  // ── Apply code from agent to editor ──
+  const handleApplyCode = useCallback((code: string, filename: string, _language: string) => {
+    // Find if file is already open
+    const existing = openFiles.find(f => f.path === filename || f.name === filename || f.path.endsWith(filename));
+    if (existing) {
+      // Replace content in the open file
+      handleContentChange(existing.path, code);
+      setActiveFilePath(existing.path);
+    } else {
+      // Open as a new file in the editor
+      const lang = filename.split(".").pop() || "text";
+      const langMap: Record<string, string> = {
+        ts: "typescript", tsx: "typescriptreact", js: "javascript", jsx: "javascriptreact",
+        py: "python", css: "css", html: "html", json: "json", md: "markdown",
+        sql: "sql", sh: "shell", yml: "yaml", yaml: "yaml",
+      };
+      setOpenFiles(prev => [...prev, {
+        path: filename, name: filename.split("/").pop() || filename,
+        content: code, originalContent: "",
+        language: langMap[lang] || lang,
+      }]);
+      setActiveFilePath(filename);
+    }
+  }, [openFiles, handleContentChange]);
 
   const handleDeleteConvo = useCallback(async (id: string) => {
     if (!token) return;
@@ -322,6 +366,9 @@ export default function IDELayout() {
               const last = messages.filter(m => m.role === "user").pop();
               if (last) handleSendMessage(last.content);
             }}
+            onApplyCode={handleApplyCode}
+            activeFileName={activeFilePath || undefined}
+            openFiles={openFiles.map(f => ({ path: f.path, name: f.name }))}
           />
         </div>
       )}
