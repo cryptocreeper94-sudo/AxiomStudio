@@ -160,134 +160,144 @@ export function registerAgentRoutes(app: Express): void {
 
   // ── Auth Login (shared SSO with DWTL) ──────────────────────────────
   app.post("/api/agent/auth/login", async (req: Request, res: Response) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      res.status(400).json({ success: false, error: "Username and password required" });
-      return;
+    try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        res.status(400).json({ success: false, error: "Username and password required" });
+        return;
+      }
+
+      const [user] = await db
+        .select()
+        .from(chatUsers)
+        .where(eq(chatUsers.username, username))
+        .limit(1);
+
+      if (!user) {
+        res.status(401).json({ success: false, error: "Invalid credentials" });
+        return;
+      }
+
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        res.status(401).json({ success: false, error: "Invalid credentials" });
+        return;
+      }
+
+      const token = jwt.sign(
+        { userId: user.id, username: user.username },
+        process.env.JWT_SECRET || "",
+        { expiresIn: "30d" }
+      );
+
+      res.json({
+        success: true,
+        token,
+        user: { id: user.id, username: user.username, displayName: user.displayName },
+      });
+    } catch (err: any) {
+      console.error("[Auth Login] Error:", err.message, err.stack);
+      res.status(500).json({ success: false, error: "Server error during login", detail: err.message });
     }
-
-    const [user] = await db
-      .select()
-      .from(chatUsers)
-      .where(eq(chatUsers.username, username))
-      .limit(1);
-
-    if (!user) {
-      res.status(401).json({ success: false, error: "Invalid credentials" });
-      return;
-    }
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      res.status(401).json({ success: false, error: "Invalid credentials" });
-      return;
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      process.env.JWT_SECRET || "",
-      { expiresIn: "30d" }
-    );
-
-    res.json({
-      success: true,
-      token,
-      user: { id: user.id, username: user.username, displayName: user.displayName },
-    });
   });
 
   // ── Auth Signup (whitelist-gated) ───────────────────────────────────
   app.post("/api/agent/auth/signup", async (req: Request, res: Response) => {
-    const { username, email, password, displayName } = req.body;
-    if (!username || !email || !password) {
-      res.status(400).json({ success: false, error: "Username, email, and password required" });
-      return;
-    }
+    try {
+      const { username, email, password, displayName } = req.body;
+      if (!username || !email || !password) {
+        res.status(400).json({ success: false, error: "Username, email, and password required" });
+        return;
+      }
 
-    // Check password strength
-    if (password.length < 8) {
-      res.status(400).json({ success: false, error: "Password must be at least 8 characters" });
-      return;
-    }
+      // Check password strength
+      if (password.length < 8) {
+        res.status(400).json({ success: false, error: "Password must be at least 8 characters" });
+        return;
+      }
 
-    // ── Whitelist gate ──
-    const { allowed, entry } = await checkWhitelist(email, "axiom-studio");
-    if (!allowed) {
-      res.status(403).json({
-        success: false,
-        error: "Axiom Studio is in closed beta. Request access at darkwavestudios.io",
-        code: "WHITELIST_REQUIRED",
+      // ── Whitelist gate ──
+      const { allowed, entry } = await checkWhitelist(email, "axiom-studio");
+      if (!allowed) {
+        res.status(403).json({
+          success: false,
+          error: "Axiom Studio is in closed beta. Request access at darkwavestudios.io",
+          code: "WHITELIST_REQUIRED",
+        });
+        return;
+      }
+
+      // Check if username or email already exists
+      const [existingUser] = await db
+        .select()
+        .from(chatUsers)
+        .where(eq(chatUsers.username, username))
+        .limit(1);
+
+      if (existingUser) {
+        res.status(409).json({ success: false, error: "Username already taken" });
+        return;
+      }
+
+      const [existingEmail] = await db
+        .select()
+        .from(chatUsers)
+        .where(eq(chatUsers.email, email))
+        .limit(1);
+
+      if (existingEmail) {
+        res.status(409).json({ success: false, error: "Email already registered" });
+        return;
+      }
+
+      // Create user — whitelist access_level determines starting credits and role
+      const passwordHash = await bcrypt.hash(password, 12);
+      const colors = ["#06b6d4", "#14b8a6", "#a855f7", "#3b82f6", "#ec4899", "#f97316"];
+      const avatarColor = colors[Math.floor(Math.random() * colors.length)];
+      const isOwner = entry?.access_level === "owner";
+
+      // Check for pre-granted credits in whitelist notes (e.g. "pre-granted 500 credits")
+      const preGrantMatch = entry?.notes?.match(/pre-granted\s+(\d+)\s+credits/i);
+      const preGrantedCredits = preGrantMatch ? parseInt(preGrantMatch[1]) : 0;
+      const startingCredits = isOwner ? 999999 : preGrantedCredits > 0 ? preGrantedCredits : entry?.access_level === "full" ? 100 : 10;
+
+      const [newUser] = await db
+        .insert(chatUsers)
+        .values({
+          username,
+          email: email.toLowerCase().trim(),
+          passwordHash,
+          displayName: displayName || username,
+          avatarColor,
+          role: isOwner ? "owner" : "member",
+        })
+        .returning();
+
+      // Seed credits (whitelisted full-access users get 100)
+      await db.insert(aiCreditBalances).values({
+        userId: newUser.id,
+        credits: startingCredits,
+        totalPurchased: startingCredits,
+        totalUsed: 0,
       });
-      return;
+
+      console.log(`[Whitelist] User ${email} signed up (access: ${entry?.access_level}, credits: ${startingCredits})`);
+
+      const token = jwt.sign(
+        { userId: newUser.id, username: newUser.username },
+        process.env.JWT_SECRET || "",
+        { expiresIn: "30d" }
+      );
+
+      res.json({
+        success: true,
+        token,
+        user: { id: newUser.id, username: newUser.username, displayName: newUser.displayName },
+      });
+    } catch (err: any) {
+      console.error("[Auth Signup] Error:", err.message, err.stack);
+      res.status(500).json({ success: false, error: "Server error during signup", detail: err.message });
     }
-
-    // Check if username or email already exists
-    const [existingUser] = await db
-      .select()
-      .from(chatUsers)
-      .where(eq(chatUsers.username, username))
-      .limit(1);
-
-    if (existingUser) {
-      res.status(409).json({ success: false, error: "Username already taken" });
-      return;
-    }
-
-    const [existingEmail] = await db
-      .select()
-      .from(chatUsers)
-      .where(eq(chatUsers.email, email))
-      .limit(1);
-
-    if (existingEmail) {
-      res.status(409).json({ success: false, error: "Email already registered" });
-      return;
-    }
-
-    // Create user — whitelist access_level determines starting credits and role
-    const passwordHash = await bcrypt.hash(password, 12);
-    const colors = ["#06b6d4", "#14b8a6", "#a855f7", "#3b82f6", "#ec4899", "#f97316"];
-    const avatarColor = colors[Math.floor(Math.random() * colors.length)];
-    const isOwner = entry?.access_level === "owner";
-
-    // Check for pre-granted credits in whitelist notes (e.g. "pre-granted 500 credits")
-    const preGrantMatch = entry?.notes?.match(/pre-granted\s+(\d+)\s+credits/i);
-    const preGrantedCredits = preGrantMatch ? parseInt(preGrantMatch[1]) : 0;
-    const startingCredits = isOwner ? 999999 : preGrantedCredits > 0 ? preGrantedCredits : entry?.access_level === "full" ? 100 : 10;
-
-    const [newUser] = await db
-      .insert(chatUsers)
-      .values({
-        username,
-        email: email.toLowerCase().trim(),
-        passwordHash,
-        displayName: displayName || username,
-        avatarColor,
-        role: isOwner ? "owner" : "member",
-      })
-      .returning();
-
-    // Seed credits (whitelisted full-access users get 100)
-    await db.insert(aiCreditBalances).values({
-      userId: newUser.id,
-      credits: startingCredits,
-      totalPurchased: startingCredits,
-      totalUsed: 0,
-    });
-
-    console.log(`[Whitelist] User ${email} signed up (access: ${entry?.access_level}, credits: ${startingCredits})`);
-
-    const token = jwt.sign(
-      { userId: newUser.id, username: newUser.username },
-      process.env.JWT_SECRET || "",
-      { expiresIn: "30d" }
-    );
-
-    res.json({
-      success: true,
-      token,
-      user: { id: newUser.id, username: newUser.username, displayName: newUser.displayName },
-    });
   });
 
   // ── List available agents ──────────────────────────────────────────
