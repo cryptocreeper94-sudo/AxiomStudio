@@ -563,7 +563,7 @@ export function registerAgentRoutes(app: Express): void {
 
     // Update conversation
     const title =
-      history.length <= 1
+      allHistory.length <= 1
         ? message.slice(0, 80) + (message.length > 80 ? "..." : "")
         : undefined;
 
