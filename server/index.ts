@@ -9,6 +9,7 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import rateLimit from "express-rate-limit";
 import { registerAgentRoutes } from "./agent-routes.js";
 import { registerStripeRoutes } from "./stripe-routes.js";
 import { registerCoinbaseRoutes } from "./coinbase-routes.js";
@@ -18,6 +19,9 @@ import workspaceRoutes from "./workspace-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+// Trust proxy for Render (required for rate limiting behind reverse proxy)
+app.set("trust proxy", 1);
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -30,6 +34,45 @@ app.use((_req, res, next) => {
   if (_req.method === "OPTIONS") { res.sendStatus(200); return; }
   next();
 });
+
+// ── Rate Limiting ───────────────────────────────────────────────────
+// Auth: strict — 5 login attempts per 15 minutes per IP
+app.use("/api/agent/auth", rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many auth attempts. Try again in 15 minutes." },
+}));
+
+// Chat: moderate — 30 messages per minute per IP (covers streaming hold time)
+app.use("/api/agent/chat", rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Slow down — 30 messages per minute max." },
+}));
+
+// Workspace exec: strict — prevent command flooding
+app.use("/api/workspace/exec", rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many commands. Wait a moment." },
+}));
+
+// General API: baseline — 200 req/min per IP
+app.use("/api/", rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Rate limit exceeded. Please slow down." },
+}));
+
+console.log("[Axiom Studio] Rate limiting enabled (auth: 20/15m, chat: 30/m, api: 200/m)");
 
 // Register API routes
 registerAgentRoutes(app);
