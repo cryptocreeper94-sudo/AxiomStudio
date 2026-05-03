@@ -169,7 +169,15 @@ export function registerAgentRoutes(app: Express): void {
       }
 
       const [user] = await db
-        .select()
+        .select({
+          id: chatUsers.id,
+          username: chatUsers.username,
+          email: chatUsers.email,
+          passwordHash: chatUsers.passwordHash,
+          displayName: chatUsers.displayName,
+          role: chatUsers.role,
+          trustLayerId: chatUsers.trustLayerId,
+        })
         .from(chatUsers)
         .where(eq(chatUsers.username, username))
         .limit(1);
@@ -230,7 +238,7 @@ export function registerAgentRoutes(app: Express): void {
 
       // Check if username or email already exists
       const [existingUser] = await db
-        .select()
+        .select({ id: chatUsers.id })
         .from(chatUsers)
         .where(eq(chatUsers.username, username))
         .limit(1);
@@ -241,7 +249,7 @@ export function registerAgentRoutes(app: Express): void {
       }
 
       const [existingEmail] = await db
-        .select()
+        .select({ id: chatUsers.id })
         .from(chatUsers)
         .where(eq(chatUsers.email, email))
         .limit(1);
@@ -329,7 +337,14 @@ export function registerAgentRoutes(app: Express): void {
 
       // Check if user exists by email
       let [user] = await db
-        .select()
+        .select({
+          id: chatUsers.id,
+          username: chatUsers.username,
+          email: chatUsers.email,
+          displayName: chatUsers.displayName,
+          role: chatUsers.role,
+          trustLayerId: chatUsers.trustLayerId,
+        })
         .from(chatUsers)
         .where(eq(chatUsers.email, email.toLowerCase().trim()))
         .limit(1);
@@ -348,7 +363,7 @@ export function registerAgentRoutes(app: Express): void {
         let username = baseUsername;
         let suffix = 1;
         while (true) {
-          const [existing] = await db.select().from(chatUsers).where(eq(chatUsers.username, username)).limit(1);
+          const [existing] = await db.select({ id: chatUsers.id }).from(chatUsers).where(eq(chatUsers.username, username)).limit(1);
           if (!existing) break;
           username = `${baseUsername}${suffix++}`;
         }
