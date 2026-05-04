@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance.">
+    <meta name="dw-app-id" content="axiom-studio">
+    <meta property="og:title" content="Axiom Studio — AI Development">
+    <meta property="og:description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance.">
+    <meta property="og:url" content="https://axiomstudio.dev">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="DarkWave Studios">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Axiom Studio — AI Development">
+    <meta name="twitter:description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance.">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Axiom Studio — AI Coding IDE by DarkWave Studios</title>
@@ -8,7 +18,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-</head>
+
+    <!-- DarkWave Studios Ecosystem Analytics -->
+    <script>
+      (function(){
+        var appId = document.querySelector('meta[name="dw-app-id"]');
+        var id = appId ? appId.content : window.location.hostname;
+        function track(type, data) {
+          try {
+            navigator.sendBeacon('https://darkwavestudios.io/api/analytics', JSON.stringify({
+              app: id, type: type, url: window.location.href,
+              ref: document.referrer, ts: Date.now(), ...data
+            }));
+          } catch(e) {}
+        }
+        track('pageview');
+        window.addEventListener('popstate', function(){ track('navigate'); });
+        var origPush = history.pushState;
+        history.pushState = function(){ origPush.apply(this, arguments); track('navigate'); };
+      })();
+    </script>
+  </head>
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
