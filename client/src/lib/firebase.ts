@@ -5,7 +5,7 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -26,7 +26,7 @@ const firebaseConfig = {
   measurementId: "G-3YHVG8K6L8",
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // ── Providers ──
