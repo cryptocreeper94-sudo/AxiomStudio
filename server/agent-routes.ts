@@ -336,18 +336,36 @@ export function registerAgentRoutes(app: Express): void {
       }
 
       // Check if user exists by email
-      let [user] = await db
-        .select({
-          id: chatUsers.id,
-          username: chatUsers.username,
-          email: chatUsers.email,
-          displayName: chatUsers.displayName,
-          role: chatUsers.role,
-          trustLayerId: chatUsers.trustLayerId,
-        })
-        .from(chatUsers)
-        .where(eq(chatUsers.email, email.toLowerCase().trim()))
-        .limit(1);
+      let user: any = null;
+      try {
+        // Try with trustLayerId (requires column to exist in DB)
+        [user] = await db
+          .select({
+            id: chatUsers.id,
+            username: chatUsers.username,
+            email: chatUsers.email,
+            displayName: chatUsers.displayName,
+            role: chatUsers.role,
+            trustLayerId: chatUsers.trustLayerId,
+          })
+          .from(chatUsers)
+          .where(eq(chatUsers.email, email.toLowerCase().trim()))
+          .limit(1);
+      } catch (selectErr: any) {
+        // Fallback: trustLayerId column may not exist yet (db:push needed)
+        console.warn("[Firebase Auth] trustLayerId column missing, querying without it:", selectErr.message);
+        [user] = await db
+          .select({
+            id: chatUsers.id,
+            username: chatUsers.username,
+            email: chatUsers.email,
+            displayName: chatUsers.displayName,
+            role: chatUsers.role,
+          })
+          .from(chatUsers)
+          .where(eq(chatUsers.email, email.toLowerCase().trim()))
+          .limit(1);
+      }
 
       if (!user) {
         // Auto-create user from Firebase profile
@@ -374,18 +392,34 @@ export function registerAgentRoutes(app: Express): void {
         // Create with a random password hash (user will sign in via Firebase only)
         const randomPass = await bcrypt.hash(crypto.randomUUID(), 10);
 
-        [user] = await db
-          .insert(chatUsers)
-          .values({
-            username,
-            email: email.toLowerCase().trim(),
-            passwordHash: randomPass,
-            displayName: name,
-            avatarColor,
-            role: isOwner ? "owner" : "member",
-            trustLayerId: `firebase:${firebaseUid}`,
-          })
-          .returning();
+        try {
+          [user] = await db
+            .insert(chatUsers)
+            .values({
+              username,
+              email: email.toLowerCase().trim(),
+              passwordHash: randomPass,
+              displayName: name,
+              avatarColor,
+              role: isOwner ? "owner" : "member",
+              trustLayerId: `firebase:${firebaseUid}`,
+            })
+            .returning();
+        } catch (insertErr: any) {
+          // Fallback: insert without trustLayerId if column doesn't exist
+          console.warn("[Firebase Auth] Insert with trustLayerId failed, retrying without:", insertErr.message);
+          [user] = await db
+            .insert(chatUsers)
+            .values({
+              username,
+              email: email.toLowerCase().trim(),
+              passwordHash: randomPass,
+              displayName: name,
+              avatarColor,
+              role: isOwner ? "owner" : "member",
+            })
+            .returning();
+        }
 
         // Seed credits
         await db.insert(aiCreditBalances).values({
@@ -398,11 +432,15 @@ export function registerAgentRoutes(app: Express): void {
         console.log(`[Firebase Auth] New user created: ${email} (username: ${username}, credits: ${startingCredits})`);
       } else {
         // Link Firebase UID if not already linked
-        if (!user.trustLayerId?.startsWith("firebase:")) {
-          await db
-            .update(chatUsers)
-            .set({ trustLayerId: `firebase:${firebaseUid}` })
-            .where(eq(chatUsers.id, user.id));
+        try {
+          if (!user.trustLayerId?.startsWith("firebase:")) {
+            await db
+              .update(chatUsers)
+              .set({ trustLayerId: `firebase:${firebaseUid}` })
+              .where(eq(chatUsers.id, user.id));
+          }
+        } catch (updateErr: any) {
+          console.warn("[Firebase Auth] Could not update trustLayerId (column may not exist):", updateErr.message);
         }
       }
 
