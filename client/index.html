@@ -1,23 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance.">
-    <meta name="dw-app-id" content="axiom-studio">
-    <meta property="og:title" content="Axiom Studio — AI Development">
-    <meta property="og:description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance.">
-    <meta property="og:url" content="https://axiomstudio.dev">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="DarkWave Studios">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Axiom Studio — AI Development">
-    <meta name="twitter:description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance.">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Axiom Studio — AI Coding IDE by DarkWave Studios</title>
-  <meta name="description" content="Multi-agent AI coding assistant powered by Claude Opus. Build, debug, and deploy with deterministic intelligence." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Axiom Studio — AI Coding IDE by DarkWave Studios</title>
+    <meta name="description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance." />
+    <meta name="dw-app-id" content="axiom-studio" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#06b6d4" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Axiom Studio" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Axiom Studio — AI Development" />
+    <meta property="og:description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance." />
+    <meta property="og:url" content="https://axiomstudio.dev" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DarkWave Studios" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Axiom Studio — AI Development" />
+    <meta name="twitter:description" content="Multi-agent AI development environment powered by AXIOM42 cognitive architecture and Lume-V governance." />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Splash Screen Styles -->
+    <style>
+      #axiom-splash {
+        position: fixed; inset: 0; z-index: 100000;
+        background: #06080f;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      #axiom-splash.fade-out {
+        opacity: 0; transform: scale(1.05);
+        pointer-events: none;
+      }
+      #axiom-splash .splash-icon {
+        width: 120px; height: 120px;
+        border-radius: 28px;
+        animation: splash-pulse 2s ease-in-out infinite, splash-float 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 40px rgba(6, 182, 212, 0.4)) drop-shadow(0 0 80px rgba(139, 92, 246, 0.2));
+      }
+      #axiom-splash .splash-title {
+        margin-top: 28px;
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 28px; font-weight: 700;
+        background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+        animation: splash-text 1.5s ease-out;
+      }
+      #axiom-splash .splash-sub {
+        margin-top: 8px;
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 12px; letter-spacing: 4px; text-transform: uppercase;
+        color: rgba(148, 163, 184, 0.6);
+        animation: splash-text 1.8s ease-out;
+      }
+      #axiom-splash .splash-loader {
+        margin-top: 40px; width: 160px; height: 2px;
+        background: rgba(6, 182, 212, 0.1);
+        border-radius: 2px; overflow: hidden;
+      }
+      #axiom-splash .splash-loader-bar {
+        height: 100%; width: 0%;
+        background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+        border-radius: 2px;
+        animation: splash-load 2s ease-in-out forwards;
+      }
+      #axiom-splash .splash-particles {
+        position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+      }
+      #axiom-splash .splash-particle {
+        position: absolute;
+        width: 2px; height: 2px;
+        background: #06b6d4;
+        border-radius: 50%;
+        opacity: 0;
+        animation: splash-particle-float 3s ease-in-out infinite;
+      }
+      @keyframes splash-pulse {
+        0%, 100% { filter: drop-shadow(0 0 40px rgba(6, 182, 212, 0.4)) drop-shadow(0 0 80px rgba(139, 92, 246, 0.2)); }
+        50% { filter: drop-shadow(0 0 60px rgba(6, 182, 212, 0.6)) drop-shadow(0 0 100px rgba(139, 92, 246, 0.35)); }
+      }
+      @keyframes splash-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+      @keyframes splash-text {
+        0% { opacity: 0; transform: translateY(12px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes splash-load {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+      }
+      @keyframes splash-particle-float {
+        0% { opacity: 0; transform: translateY(0) scale(0); }
+        20% { opacity: 0.6; transform: scale(1); }
+        100% { opacity: 0; transform: translateY(-200px) scale(0); }
+      }
+      #axiom-splash .splash-ring {
+        position: absolute;
+        width: 200px; height: 200px;
+        border-radius: 50%;
+        border: 1px solid rgba(6, 182, 212, 0.08);
+        animation: splash-ring-expand 2.5s ease-out infinite;
+      }
+      @keyframes splash-ring-expand {
+        0% { transform: scale(0.5); opacity: 0.5; }
+        100% { transform: scale(2.5); opacity: 0; }
+      }
+    </style>
 
     <!-- DarkWave Studios Ecosystem Analytics -->
     <script>
@@ -40,82 +147,148 @@
     </script>
   </head>
 <body>
+  <!-- Splash Screen -->
+  <div id="axiom-splash">
+    <div class="splash-particles" id="splash-particles"></div>
+    <div class="splash-ring"></div>
+    <div class="splash-ring" style="animation-delay: 0.8s;"></div>
+    <div class="splash-ring" style="animation-delay: 1.6s;"></div>
+    <img class="splash-icon" src="/icons/icon-512.png" alt="Axiom Studio" />
+    <div class="splash-title">Axiom Studio</div>
+    <div class="splash-sub">DarkWave Studios</div>
+    <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+  </div>
+
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 
-    <!-- DarkWave Studios Command Center Easter Egg -->
-    <script>
-      (function(){
-        var cc=0,timer=null;
-        function injectShield(){
-          var f=document.querySelector('footer');
-          if(!f)return setTimeout(injectShield,2000);
-          var existing=f.querySelector('[data-dw-shield]');
-          if(existing)return;
-          var s=document.createElement('span');
-          s.setAttribute('data-dw-shield','1');
-          s.textContent='\u25C8';
-          s.style.cssText='cursor:default;opacity:0.2;font-size:14px;user-select:none;margin-left:6px;';
-          s.addEventListener('click',function(){
-            cc++;if(timer)clearTimeout(timer);
-            if(cc>=3){cc=0;showPinModal();}
-            else{timer=setTimeout(function(){cc=0;},2000);}
-          });
-          var copy=f.querySelector('[class*="copyright"],[class*="Copyright"]');
-          if(copy){copy.appendChild(s);}
-          else{var last=f.lastElementChild||f;last.appendChild(s);}
+  <!-- Splash Screen Controller + Particle Generator -->
+  <script>
+    (function() {
+      var container = document.getElementById('splash-particles');
+      if (container) {
+        for (var i = 0; i < 30; i++) {
+          var p = document.createElement('div');
+          p.className = 'splash-particle';
+          p.style.left = Math.random() * 100 + '%';
+          p.style.top = (40 + Math.random() * 60) + '%';
+          p.style.animationDelay = (Math.random() * 3) + 's';
+          p.style.animationDuration = (2 + Math.random() * 2) + 's';
+          var colors = ['#06b6d4', '#8b5cf6', '#ec4899', '#14b8a6'];
+          p.style.background = colors[Math.floor(Math.random() * colors.length)];
+          p.style.width = (1 + Math.random() * 2) + 'px';
+          p.style.height = p.style.width;
+          container.appendChild(p);
         }
-        function showPinModal(){
-          var o=document.createElement('div');
-          o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;';
-          o.addEventListener('click',function(e){if(e.target===o)o.remove();});
-          var box=document.createElement('div');
-          box.style.cssText='background:#0a0a1a;border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:32px;text-align:center;min-width:280px;font-family:system-ui,sans-serif;';
-          box.innerHTML='<div style="font-size:12px;color:#06b6d4;margin-bottom:16px;letter-spacing:3px;">AUTHENTICATION REQUIRED</div>';
-          var inp=document.createElement('input');
-          inp.type='password';inp.maxLength=4;
-          inp.style.cssText='background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:12px;color:#fff;font-size:24px;text-align:center;width:120px;letter-spacing:8px;outline:none;';
-          inp.addEventListener('keydown',function(e){
-            if(e.key==='Enter'){
-              if(inp.value==='0424'){o.remove();showCommandCenter();}
-              else{inp.style.borderColor='#f43f5e';inp.value='';setTimeout(function(){inp.style.borderColor='rgba(6,182,212,0.2)';},600);}
-            }
-          });
-          box.appendChild(inp);
-          var hint=document.createElement('div');
-          hint.style.cssText='margin-top:12px;font-size:10px;color:rgba(255,255,255,0.3);';
-          hint.textContent='Enter PIN to continue';
-          box.appendChild(hint);
-          o.appendChild(box);document.body.appendChild(o);
-          setTimeout(function(){inp.focus();},100);
+      }
+
+      var dismissed = false;
+      function dismissSplash() {
+        if (dismissed) return;
+        dismissed = true;
+        var splash = document.getElementById('axiom-splash');
+        if (splash) {
+          splash.classList.add('fade-out');
+          setTimeout(function() { splash.remove(); }, 700);
         }
-        function showCommandCenter(){
-          var o=document.createElement('div');
-          o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:99999;';
-          o.addEventListener('click',function(e){if(e.target===o)o.remove();});
-          var links=[
-            {l:'Trust Layer Dashboard',u:'https://dwtl.io'},
-            {l:'Axiom Studio',u:'https://axiomstudio.dev'},
-            {l:'DWSC Research',u:'https://dwsc.io'},
-            {l:'Meridian Canon',u:'https://meridiancanon.com'},
-            {l:'DarkWave Pulse',u:'https://pulse.darkwavestudios.io'},
-            {l:'Ecosystem Analytics',u:'https://darkwavestudios.io/analytics'},
-            {l:'DarkWave Studios',u:'https://darkwavestudios.io'}
-          ];
-          var html='<div style="background:linear-gradient(135deg,#0a0a1a,#0d1117);border:1px solid rgba(6,182,212,0.2);border-radius:20px;padding:40px;max-width:500px;width:90%;font-family:system-ui,sans-serif;">';
-          html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;"><div style="font-size:14px;color:#06b6d4;letter-spacing:3px;font-weight:700;">\u27D0 COMMAND CENTER</div><span id="cc-close" style="color:#666;font-size:20px;cursor:pointer;">\u2715</span></div>';
-          html+='<div style="display:grid;gap:10px;">';
-          links.forEach(function(lk){
-            html+='<a href="'+lk.u+'" target="_blank" rel="noopener" style="display:block;padding:12px 16px;background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.1);border-radius:10px;color:#94a3b8;text-decoration:none;font-size:13px;transition:all 0.2s;" onmouseenter="this.style.borderColor=\'rgba(6,182,212,0.3)\';this.style.color=\'#06b6d4\';" onmouseleave="this.style.borderColor=\'rgba(6,182,212,0.1)\';this.style.color=\'#94a3b8\';">'+lk.l+'</a>';
-          });
-          html+='</div><div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,0.2);text-align:center;">\u00A9 2026 DarkWave Studios LLC</div></div>';
-          o.innerHTML=html;
-          document.body.appendChild(o);
-          document.getElementById('cc-close').addEventListener('click',function(){o.remove();});
+      }
+
+      var observer = new MutationObserver(function() {
+        var root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          setTimeout(dismissSplash, 800);
+          observer.disconnect();
         }
-        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(injectShield,1000);});
-        else setTimeout(injectShield,1000);
-      })();
-    </script>
-  </body>
+      });
+      observer.observe(document.getElementById('root'), { childList: true });
+      setTimeout(dismissSplash, 4000);
+    })();
+  </script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(reg) { console.log('[PWA] Service worker registered:', reg.scope); })
+          .catch(function(err) { console.warn('[PWA] SW registration failed:', err); });
+      });
+    }
+  </script>
+
+  <!-- DarkWave Studios Command Center Easter Egg -->
+  <script>
+    (function(){
+      var cc=0,timer=null;
+      function injectShield(){
+        var f=document.querySelector('footer');
+        if(!f)return setTimeout(injectShield,2000);
+        var existing=f.querySelector('[data-dw-shield]');
+        if(existing)return;
+        var s=document.createElement('span');
+        s.setAttribute('data-dw-shield','1');
+        s.textContent='\u25C8';
+        s.style.cssText='cursor:default;opacity:0.2;font-size:14px;user-select:none;margin-left:6px;';
+        s.addEventListener('click',function(){
+          cc++;if(timer)clearTimeout(timer);
+          if(cc>=3){cc=0;showPinModal();}
+          else{timer=setTimeout(function(){cc=0;},2000);}
+        });
+        var copy=f.querySelector('[class*="copyright"],[class*="Copyright"]');
+        if(copy){copy.appendChild(s);}
+        else{var last=f.lastElementChild||f;last.appendChild(s);}
+      }
+      function showPinModal(){
+        var o=document.createElement('div');
+        o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;';
+        o.addEventListener('click',function(e){if(e.target===o)o.remove();});
+        var box=document.createElement('div');
+        box.style.cssText='background:#0a0a1a;border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:32px;text-align:center;min-width:280px;font-family:system-ui,sans-serif;';
+        box.innerHTML='<div style="font-size:12px;color:#06b6d4;margin-bottom:16px;letter-spacing:3px;">AUTHENTICATION REQUIRED</div>';
+        var inp=document.createElement('input');
+        inp.type='password';inp.maxLength=4;
+        inp.style.cssText='background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:12px;color:#fff;font-size:24px;text-align:center;width:120px;letter-spacing:8px;outline:none;';
+        inp.addEventListener('keydown',function(e){
+          if(e.key==='Enter'){
+            if(inp.value==='0424'){o.remove();showCommandCenter();}
+            else{inp.style.borderColor='#f43f5e';inp.value='';setTimeout(function(){inp.style.borderColor='rgba(6,182,212,0.2)';},600);}
+          }
+        });
+        box.appendChild(inp);
+        var hint=document.createElement('div');
+        hint.style.cssText='margin-top:12px;font-size:10px;color:rgba(255,255,255,0.3);';
+        hint.textContent='Enter PIN to continue';
+        box.appendChild(hint);
+        o.appendChild(box);document.body.appendChild(o);
+        setTimeout(function(){inp.focus();},100);
+      }
+      function showCommandCenter(){
+        var o=document.createElement('div');
+        o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:99999;';
+        o.addEventListener('click',function(e){if(e.target===o)o.remove();});
+        var links=[
+          {l:'Trust Layer Dashboard',u:'https://dwtl.io'},
+          {l:'Axiom Studio',u:'https://axiomstudio.dev'},
+          {l:'DWSC Research',u:'https://dwsc.io'},
+          {l:'Meridian Canon',u:'https://meridiancanon.com'},
+          {l:'DarkWave Pulse',u:'https://pulse.darkwavestudios.io'},
+          {l:'Ecosystem Analytics',u:'https://darkwavestudios.io/analytics'},
+          {l:'DarkWave Studios',u:'https://darkwavestudios.io'}
+        ];
+        var html='<div style="background:linear-gradient(135deg,#0a0a1a,#0d1117);border:1px solid rgba(6,182,212,0.2);border-radius:20px;padding:40px;max-width:500px;width:90%;font-family:system-ui,sans-serif;">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;"><div style="font-size:14px;color:#06b6d4;letter-spacing:3px;font-weight:700;">\u27D0 COMMAND CENTER</div><span id="cc-close" style="color:#666;font-size:20px;cursor:pointer;">\u2715</span></div>';
+        html+='<div style="display:grid;gap:10px;">';
+        links.forEach(function(lk){
+          html+='<a href="'+lk.u+'" target="_blank" rel="noopener" style="display:block;padding:12px 16px;background:rgba(6,182,212,0.05);border:1px solid rgba(6,182,212,0.1);border-radius:10px;color:#94a3b8;text-decoration:none;font-size:13px;transition:all 0.2s;" onmouseenter="this.style.borderColor=\'rgba(6,182,212,0.3)\';this.style.color=\'#06b6d4\';" onmouseleave="this.style.borderColor=\'rgba(6,182,212,0.1)\';this.style.color=\'#94a3b8\';">'+lk.l+'</a>';
+        });
+        html+='</div><div style="margin-top:20px;font-size:10px;color:rgba(255,255,255,0.2);text-align:center;">\u00A9 2026 DarkWave Studios LLC</div></div>';
+        o.innerHTML=html;
+        document.body.appendChild(o);
+        document.getElementById('cc-close').addEventListener('click',function(){o.remove();});
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(injectShield,1000);});
+      else setTimeout(injectShield,1000);
+    })();
+  </script>
+</body>
 </html>
