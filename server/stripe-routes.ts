@@ -22,7 +22,7 @@ function extractUserId(req: Request): string | null {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) return null;
   try {
-    const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET || "") as any;
+    const decoded = jwt.verify(authHeader.slice(7), process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me") as any;
     return decoded.userId || decoded.id || null;
   } catch {
     return null;
