@@ -8,8 +8,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Brain, LogIn, UserPlus, Loader2, Chrome, Github } from "lucide-react";
 
 interface Props {
-  onLogin: (username: string, password: string, remember?: boolean) => Promise<string | null>;
-  onSignup: (username: string, email: string, password: string, displayName: string) => Promise<string | null>;
+  onLogin: (email: string, password: string, remember?: boolean) => Promise<string | null>;
+  onSignup: (email: string, password: string, displayName: string) => Promise<string | null>;
   onGoogleLogin: () => Promise<string | null>;
   onGitHubLogin?: () => Promise<string | null>;
   biometricsAvailable?: boolean;
@@ -109,7 +109,6 @@ const oauthBtnStyle: React.CSSProperties = {
 export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHubLogin, biometricsAvailable, biometricsEnrolled, onBiometricLogin }: Props) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showLegacy, setShowLegacy] = useState(false);
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -124,12 +123,12 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
     setError("");
 
     let err: string | null;
+    if (!email) { setError("Email is required"); setLoading(false); return; }
     if (mode === "login") {
-      err = await onLogin(username, password, remember);
+      err = await onLogin(email, password, remember);
     } else {
-      if (!email) { setError("Email is required"); setLoading(false); return; }
       if (password.length < 8) { setError("Password must be at least 8 characters"); setLoading(false); return; }
-      err = await onSignup(username, email, password, displayName || username);
+      err = await onSignup(email, password, displayName || email.split("@")[0]);
     }
 
     if (err) setError(err);
@@ -295,7 +294,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
                 padding: "2px 4px",
               }}
             >
-              {showLegacy ? "Hide" : "or sign in with"} username / password
+              {showLegacy ? "Hide" : "or sign in with"} email / password
             </button>
             <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
           </div>
@@ -330,30 +329,21 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
 
               <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: "14px" }}>
-                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Username" style={inputStyle} autoComplete="username"
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email" style={inputStyle} autoComplete="email"
                     onFocus={(e) => { e.target.style.borderColor = "rgba(6,182,212,0.4)"; e.target.style.background = "rgba(255,255,255,0.08)"; }}
                     onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.background = "rgba(255,255,255,0.06)"; }}
                   />
                 </div>
 
                 {mode === "signup" && (
-                  <>
-                    <div style={{ marginBottom: "14px" }}>
-                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Email" style={inputStyle} autoComplete="email"
-                        onFocus={(e) => { e.target.style.borderColor = "rgba(6,182,212,0.4)"; e.target.style.background = "rgba(255,255,255,0.08)"; }}
-                        onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.background = "rgba(255,255,255,0.06)"; }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: "14px" }}>
-                      <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Display Name (optional)" style={inputStyle}
-                        onFocus={(e) => { e.target.style.borderColor = "rgba(6,182,212,0.4)"; e.target.style.background = "rgba(255,255,255,0.08)"; }}
-                        onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.background = "rgba(255,255,255,0.06)"; }}
-                      />
-                    </div>
-                  </>
+                  <div style={{ marginBottom: "14px" }}>
+                    <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Display Name (optional)" style={inputStyle}
+                      onFocus={(e) => { e.target.style.borderColor = "rgba(6,182,212,0.4)"; e.target.style.background = "rgba(255,255,255,0.08)"; }}
+                      onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.background = "rgba(255,255,255,0.06)"; }}
+                    />
+                  </div>
                 )}
 
                 <div style={{ marginBottom: "20px" }}>

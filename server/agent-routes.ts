@@ -159,28 +159,26 @@ export function registerAgentRoutes(app: Express): void {
   // Seed agents on startup
   seedAgents().catch(console.error);
 
-  // ── Auth Login (shared SSO with DWTL) ──────────────────────────────
+  // ── Auth Login (email-based, with username backward compat) ────────
   app.post("/api/agent/auth/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        res.status(400).json({ success: false, error: "Username and password required" });
+      const { email, username, password } = req.body;
+      const identifier = email || username;
+      if (!identifier || !password) {
+        res.status(400).json({ success: false, error: "Email and password required" });
         return;
       }
 
-      const [user] = await db
-        .select({
-          id: chatUsers.id,
-          username: chatUsers.username,
-          email: chatUsers.email,
-          passwordHash: chatUsers.passwordHash,
-          displayName: chatUsers.displayName,
-          role: chatUsers.role,
-          trustLayerId: chatUsers.trustLayerId,
-        })
-        .from(chatUsers)
-        .where(eq(chatUsers.username, username))
-        .limit(1);
+      // Look up by email first, fall back to username (backward compat)
+      const userResult = await pool.query(
+        `SELECT id, username, email, password_hash AS "passwordHash", 
+                display_name AS "displayName", role 
+         FROM chat_users 
+         WHERE email = $1 OR username = $1 
+         LIMIT 1`,
+        [identifier.toLowerCase().trim()]
+      );
+      const user = userResult.rows[0];
 
       if (!user) {
         res.status(401).json({ success: false, error: "Invalid credentials" });
@@ -210,12 +208,12 @@ export function registerAgentRoutes(app: Express): void {
     }
   });
 
-  // ── Auth Signup (whitelist-gated) ───────────────────────────────────
+  // ── Auth Signup (email-primary, username auto-generated) ───────────
   app.post("/api/agent/auth/signup", async (req: Request, res: Response) => {
     try {
       const { username, email, password, displayName } = req.body;
-      if (!username || !email || !password) {
-        res.status(400).json({ success: false, error: "Username, email, and password required" });
+      if (!email || !password) {
+        res.status(400).json({ success: false, error: "Email and password required" });
         return;
       }
 

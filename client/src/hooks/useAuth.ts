@@ -28,8 +28,8 @@ interface AuthState {
   token: string | null;
   userId: string | null;
   user: AuthUser | null;
-  login: (username: string, password: string, remember?: boolean) => Promise<string | null>;
-  signup: (username: string, email: string, password: string, displayName: string) => Promise<string | null>;
+  login: (email: string, password: string, remember?: boolean) => Promise<string | null>;
+  signup: (email: string, password: string, displayName: string) => Promise<string | null>;
   loginWithGoogle: () => Promise<string | null>;
   loginWithGitHub: () => Promise<string | null>;
   logout: () => void;
@@ -107,12 +107,12 @@ export function useAuth(): AuthState {
   }, []);
 
   // ── Legacy username/password login ──
-  const login = useCallback(async (username: string, password: string, remember = true): Promise<string | null> => {
+  const login = useCallback(async (email: string, password: string, remember = true): Promise<string | null> => {
     try {
       const res = await fetch("/api/agent/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       return handleAuthResponse(data, remember);
@@ -122,8 +122,9 @@ export function useAuth(): AuthState {
   }, [handleAuthResponse]);
 
   // ── Legacy signup ──
-  const signup = useCallback(async (username: string, email: string, password: string, displayName: string): Promise<string | null> => {
+  const signup = useCallback(async (email: string, password: string, displayName: string): Promise<string | null> => {
     try {
+      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 20);
       const res = await fetch("/api/agent/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
