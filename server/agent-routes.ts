@@ -52,7 +52,7 @@ function extractUserId(req: Request): string | null {
   try {
     const decoded = jwt.verify(
       authHeader.slice(7),
-      process.env.JWT_SECRET || ""
+      process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me"
     ) as any;
     return decoded.userId || decoded.id || null;
   } catch {
@@ -193,7 +193,7 @@ export function registerAgentRoutes(app: Express): void {
 
       const token = jwt.sign(
         { userId: user.id, username: user.username },
-        process.env.JWT_SECRET || "",
+        process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me",
         { expiresIn: "30d" }
       );
 
@@ -292,7 +292,7 @@ export function registerAgentRoutes(app: Express): void {
 
       const token = jwt.sign(
         { userId: newUser.id, username: newUser.username },
-        process.env.JWT_SECRET || "",
+        process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me",
         { expiresIn: "30d" }
       );
 
@@ -390,7 +390,7 @@ export function registerAgentRoutes(app: Express): void {
       // Issue app JWT
       const token = jwt.sign(
         { userId: user.id, username: user.username },
-        process.env.JWT_SECRET || "",
+        process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me",
         { expiresIn: "30d" }
       );
 
@@ -421,7 +421,7 @@ export function registerAgentRoutes(app: Express): void {
       const authHeader = req.headers.authorization;
       if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return; }
       const token = authHeader.replace("Bearer ", "");
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me") as any;
 
       const { username, displayName, pin } = req.body;
       const updates: string[] = [];
