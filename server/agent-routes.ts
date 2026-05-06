@@ -375,12 +375,16 @@ export function registerAgentRoutes(app: Express): void {
         );
         user = insertResult.rows[0];
 
-        // Seed credits
-        await pool.query(
-          `INSERT INTO ai_credit_balances (id, user_id, credits, total_purchased, total_used, updated_at)
-           VALUES (gen_random_uuid(), $1, $2, $2, 0, NOW())`,
-          [user.id, startingCredits]
-        );
+        // Seed credits (non-fatal — table may not exist yet)
+        try {
+          await pool.query(
+            `INSERT INTO ai_credit_balances (id, user_id, credits, total_purchased, total_used, updated_at)
+             VALUES (gen_random_uuid(), $1, $2, $2, 0, NOW())`,
+            [user.id, startingCredits]
+          );
+        } catch (creditErr: any) {
+          console.warn("[Firebase Auth] Could not seed credits (table may not exist):", creditErr.message);
+        }
 
         console.log(`[Firebase Auth] New user created: ${email} (username: ${username}, credits: ${startingCredits})`);
       }
