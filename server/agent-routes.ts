@@ -425,7 +425,12 @@ export function registerAgentRoutes(app: Express): void {
       });
     } catch (err: any) {
       console.error("[Firebase Auth] Error:", err.message, err.stack);
-      res.status(500).json({ success: false, error: "Firebase authentication error", detail: err.message });
+      res.status(500).json({ 
+        success: false, 
+        error: `Firebase authentication error: ${err.message}`,
+        detail: err.message,
+        code: err.code || "UNKNOWN",
+      });
     }
   });
 

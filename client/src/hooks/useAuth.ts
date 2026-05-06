@@ -136,7 +136,6 @@ export function useAuth(): AuthState {
     }
   }, [handleAuthResponse]);
 
-  // ── Firebase Auth: exchange Firebase ID token for app JWT ──
   const exchangeFirebaseToken = useCallback(async (firebaseUser: FirebaseUser): Promise<string | null> => {
     try {
       const idToken = await firebaseUser.getIdToken();
@@ -150,8 +149,12 @@ export function useAuth(): AuthState {
         data.user.photoURL = firebaseUser.photoURL;
         data.user.authMethod = "firebase";
       }
+      if (!res.ok) {
+        console.error("[Auth] Firebase exchange failed:", data);
+      }
       return handleAuthResponse(data, true);
     } catch (err: any) {
+      console.error("[Auth] Firebase token exchange error:", err);
       return err.message || "Firebase authentication failed";
     }
   }, [handleAuthResponse]);

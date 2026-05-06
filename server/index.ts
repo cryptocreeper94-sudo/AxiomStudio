@@ -26,11 +26,13 @@ app.set("trust proxy", 1);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// CORS for dev
+// CORS + COOP (allow Firebase OAuth popups to communicate back)
 app.use((_req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  // Firebase OAuth uses popups — COOP must allow them to post back
+  res.header("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   if (_req.method === "OPTIONS") { res.sendStatus(200); return; }
   next();
 });
