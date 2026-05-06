@@ -415,6 +415,67 @@ export function registerAgentRoutes(app: Express): void {
     }
   });
 
+  // ── Profile Update (username, displayName, PIN) ─────────────────────
+  app.patch("/api/agent/profile", async (req: Request, res: Response) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return; }
+      const token = authHeader.replace("Bearer ", "");
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "") as any;
+
+      const { username, displayName, pin } = req.body;
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (username) {
+        // Check uniqueness
+        const check = await pool.query(`SELECT id FROM chat_users WHERE username = $1 AND id != $2 LIMIT 1`, [username, decoded.userId]);
+        if (check.rows.length > 0) { res.status(409).json({ error: "Username already taken" }); return; }
+        updates.push(`username = $${paramIndex++}`);
+        values.push(username);
+      }
+      if (displayName) {
+        updates.push(`display_name = $${paramIndex++}`);
+        values.push(displayName);
+      }
+      if (pin) {
+        const pinHash = await bcrypt.hash(pin, 10);
+        updates.push(`ecosystem_pin_hash = $${paramIndex++}`);
+        values.push(pinHash);
+      }
+
+      if (updates.length === 0) { res.status(400).json({ error: "No fields to update" }); return; }
+
+      values.push(decoded.userId);
+      try {
+        await pool.query(
+          `UPDATE chat_users SET ${updates.join(", ")} WHERE id = $${paramIndex}`,
+          values
+        );
+      } catch (dbErr: any) {
+        // If ecosystem_pin_hash column doesn't exist, retry without it
+        if (dbErr.message?.includes("ecosystem_pin_hash")) {
+          const filteredUpdates = updates.filter(u => !u.includes("ecosystem_pin_hash"));
+          const filteredValues = values.filter((_, i) => !updates[i]?.includes("ecosystem_pin_hash"));
+          filteredValues.push(decoded.userId);
+          if (filteredUpdates.length > 0) {
+            await pool.query(
+              `UPDATE chat_users SET ${filteredUpdates.join(", ")} WHERE id = $${filteredUpdates.length + 1}`,
+              filteredValues
+            );
+          }
+          console.warn("[Profile] ecosystem_pin_hash column missing, PIN not saved");
+        } else throw dbErr;
+      }
+
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("[Profile] Error:", err.message);
+      res.status(500).json({ error: "Failed to update profile", detail: err.message });
+    }
+  });
+
   // ── List available agents ──────────────────────────────────────────
   app.get("/api/agent/models", async (_req: Request, res: Response) => {
     try {

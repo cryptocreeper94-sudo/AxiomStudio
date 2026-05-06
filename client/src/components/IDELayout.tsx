@@ -12,6 +12,7 @@ import TerminalPanel from "./TerminalPanel";
 import ChatView from "./ChatView";
 import LoginScreen from "./LoginScreen";
 import CreditStore from "./CreditStore";
+import ProfileBadge from "./ProfileBadge";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
 import * as api from "../lib/api";
@@ -248,6 +249,17 @@ export default function IDELayout() {
 
   return (
     <div className="ax-ide">
+      {/* Profile Badge (upper-right) */}
+      <ProfileBadge
+        user={user}
+        token={token}
+        onLogout={logout}
+        onOpenCredits={() => setShowCreditStore(true)}
+        biometricsAvailable={biometricsAvailable}
+        biometricsEnrolled={biometricsEnrolled}
+        onEnrollBiometrics={enrollBiometrics}
+      />
+
       {/* Activity Bar */}
       <ActivityBar
         activePanel={sidePanel}
