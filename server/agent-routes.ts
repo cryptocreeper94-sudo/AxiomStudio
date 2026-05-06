@@ -335,41 +335,17 @@ export function registerAgentRoutes(app: Express): void {
         return;
       }
 
-      // Check if user exists by email
-      let user: any = null;
-      try {
-        // Try with trustLayerId (requires column to exist in DB)
-        [user] = await db
-          .select({
-            id: chatUsers.id,
-            username: chatUsers.username,
-            email: chatUsers.email,
-            displayName: chatUsers.displayName,
-            role: chatUsers.role,
-            trustLayerId: chatUsers.trustLayerId,
-          })
-          .from(chatUsers)
-          .where(eq(chatUsers.email, email.toLowerCase().trim()))
-          .limit(1);
-      } catch (selectErr: any) {
-        // Fallback: trustLayerId column may not exist yet (db:push needed)
-        console.warn("[Firebase Auth] trustLayerId column missing, querying without it:", selectErr.message);
-        [user] = await db
-          .select({
-            id: chatUsers.id,
-            username: chatUsers.username,
-            email: chatUsers.email,
-            displayName: chatUsers.displayName,
-            role: chatUsers.role,
-          })
-          .from(chatUsers)
-          .where(eq(chatUsers.email, email.toLowerCase().trim()))
-          .limit(1);
-      }
+      // Use raw SQL to avoid Drizzle referencing columns that may not exist in production DB
+      // (e.g. ecosystem_pin_hash, trust_layer_id added to schema but db:push not run)
+      const userResult = await pool.query(
+        `SELECT id, username, email, display_name AS "displayName", role 
+         FROM chat_users WHERE email = $1 LIMIT 1`,
+        [email.toLowerCase().trim()]
+      );
+      let user = userResult.rows[0] || null;
 
       if (!user) {
         // Auto-create user from Firebase profile
-        // Check whitelist for access level
         const { allowed, entry } = await checkWhitelist(email, "axiom-studio");
         const isOwner = entry?.access_level === "owner";
         const preGrantMatch = entry?.notes?.match(/pre-granted\s+(\d+)\s+credits/i);
@@ -381,67 +357,32 @@ export function registerAgentRoutes(app: Express): void {
         let username = baseUsername;
         let suffix = 1;
         while (true) {
-          const [existing] = await db.select({ id: chatUsers.id }).from(chatUsers).where(eq(chatUsers.username, username)).limit(1);
-          if (!existing) break;
+          const check = await pool.query(`SELECT id FROM chat_users WHERE username = $1 LIMIT 1`, [username]);
+          if (check.rows.length === 0) break;
           username = `${baseUsername}${suffix++}`;
         }
 
         const colors = ["#06b6d4", "#14b8a6", "#a855f7", "#3b82f6", "#ec4899", "#f97316"];
         const avatarColor = colors[Math.floor(Math.random() * colors.length)];
-
-        // Create with a random password hash (user will sign in via Firebase only)
         const randomPass = await bcrypt.hash(crypto.randomUUID(), 10);
 
-        try {
-          [user] = await db
-            .insert(chatUsers)
-            .values({
-              username,
-              email: email.toLowerCase().trim(),
-              passwordHash: randomPass,
-              displayName: name,
-              avatarColor,
-              role: isOwner ? "owner" : "member",
-              trustLayerId: `firebase:${firebaseUid}`,
-            })
-            .returning();
-        } catch (insertErr: any) {
-          // Fallback: insert without trustLayerId if column doesn't exist
-          console.warn("[Firebase Auth] Insert with trustLayerId failed, retrying without:", insertErr.message);
-          [user] = await db
-            .insert(chatUsers)
-            .values({
-              username,
-              email: email.toLowerCase().trim(),
-              passwordHash: randomPass,
-              displayName: name,
-              avatarColor,
-              role: isOwner ? "owner" : "member",
-            })
-            .returning();
-        }
+        // Raw INSERT — only core columns that definitely exist
+        const insertResult = await pool.query(
+          `INSERT INTO chat_users (id, username, email, password_hash, display_name, avatar_color, role, created_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())
+           RETURNING id, username, email, display_name AS "displayName", role`,
+          [username, email.toLowerCase().trim(), randomPass, name, avatarColor, isOwner ? "owner" : "member"]
+        );
+        user = insertResult.rows[0];
 
         // Seed credits
-        await db.insert(aiCreditBalances).values({
-          userId: user.id,
-          credits: startingCredits,
-          totalPurchased: startingCredits,
-          totalUsed: 0,
-        });
+        await pool.query(
+          `INSERT INTO ai_credit_balances (id, user_id, credits, total_purchased, total_used, updated_at)
+           VALUES (gen_random_uuid(), $1, $2, $2, 0, NOW())`,
+          [user.id, startingCredits]
+        );
 
         console.log(`[Firebase Auth] New user created: ${email} (username: ${username}, credits: ${startingCredits})`);
-      } else {
-        // Link Firebase UID if not already linked
-        try {
-          if (!user.trustLayerId?.startsWith("firebase:")) {
-            await db
-              .update(chatUsers)
-              .set({ trustLayerId: `firebase:${firebaseUid}` })
-              .where(eq(chatUsers.id, user.id));
-          }
-        } catch (updateErr: any) {
-          console.warn("[Firebase Auth] Could not update trustLayerId (column may not exist):", updateErr.message);
-        }
       }
 
       // Issue app JWT
