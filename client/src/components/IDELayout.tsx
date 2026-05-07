@@ -82,6 +82,22 @@ export default function IDELayout() {
 
   useEffect(() => { trackPageView("/studio"); }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "b") {
+        e.preventDefault();
+        setSidePanel(prev => prev ? null : "files");
+      }
+      if (e.ctrlKey && e.key === "`") {
+        e.preventDefault();
+        setTerminalVisible(v => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   // Cockpit clock
   useEffect(() => {
     const update = () => {

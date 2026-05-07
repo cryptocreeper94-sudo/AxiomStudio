@@ -219,38 +219,57 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
       }
       // Render non-code markdown
       const html = marked.parse(seg.content, { async: false }) as string;
-      return <div key={i} className="agent-message text-sm text-white/80" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div key={i} className="agent-message" style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: html }} />;
     });
   }, [msg.content, isUser, onApply, activeFileName]);
 
+  const modelShort = msg.model?.includes("opus") ? "Opus 4"
+    : msg.model?.includes("sonnet") ? "Sonnet 4"
+    : msg.model?.includes("4.1") ? "GPT-4.1"
+    : msg.model?.includes("4o-mini") ? "4o Mini"
+    : msg.model || "";
+
   return (
-    <div className={`flex gap-3 py-4 px-4 ${isUser ? "" : "bg-white/[0.015]"}`}>
-      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
-        isUser ? "bg-purple-600/20 text-purple-400" : "bg-cyan-600/20 text-cyan-400"
-      }`}>
-        {isUser ? <User className="w-4 h-4" /> : <Brain className="w-4 h-4" />}
+    <div style={{
+      display: "flex", gap: 10, padding: "10px 14px",
+      background: isUser ? "transparent" : "rgba(255,255,255,0.015)",
+    }}>
+      <div style={{
+        width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 2,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: isUser ? "rgba(168,85,247,0.12)" : "rgba(6,182,212,0.12)",
+        color: isUser ? "#c084fc" : "#22d3ee",
+      }}>
+        {isUser ? <User style={{ width: 14, height: 14 }} /> : <Brain style={{ width: 14, height: 14 }} />}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-semibold text-white/60">{isUser ? "You" : agentName}</span>
-          {msg.model && <span className="text-[10px] text-white/20 font-mono">{msg.model}</span>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>{isUser ? "You" : agentName}</span>
+          {modelShort && !isUser && (
+            <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 3, background: "rgba(6,182,212,0.08)", color: "rgba(6,182,212,0.45)", fontFamily: "'JetBrains Mono', monospace" }}>
+              {modelShort}
+            </span>
+          )}
           {msg.inputTokens != null && (
-            <span className="text-[10px] text-white/15 font-mono">
+            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.15)", fontFamily: "'JetBrains Mono', monospace" }}>
               {msg.inputTokens}↓ {msg.outputTokens}↑
             </span>
           )}
         </div>
         {msg.errorContext && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 mb-2 text-xs text-red-300">
-            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">Error context attached</span>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 10px", borderRadius: 8, marginBottom: 8,
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)",
+            fontSize: 11, color: "#fca5a5",
+          }}>
+            <AlertTriangle style={{ width: 13, height: 13, flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Error context attached</span>
           </div>
         )}
         {/* Context files badge */}
         {msg.contextFiles && msg.contextFiles.length > 0 && (
-          <div style={{
-            display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px",
-          }}>
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
             {msg.contextFiles.map((f, i) => (
               <span key={i} style={{
                 display: "inline-flex", alignItems: "center", gap: "4px",
@@ -265,7 +284,7 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
           </div>
         )}
         {isUser ? (
-          <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", whiteSpace: "pre-wrap", lineHeight: 1.5, margin: 0 }}>{msg.content}</p>
         ) : (
           <div>{rendered}</div>
         )}
@@ -273,10 +292,16 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
       {!isUser && (
         <button
           onClick={() => { navigator.clipboard.writeText(msg.content); }}
-          className="p-1 rounded hover:bg-white/10 transition text-white/30 hover:text-white/60 flex-shrink-0 self-start mt-1"
+          style={{
+            padding: 4, borderRadius: 4, background: "none", border: "none",
+            color: "rgba(255,255,255,0.2)", cursor: "pointer", flexShrink: 0,
+            alignSelf: "flex-start", marginTop: 4, transition: "color 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
           title="Copy full response"
         >
-          <Copy className="w-3.5 h-3.5" />
+          <Copy style={{ width: 12, height: 12 }} />
         </button>
       )}
     </div>
@@ -459,12 +484,12 @@ export default function ChatView({
   const availableFiles = openFiles.length > 0 ? openFiles : workspaceFiles;
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div style={{ flex: 1, overflowY: "auto" }}>
         {messages.length === 0 && !isStreaming ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center" style={{ padding: "24px 16px" }}>
+          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ textAlign: "center", padding: "24px 16px" }}>
               <div style={{
                 width: 48, height: 48, margin: "0 auto 12px", borderRadius: 14,
                 background: "linear-gradient(135deg, #06b6d4, #a855f7)",
@@ -514,13 +539,17 @@ export default function ChatView({
               />
             ))}
             {isStreaming && streamingContent && (
-              <div className="flex gap-3 py-4 px-4 bg-white/[0.015]">
-                <div className="w-7 h-7 rounded-lg bg-cyan-600/20 text-cyan-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Brain className="w-4 h-4" />
+              <div style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,0.015)" }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 2,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(6,182,212,0.12)", color: "#22d3ee",
+                }}>
+                  <Brain style={{ width: 14, height: 14 }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1" style={{ flexWrap: "wrap" }}>
-                    <span className="text-xs font-semibold text-white/60">{agentName}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>{agentName}</span>
                     {agentModel && (
                       <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "rgba(6,182,212,0.08)", color: "rgba(6,182,212,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
                         {agentModel}
@@ -537,17 +566,21 @@ export default function ChatView({
               </div>
             )}
             {isStreaming && !streamingContent && (
-              <div className="flex gap-3 py-4 px-4 bg-white/[0.015]">
-                <div className="w-7 h-7 rounded-lg bg-cyan-600/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+              <div style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,0.015)" }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(6,182,212,0.12)", color: "#22d3ee",
+                }}>
+                  <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 pulse-dot" style={{ animationDelay: "0ms" }} />
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 pulse-dot" style={{ animationDelay: "300ms" }} />
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 pulse-dot" style={{ animationDelay: "600ms" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 3 }}>
+                    <div className="pulse-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#22d3ee", animationDelay: "0ms" }} />
+                    <div className="pulse-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#22d3ee", animationDelay: "300ms" }} />
+                    <div className="pulse-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#22d3ee", animationDelay: "600ms" }} />
                   </div>
-                  <span className="text-xs text-white/30">{agentName} is thinking...</span>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{agentName} is thinking...</span>
                 </div>
               </div>
             )}
