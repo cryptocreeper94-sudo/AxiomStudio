@@ -45,6 +45,11 @@ export default function IDELayout() {
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
 
+  // ── Bottom panel state ──
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(220);
+  const [bottomTab, setBottomTab] = useState<'terminal' | 'problems' | 'output'>('terminal');
+  const [errors, setErrors] = useState<Array<{ severity: 'error' | 'warning'; message: string; file?: string }>>([]);
+
   // ── Draggable panel resizing (must be before any conditional returns — Rules of Hooks) ──
   const [sidePanelWidth, setSidePanelWidth] = useState(260);
   const [chatPanelWidth, setChatPanelWidth] = useState(380);
@@ -426,7 +431,7 @@ export default function IDELayout() {
         </>
       )}
 
-      {/* Main Area (Editor + Terminal) */}
+      {/* Main Area (Editor + Bottom Panel) */}
       <div className="ax-main-area">
         <div className="ax-editor-wrap">
           <EditorArea
@@ -438,7 +443,97 @@ export default function IDELayout() {
             onSave={handleSaveFile}
           />
         </div>
-        <TerminalPanel token={token} visible={terminalVisible} onClose={() => setTerminalVisible(false)} />
+
+        {/* Bottom Panel (Terminal + Problems + Output) */}
+        {terminalVisible && (
+          <div className="ax-bottom-panel" style={{ height: bottomPanelHeight, minHeight: 120, maxHeight: '60vh' }}>
+            {/* Drag handle for bottom panel resize */}
+            <div
+              className="ax-bottom-resize"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const startY = e.clientY;
+                const startH = bottomPanelHeight;
+                const onMove = (ev: MouseEvent) => {
+                  const delta = startY - ev.clientY;
+                  setBottomPanelHeight(Math.min(Math.max(startH + delta, 120), window.innerHeight * 0.6));
+                };
+                const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); document.body.style.cursor = ''; document.body.style.userSelect = ''; };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
+                document.body.style.cursor = 'row-resize';
+                document.body.style.userSelect = 'none';
+              }}
+            />
+            {/* Bottom panel tabs */}
+            <div className="ax-bp-tabs">
+              <div className="ax-bp-tab-group">
+                <button
+                  className={`ax-bp-tab ${bottomTab === 'terminal' ? 'ax-bp-tab--active' : ''}`}
+                  onClick={() => setBottomTab('terminal')}
+                >TERMINAL</button>
+                <button
+                  className={`ax-bp-tab ${bottomTab === 'problems' ? 'ax-bp-tab--active' : ''}`}
+                  onClick={() => setBottomTab('problems')}
+                >
+                  PROBLEMS
+                  {errors.length > 0 && <span className="ax-bp-badge">{errors.length}</span>}
+                </button>
+                <button
+                  className={`ax-bp-tab ${bottomTab === 'output' ? 'ax-bp-tab--active' : ''}`}
+                  onClick={() => setBottomTab('output')}
+                >OUTPUT</button>
+              </div>
+              <div className="ax-bp-actions">
+                <button className="ax-terminal-action" onClick={() => setTerminalVisible(false)} title="Close panel">
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>×</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Tab content */}
+            <div className="ax-bp-content">
+              {bottomTab === 'terminal' && (
+                <TerminalPanel token={token} visible={true} onClose={() => setTerminalVisible(false)} />
+              )}
+              {bottomTab === 'problems' && (
+                <div className="ax-problems-list">
+                  {errors.length === 0 ? (
+                    <div style={{ padding: 16, fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
+                      No problems detected
+                    </div>
+                  ) : (
+                    errors.map((err, i) => (
+                      <div key={i} className="ax-problem-item">
+                        <span className="ax-problem-icon" style={{ color: err.severity === 'error' ? '#ef4444' : '#eab308' }}>
+                          {err.severity === 'error' ? '●' : '▲'}
+                        </span>
+                        <span className="ax-problem-msg">{err.message}</span>
+                        {err.file && <span className="ax-problem-file">{err.file}</span>}
+                        <button
+                          className="ax-problem-send"
+                          onClick={() => {
+                            const errMsg = `[Error in ${err.file || 'unknown'}]: ${err.message}`;
+                            handleSendMessage(errMsg);
+                            setChatCollapsed(false);
+                          }}
+                          title="Send to AI Agent"
+                        >
+                          Send to Agent
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+              {bottomTab === 'output' && (
+                <div style={{ padding: 16, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: "'JetBrains Mono', monospace" }}>
+                  Build output will appear here
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* AI Chat (right panel) */}

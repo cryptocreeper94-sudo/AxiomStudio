@@ -119,17 +119,6 @@ export default function TerminalPanel({ token, visible, onClose }: Props) {
 
   return (
     <div className={`ax-terminal ${maximized ? "ax-terminal--max" : ""}`}>
-      <div className="ax-terminal-header">
-        <span className="ax-terminal-title">TERMINAL</span>
-        <div className="ax-terminal-actions">
-          <button onClick={() => setMaximized(!maximized)} className="ax-terminal-action">
-            {maximized ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-          </button>
-          <button onClick={onClose} className="ax-terminal-action">
-            <X size={12} />
-          </button>
-        </div>
-      </div>
       <div ref={containerRef} className="ax-terminal-container" />
     </div>
   );
