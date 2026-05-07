@@ -45,6 +45,36 @@ export default function IDELayout() {
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
 
+  // ── Draggable panel resizing (must be before any conditional returns — Rules of Hooks) ──
+  const [sidePanelWidth, setSidePanelWidth] = useState(260);
+  const [chatPanelWidth, setChatPanelWidth] = useState(380);
+  const draggingRef = useRef<"side" | "chat" | null>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      e.preventDefault();
+      if (draggingRef.current === "side") {
+        const newWidth = Math.min(Math.max(e.clientX - 48, 180), 500);
+        setSidePanelWidth(newWidth);
+      } else if (draggingRef.current === "chat") {
+        const newWidth = Math.min(Math.max(window.innerWidth - e.clientX, 260), 600);
+        setChatPanelWidth(newWidth);
+      }
+    };
+    const handleMouseUp = () => { draggingRef.current = null; document.body.style.cursor = ""; document.body.style.userSelect = ""; };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
+  }, []);
+
+  const startDrag = (panel: "side" | "chat") => (e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingRef.current = panel;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
   useEffect(() => { trackPageView("/studio"); }, []);
 
   // Cockpit clock
@@ -259,35 +289,7 @@ export default function IDELayout() {
     />
   );
 
-  // ── Draggable panel resizing ──
-  const [sidePanelWidth, setSidePanelWidth] = useState(260);
-  const [chatPanelWidth, setChatPanelWidth] = useState(380);
-  const draggingRef = useRef<"side" | "chat" | null>(null);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!draggingRef.current) return;
-      e.preventDefault();
-      if (draggingRef.current === "side") {
-        const newWidth = Math.min(Math.max(e.clientX - 48, 180), 500);
-        setSidePanelWidth(newWidth);
-      } else if (draggingRef.current === "chat") {
-        const newWidth = Math.min(Math.max(window.innerWidth - e.clientX, 260), 600);
-        setChatPanelWidth(newWidth);
-      }
-    };
-    const handleMouseUp = () => { draggingRef.current = null; document.body.style.cursor = ""; document.body.style.userSelect = ""; };
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
-  }, []);
-
-  const startDrag = (panel: "side" | "chat") => (e: React.MouseEvent) => {
-    e.preventDefault();
-    draggingRef.current = panel;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
