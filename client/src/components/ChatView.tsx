@@ -35,6 +35,7 @@ interface Props {
   isStreaming: boolean;
   agentName: string;
   agentColor: string;
+  agentModel?: string;
   routeInfo: { model: string; agent: string; score: number; reason: string } | null;
   onSend: (message: string, contextFiles?: string[]) => void;
   onRetry: () => void;
@@ -394,7 +395,7 @@ function FileContextBar({ files, selected, onToggle, onClear }: {
 // ── Main Chat View ──
 
 export default function ChatView({
-  messages, streamingContent, isStreaming, agentName, agentColor,
+  messages, streamingContent, isStreaming, agentName, agentColor, agentModel,
   routeInfo, onSend, onRetry, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
 }: Props) {
   const [input, setInput] = useState("");
@@ -463,24 +464,40 @@ export default function ChatView({
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 && !isStreaming ? (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${agentColor} flex items-center justify-center shadow-2xl shadow-cyan-500/20 mb-4`}>
-                <Brain className="w-8 h-8 text-white" />
+            <div className="text-center" style={{ padding: "24px 16px" }}>
+              <div style={{
+                width: 48, height: 48, margin: "0 auto 12px", borderRadius: 14,
+                background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 8px 32px rgba(6,182,212,0.15)",
+              }}>
+                <Brain style={{ width: 24, height: 24, color: "#fff" }} />
               </div>
-              <h2 className="text-xl font-bold gradient-text mb-2">{agentName}</h2>
-              <p className="text-sm text-white/30 max-w-md">
-                Ask me anything — architecture, debugging, code generation, Lume programming, or just thinking through a problem.
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: "#e2e8f0", marginBottom: 4 }}>{agentName}</h2>
+              {agentModel && (
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "2px 10px", borderRadius: 6, marginBottom: 8,
+                  background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.1)",
+                  fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
+                  color: "rgba(6,182,212,0.6)", fontWeight: 600,
+                }}>
+                  {agentModel}
+                </div>
+              )}
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", maxWidth: 280, margin: "0 auto", lineHeight: 1.5 }}>
+                Architecture, debugging, code generation, Lume programming, or just thinking through a problem.
               </p>
               {activeFileName && (
                 <div style={{
-                  marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "6px",
-                  padding: "6px 14px", borderRadius: "8px",
+                  marginTop: 12, display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "4px 12px", borderRadius: "6px",
                   background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.1)",
-                  color: "rgba(6,182,212,0.5)", fontSize: "11px",
+                  color: "rgba(6,182,212,0.5)", fontSize: "10px",
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>
-                  <FileCode style={{ width: 12, height: 12 }} />
-                  Editing: {activeFileName.split("/").pop()}
+                  <FileCode style={{ width: 11, height: 11 }} />
+                  {activeFileName.split("/").pop()}
                 </div>
               )}
             </div>
@@ -502,11 +519,16 @@ export default function ChatView({
                   <Brain className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1" style={{ flexWrap: "wrap" }}>
                     <span className="text-xs font-semibold text-white/60">{agentName}</span>
+                    {agentModel && (
+                      <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "rgba(6,182,212,0.08)", color: "rgba(6,182,212,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
+                        {agentModel}
+                      </span>
+                    )}
                     {routeInfo && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
-                        {routeInfo.agent} · {routeInfo.score}/10 · {routeInfo.reason}
+                      <span style={{ fontSize: 8, padding: "1px 6px", borderRadius: 4, background: "rgba(168,85,247,0.08)", color: "rgba(168,85,247,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
+                        routed · {routeInfo.score}/10
                       </span>
                     )}
                   </div>
@@ -535,10 +557,14 @@ export default function ChatView({
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-white/[0.06] p-4 bg-[#080c15]">
+      <div style={{
+        borderTop: "1px solid rgba(255,255,255,0.08)",
+        padding: "12px 12px 8px",
+        background: "linear-gradient(to top, rgba(6,8,14,1), rgba(8,12,20,0.95))",
+      }}>
         <div style={{ maxWidth: "56rem", margin: "0 auto" }}>
           {/* File context bar */}
-          <div style={{ position: "relative", marginBottom: contextFiles.length > 0 || availableFiles.length > 0 ? "8px" : "0" }}>
+          <div style={{ position: "relative", marginBottom: contextFiles.length > 0 || availableFiles.length > 0 ? "6px" : "0" }}>
             <FileContextBar
               files={availableFiles}
               selected={contextFiles}
@@ -547,8 +573,8 @@ export default function ChatView({
             />
           </div>
 
-          <div className="flex items-end gap-2">
-            <div className="flex-1 relative">
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+            <div style={{ flex: 1, position: "relative" }}>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -556,28 +582,59 @@ export default function ChatView({
                 onKeyDown={handleKeyDown}
                 placeholder={activeFileName
                   ? `Ask about ${activeFileName.split("/").pop()}...`
-                  : "Ask Axiom anything..."
+                  : `Ask ${agentName} anything...`
                 }
                 rows={1}
-                className="w-full resize-none rounded-xl px-4 py-3 pr-12 text-sm bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40 transition leading-relaxed"
+                style={{
+                  width: "100%",
+                  resize: "none",
+                  borderRadius: 12,
+                  padding: "10px 44px 10px 14px",
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "#e2e8f0",
+                  outline: "none",
+                  fontFamily: "'Inter', sans-serif",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "rgba(6,182,212,0.4)"}
+                onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
                 disabled={isStreaming}
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isStreaming}
-                className="absolute right-2 bottom-2 p-2 rounded-lg bg-gradient-to-r from-cyan-600 to-purple-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:from-cyan-500 hover:to-purple-500 transition"
+                style={{
+                  position: "absolute", right: 6, bottom: 6,
+                  padding: 7, borderRadius: 8,
+                  background: (!input.trim() || isStreaming) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
+                  border: "none", color: "#fff", cursor: (!input.trim() || isStreaming) ? "not-allowed" : "pointer",
+                  opacity: (!input.trim() || isStreaming) ? 0.3 : 1,
+                  transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
+                }}
               >
-                {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isStreaming ? <Loader2 style={{ width: 15, height: 15, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 15, height: 15 }} />}
               </button>
             </div>
             {messages.length > 0 && !isStreaming && (
-              <button onClick={onRetry} className="p-3 rounded-xl glass text-white/30 hover:text-white/60 transition" title="Retry last">
-                <RotateCcw className="w-4 h-4" />
+              <button
+                onClick={onRetry}
+                title="Retry last"
+                style={{
+                  padding: 9, borderRadius: 10,
+                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.3)", cursor: "pointer",
+                  transition: "all 0.2s", display: "flex",
+                }}
+              >
+                <RotateCcw style={{ width: 14, height: 14 }} />
               </button>
             )}
           </div>
-          <p className="text-[10px] text-white/15 text-center mt-2">
-            Axiom Studio by DarkWave Studios · Auto-routes to optimal model · Shift+Enter for new line
+          <p style={{ fontSize: 8, color: "rgba(255,255,255,0.12)", textAlign: "center", marginTop: 6 }}>
+            Shift+Enter for new line · Auto-routes to optimal model
           </p>
         </div>
       </div>

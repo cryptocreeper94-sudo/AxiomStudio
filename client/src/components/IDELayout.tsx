@@ -456,15 +456,24 @@ export default function IDELayout() {
 
           {/* Agent selector */}
           <div className="ax-chat-agents">
-            {agents.slice(0, 4).map((a: any) => (
-              <button
-                key={a.id}
-                className={`ax-agent-btn ${activeAgentId === a.id ? "ax-agent-btn--active" : ""}`}
-                onClick={() => setActiveAgentId(a.id)}
-              >
-                {a.name?.replace("Agent ", "") || a.id}
-              </button>
-            ))}
+            {agents.map((a: any) => {
+              const modelShort = a.model?.includes("opus") ? "Opus 4"
+                : a.model?.includes("sonnet") ? "Sonnet 4"
+                : a.model?.includes("4.1") ? "GPT-4.1"
+                : a.model?.includes("4o-mini") ? "4o Mini"
+                : a.model || "";
+              return (
+                <button
+                  key={a.id}
+                  className={`ax-agent-btn ${activeAgentId === a.id ? "ax-agent-btn--active" : ""}`}
+                  onClick={() => setActiveAgentId(a.id)}
+                  title={`${a.name} — ${a.model} (${a.provider})`}
+                >
+                  <span style={{ fontWeight: 700 }}>{a.name?.replace("Agent ", "") || a.id}</span>
+                  <span style={{ fontSize: 8, opacity: 0.5, marginLeft: 3 }}>{modelShort}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Conversation list (compact) */}
@@ -489,6 +498,7 @@ export default function IDELayout() {
             agentName={agents.find((a: any) => a.id === activeAgentId)?.name || "Axiom"}
             agentColor="#06b6d4"
             routeInfo={routeInfo}
+            agentModel={agents.find((a: any) => a.id === activeAgentId)?.model || ""}
             onSend={handleSendMessage}
             onRetry={() => {
               const last = messages.filter(m => m.role === "user").pop();
