@@ -72,6 +72,9 @@ function requireAuth(req: Request, res: Response): string | null {
 // ─── Credit Management ───────────────────────────────────────────────
 
 async function checkCredits(userId: string, agentId: string): Promise<boolean> {
+  // Dev mode bypass — no credit gating without Firebase
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT) return true;
+
   // Owner bypass — unlimited access
   const [user] = await db.select().from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
   if (user?.role === "owner") return true;
