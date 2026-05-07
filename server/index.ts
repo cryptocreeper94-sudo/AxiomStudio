@@ -86,31 +86,44 @@ app.use("/api/analytics", analyticsRoutes);
 console.log("[Axiom Studio] Analytics routes registered");
 app.use("/api/workspace", workspaceRoutes);
 console.log("[Axiom Studio] Workspace FS routes registered");
-
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "axiom-studio",
-    version: "1.0.0",
+    version: "2.0.0",
     timestamp: new Date().toISOString(),
   });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
-  const publicDir = path.resolve(__dirname, "../public");
-  app.use(express.static(publicDir));
-  app.get("/{*splat}", (_req, res) => {
-    res.sendFile(path.join(publicDir, "index.html"));
+// Serve frontend
+async function startServer() {
+  if (process.env.NODE_ENV === "production") {
+    // Production: serve pre-built static files
+    const publicDir = path.resolve(__dirname, "../public");
+    app.use(express.static(publicDir));
+    app.get("/{*splat}", (_req, res) => {
+      res.sendFile(path.join(publicDir, "index.html"));
+    });
+  } else {
+    // Development: use Vite dev middleware
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      root: path.resolve(__dirname, "../client"),
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  }
+
+  const PORT = parseInt(process.env.PORT || "5100");
+  app.listen(PORT, () => {
+    console.log(`\n  ╔══════════════════════════════════════╗`);
+    console.log(`  ║     AXIOM STUDIO IDE — v2.0.0        ║`);
+    console.log(`  ║     DarkWave Studios LLC              ║`);
+    console.log(`  ║     http://localhost:${PORT}             ║`);
+    console.log(`  ╚══════════════════════════════════════╝\n`);
   });
 }
 
-const PORT = parseInt(process.env.PORT || "5101");
-app.listen(PORT, () => {
-  console.log(`\n  ╔══════════════════════════════════════╗`);
-  console.log(`  ║     AXIOM STUDIO IDE — v2.0.0        ║`);
-  console.log(`  ║     DarkWave Studios LLC              ║`);
-  console.log(`  ║     http://localhost:${PORT}             ║`);
-  console.log(`  ╚══════════════════════════════════════╝\n`);
-});
+startServer();
