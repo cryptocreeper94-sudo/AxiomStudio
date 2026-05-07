@@ -636,16 +636,29 @@ export function registerAgentRoutes(app: Express): void {
       return;
     }
 
-    // Get agent definition
-    const [agent] = await db
-      .select()
-      .from(agentDefinitions)
-      .where(eq(agentDefinitions.id, activeAgent))
-      .limit(1);
+    // Get agent definition (with fallback to seeds)
+    let agent: any;
+    try {
+      const [dbAgent] = await db
+        .select()
+        .from(agentDefinitions)
+        .where(eq(agentDefinitions.id, activeAgent))
+        .limit(1);
+      agent = dbAgent;
+    } catch (err) {
+      console.warn("[Chat] Agent DB lookup failed, falling back to seeds:", (err as any).message);
+    }
 
     if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
-      return;
+      // Fallback to seed data
+      const seed = AGENT_SEEDS.find(s => s.id === activeAgent) || AGENT_SEEDS[0];
+      agent = {
+        id: seed.id, name: seed.name, model: seed.model,
+        provider: seed.provider, maxTokens: seed.maxTokens,
+        temperature: 0.7, systemPrompt: AGENT_PROMPTS[seed.id] || AGENT_PROMPTS.opus,
+        creditCost: seed.creditCost,
+      };
+      console.log(`[Chat] Using seed agent fallback: ${agent.name} (${agent.model})`);
     }
 
     // Build context-enriched user message

@@ -3,7 +3,7 @@
  * VS Code-style split-pane layout: ActivityBar → SidePanel → Editor → AI Chat
  * DarkWave Studios LLC — Copyright 2026
  */
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ActivityBar, { type SidePanel } from "./ActivityBar";
 import FileExplorer from "./FileExplorer";
@@ -38,7 +38,7 @@ export default function IDELayout() {
 
   // Chat state (preserved from AgentPanel)
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
-  const [activeAgentId, setActiveAgentId] = useState("auto");
+  const [activeAgentId, setActiveAgentId] = useState("opus");
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -169,7 +169,8 @@ export default function IDELayout() {
           if (payload === "[DONE]") continue;
           try {
             const parsed = JSON.parse(payload);
-            if (parsed.type === "token") { fullContent += parsed.token; setStreamingContent(fullContent); }
+            if (parsed.type === "text" && parsed.content) { fullContent += parsed.content; setStreamingContent(fullContent); }
+            if (parsed.type === "token" && parsed.token) { fullContent += parsed.token; setStreamingContent(fullContent); }
             if (parsed.type === "route") setRouteInfo(parsed);
           } catch { fullContent += payload; setStreamingContent(fullContent); }
         }
@@ -222,7 +223,7 @@ export default function IDELayout() {
     if (p === "analytics") { setShowAnalytics(true); setSidePanel(null); return; }
     if (p === "ai") { setChatCollapsed(false); setSidePanel(null); return; }
     setShowAnalytics(false);
-    setSidePanel(p);
+    setSidePanel(prev => prev === p ? null : p);
   }, []);
 
   // Auth gate
@@ -247,6 +248,36 @@ export default function IDELayout() {
     />
   );
 
+  // ── Draggable panel resizing ──
+  const [sidePanelWidth, setSidePanelWidth] = useState(260);
+  const [chatPanelWidth, setChatPanelWidth] = useState(380);
+  const draggingRef = useRef<"side" | "chat" | null>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!draggingRef.current) return;
+      e.preventDefault();
+      if (draggingRef.current === "side") {
+        const newWidth = Math.min(Math.max(e.clientX - 48, 180), 500);
+        setSidePanelWidth(newWidth);
+      } else if (draggingRef.current === "chat") {
+        const newWidth = Math.min(Math.max(window.innerWidth - e.clientX, 260), 600);
+        setChatPanelWidth(newWidth);
+      }
+    };
+    const handleMouseUp = () => { draggingRef.current = null; document.body.style.cursor = ""; document.body.style.userSelect = ""; };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
+  }, []);
+
+  const startDrag = (panel: "side" | "chat") => (e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingRef.current = panel;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
   return (
     <div className="ax-ide">
       {/* Profile Badge (upper-right) */}
@@ -270,71 +301,75 @@ export default function IDELayout() {
 
       {/* Side Panel */}
       {sidePanel && (
-        <div className="ax-side-panel">
-          {sidePanel === "files" && <FileExplorer token={token} onOpenFile={handleOpenFile} />}
-          {sidePanel === "search" && (
-            <div className="ax-panel-placeholder">
-              <div className="ax-fe-header"><span className="ax-fe-title">SEARCH</span></div>
-              <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Search across workspace (coming soon)</div>
-            </div>
-          )}
-          {sidePanel === "git" && (
-            <div className="ax-panel-placeholder">
-              <div className="ax-fe-header"><span className="ax-fe-title">SOURCE CONTROL</span></div>
-              <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Use terminal for git operations</div>
-            </div>
-          )}
-          {sidePanel === "settings" && (
-            <div className="ax-panel-placeholder">
-              <div className="ax-fe-header"><span className="ax-fe-title">SETTINGS</span></div>
-              <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
-                <p style={{ marginBottom: 8 }}>Credits: {creditData?.credits ?? "—"}</p>
-                <p style={{ marginBottom: 8 }}>User: {user?.displayName || user?.username}</p>
-                <p style={{ marginBottom: 12 }}>Role: {user?.role || "member"}</p>
-
-                {/* Buy Credits */}
-                <button
-                  onClick={() => setShowCreditStore(true)}
-                  style={{
-                    width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700,
-                    background: "linear-gradient(135deg, #06b6d4, #a855f7)",
-                    border: "none", color: "#fff", cursor: "pointer", marginBottom: 12,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  ⚡ Buy Credits
-                </button>
-
-                {/* Biometric enrollment */}
-                {biometricsAvailable && (
-                  <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Biometric Login</p>
-                    {biometricsEnrolled ? (
-                      <p style={{ fontSize: 11, color: "#22c55e" }}>✓ Enrolled — use Face ID / fingerprint to sign in</p>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          const err = await enrollBiometrics();
-                          if (err) alert(err);
-                        }}
-                        style={{
-                          padding: "8px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                          background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)",
-                          color: "#06b6d4", cursor: "pointer",
-                        }}
-                      >
-                        🔐 Enable Biometrics
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <button onClick={logout} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: 12 }}>Logout</button>
+        <>
+          <div className="ax-side-panel" style={{ width: sidePanelWidth, minWidth: 180, maxWidth: 500 }}>
+            {sidePanel === "files" && <FileExplorer token={token} onOpenFile={handleOpenFile} />}
+            {sidePanel === "search" && (
+              <div className="ax-panel-placeholder">
+                <div className="ax-fe-header"><span className="ax-fe-title">SEARCH</span></div>
+                <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Search across workspace (coming soon)</div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+            {sidePanel === "git" && (
+              <div className="ax-panel-placeholder">
+                <div className="ax-fe-header"><span className="ax-fe-title">SOURCE CONTROL</span></div>
+                <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Use terminal for git operations</div>
+              </div>
+            )}
+            {sidePanel === "settings" && (
+              <div className="ax-panel-placeholder">
+                <div className="ax-fe-header"><span className="ax-fe-title">SETTINGS</span></div>
+                <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+                  <p style={{ marginBottom: 8 }}>Credits: {creditData?.credits ?? "—"}</p>
+                  <p style={{ marginBottom: 8 }}>User: {user?.displayName || user?.username}</p>
+                  <p style={{ marginBottom: 12 }}>Role: {user?.role || "member"}</p>
+
+                  {/* Buy Credits */}
+                  <button
+                    onClick={() => setShowCreditStore(true)}
+                    style={{
+                      width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700,
+                      background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                      border: "none", color: "#fff", cursor: "pointer", marginBottom: 12,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    ⚡ Buy Credits
+                  </button>
+
+                  {/* Biometric enrollment */}
+                  {biometricsAvailable && (
+                    <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Biometric Login</p>
+                      {biometricsEnrolled ? (
+                        <p style={{ fontSize: 11, color: "#22c55e" }}>✓ Enrolled — use Face ID / fingerprint to sign in</p>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const err = await enrollBiometrics();
+                            if (err) alert(err);
+                          }}
+                          style={{
+                            padding: "8px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)",
+                            color: "#06b6d4", cursor: "pointer",
+                          }}
+                        >
+                          🔐 Enable Biometrics
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <button onClick={logout} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: 12 }}>Logout</button>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Drag handle for side panel */}
+          <div className="ax-resize-handle" onMouseDown={startDrag("side")} />
+        </>
       )}
 
       {/* Main Area (Editor + Terminal) */}
@@ -354,7 +389,10 @@ export default function IDELayout() {
 
       {/* AI Chat (right panel) */}
       {!chatCollapsed && (
-        <div className="ax-chat-panel">
+        <>
+          {/* Drag handle for chat panel */}
+          <div className="ax-resize-handle" onMouseDown={startDrag("chat")} />
+          <div className="ax-chat-panel" style={{ width: chatPanelWidth, minWidth: 260, maxWidth: 600 }}>
           <div className="ax-chat-header">
             <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.05em" }}>AI ASSISTANT</span>
             <button onClick={() => setChatCollapsed(true)} className="ax-chat-collapse" title="Collapse">
@@ -407,6 +445,7 @@ export default function IDELayout() {
             openFiles={openFiles.map(f => ({ path: f.path, name: f.name }))}
           />
         </div>
+        </>
       )}
 
       {/* Collapsed chat toggle */}
