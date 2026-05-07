@@ -217,6 +217,24 @@ export default function IDELayout() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ conversationId: convoId, agentId: activeAgentId, message: enrichedContent }),
       });
+
+      // Handle non-stream error responses (402, 400, 500, etc.)
+      if (!res.ok) {
+        let errMsg = `Error ${res.status}`;
+        try {
+          const errJson = await res.json();
+          errMsg = errJson.message || errJson.error || errMsg;
+        } catch {}
+        const errResponse: Message = {
+          id: `err-${Date.now()}`, role: "assistant", content: `⚠️ ${errMsg}`,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, errResponse]);
+        setIsStreaming(false);
+        setStreamingContent("");
+        return;
+      }
+
       if (!res.body) throw new Error("No response body");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -234,16 +252,25 @@ export default function IDELayout() {
             if (parsed.type === "text" && parsed.content) { fullContent += parsed.content; setStreamingContent(fullContent); }
             if (parsed.type === "token" && parsed.token) { fullContent += parsed.token; setStreamingContent(fullContent); }
             if (parsed.type === "route") setRouteInfo(parsed);
+            if (parsed.type === "error") { fullContent += `\n\n⚠️ ${parsed.error}`; setStreamingContent(fullContent); }
           } catch { fullContent += payload; setStreamingContent(fullContent); }
         }
       }
       const assistantMsg: Message = {
-        id: `resp-${Date.now()}`, role: "assistant", content: fullContent,
+        id: `resp-${Date.now()}`, role: "assistant", content: fullContent || "(No response received)",
         model: routeInfo?.model, createdAt: new Date().toISOString(),
       };
       setMessages(prev => [...prev, assistantMsg]);
       queryClient.invalidateQueries({ queryKey: ["credits"] });
-    } catch (err) { console.error("Chat error:", err); }
+    } catch (err) {
+      console.error("Chat error:", err);
+      const errResponse: Message = {
+        id: `err-${Date.now()}`, role: "assistant",
+        content: `⚠️ Connection error: ${(err as Error).message}`,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errResponse]);
+    }
     setIsStreaming(false);
     setStreamingContent("");
   }, [token, activeConvoId, activeAgentId, agents, queryClient, routeInfo, openFiles]);
