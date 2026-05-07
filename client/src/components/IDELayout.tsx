@@ -264,7 +264,7 @@ export default function IDELayout() {
     if (p === "analytics") { setShowAnalytics(true); setSidePanel(null); return; }
     if (p === "ai") { setChatCollapsed(false); setSidePanel(null); return; }
     setShowAnalytics(false);
-    setSidePanel(prev => prev === p ? null : p);
+    setSidePanel(p);
   }, []);
 
   // Auth gate
