@@ -112,6 +112,10 @@ async function startServer() {
       server: { middlewareMode: true },
       root: path.resolve(__dirname, "../client"),
       appType: "spa",
+      optimizeDeps: {
+        noDiscovery: true,
+        include: [],
+      },
     });
     app.use(vite.middlewares);
   }
