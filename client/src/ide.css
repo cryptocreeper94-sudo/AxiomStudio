@@ -53,12 +53,13 @@
 /* ── Side Panel ── */
 .ax-side-panel {
   width: 260px;
-  min-width: 200px;
-  max-width: 400px;
+  min-width: 180px;
+  max-width: 500px;
   height: 100%;
   background: #0a0c14;
   border-right: 1px solid rgba(255,255,255,0.06);
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 /* ── File Explorer ── */
@@ -212,14 +213,15 @@
 /* ── AI Chat Panel ── */
 .ax-chat-panel {
   width: 380px;
-  min-width: 280px;
-  max-width: 500px;
+  min-width: 260px;
+  max-width: 600px;
   height: 100%;
   background: #0a0c14;
   border-left: 1px solid rgba(255,255,255,0.06);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* ── Resize Handle ── */
