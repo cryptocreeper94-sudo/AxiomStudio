@@ -114,7 +114,13 @@ async function startServer() {
       appType: "spa",
       optimizeDeps: {
         noDiscovery: true,
-        include: [],
+        include: [
+          "react",
+          "react-dom",
+          "react-dom/client",
+          "react/jsx-runtime",
+          "react/jsx-dev-runtime",
+        ],
       },
     });
     app.use(vite.middlewares);
