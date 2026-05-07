@@ -395,10 +395,30 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
 
           <div style={{
             marginTop: "20px", paddingTop: "16px",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", flexDirection: "column", gap: "10px", alignItems: "center",
           }}>
-            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textAlign: "center", lineHeight: 1.5 }}>
-              Trust Layer SSO — works across all DarkWave Studios apps
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "https://dwtl.io/login?redirect=studio&callback=" + encodeURIComponent(window.location.origin);
+              }}
+              style={{
+                width: "100%", padding: "13px 16px", borderRadius: "12px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.25)"; e.currentTarget.style.color = "rgba(255,255,255,0.9)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+            >
+              🔐 Sign in with Trust Layer SSO
+            </button>
+            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textAlign: "center", lineHeight: 1.5 }}>
+              Works across all DarkWave Studios apps
             </p>
           </div>
         </div>
