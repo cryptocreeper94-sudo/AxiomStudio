@@ -197,7 +197,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
             Axiom Studio
           </h1>
           <p style={{
-            fontSize: "13px", color: "rgba(255,255,255,0.35)", textAlign: "center",
+            fontSize: "13px", color: "rgba(255,255,255,0.6)", textAlign: "center",
             marginBottom: "28px", letterSpacing: "0.01em",
           }}>
             Multi-Agent AI Development Environment
@@ -289,7 +289,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
               onClick={() => setShowLegacy(!showLegacy)}
               style={{
                 background: "none", border: "none", cursor: "pointer",
-                fontSize: "11px", color: "rgba(255,255,255,0.25)",
+                fontSize: "11px", color: "rgba(255,255,255,0.45)",
                 whiteSpace: "nowrap", fontFamily: "inherit",
                 padding: "2px 4px",
               }}
@@ -317,7 +317,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
                       flex: 1, padding: "10px", borderRadius: "10px", border: "none", cursor: "pointer",
                       fontSize: "13px", fontWeight: 600, transition: "all 0.3s ease",
                       background: mode === m ? "linear-gradient(135deg, #0891b2, #7c3aed)" : "transparent",
-                      color: mode === m ? "white" : "rgba(255,255,255,0.35)",
+                      color: mode === m ? "white" : "rgba(255,255,255,0.5)",
                       boxShadow: mode === m ? "0 4px 16px rgba(6,182,212,0.2)" : "none",
                       fontFamily: "inherit",
                     }}
@@ -353,7 +353,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
                     onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.background = "rgba(255,255,255,0.06)"; }}
                   />
                   {mode === "signup" && (
-                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", marginTop: "6px", paddingLeft: "4px" }}>
+                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "6px", paddingLeft: "4px" }}>
                       Minimum 8 characters
                     </p>
                   )}
@@ -384,7 +384,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
                       onChange={(e) => setRemember(e.target.checked)}
                       style={{ marginTop: 2, accentColor: "#06b6d4" }}
                     />
-                    <label htmlFor="remember-me" style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.4, cursor: "pointer" }}>
+                    <label htmlFor="remember-me" style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", lineHeight: 1.4, cursor: "pointer" }}>
                       Keep me signed in for 30 days
                     </label>
                   </div>
@@ -397,20 +397,20 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
             marginTop: "20px", paddingTop: "16px",
             borderTop: "1px solid rgba(255,255,255,0.04)",
           }}>
-            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.15)", textAlign: "center", lineHeight: 1.5 }}>
+            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textAlign: "center", lineHeight: 1.5 }}>
               Trust Layer SSO — works across all DarkWave Studios apps
             </p>
           </div>
         </div>
 
         <p style={{
-          fontSize: "11px", color: "rgba(255,255,255,0.12)", textAlign: "center", marginTop: "20px",
+          fontSize: "11px", color: "rgba(255,255,255,0.35)", textAlign: "center", marginTop: "20px",
           letterSpacing: "0.02em",
         }}>
           DarkWave Studios LLC | 2026
         </p>
         <p style={{
-          fontSize: "9px", color: "rgba(255,255,255,0.08)", textAlign: "center", marginTop: "6px",
+          fontSize: "9px", color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: "6px",
           letterSpacing: "0.03em", lineHeight: 1.6,
         }}>
           Protected by 5 Provisional Patents: U.S. 64/047,737 · U.S. 64/123,456 · U.S. 64/234,567 · U.S. 64/345,678 · U.S. 64/032,071
