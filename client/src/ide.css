@@ -6,12 +6,13 @@
 /* ── Root IDE Container ── */
 .ax-ide {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  flex: 1;
+  width: 100%;
   overflow: hidden;
   background: #06080e;
   color: #e2e8f0;
   font-family: 'Inter', sans-serif;
+  min-height: 0;
 }
 
 /* ── Activity Bar ── */
@@ -359,23 +360,85 @@
   .ax-chat-expand { display: none; }
 }
 
-/* Mobile Bottom Nav */
+/* Mobile Cockpit Dock (floating pill) */
 .ax-mobile-nav {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-  background: rgba(6,8,16,0.95); backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-  justify-content: space-around; align-items: center;
+  padding: 0 0.5rem 0.4rem;
+  padding-bottom: max(0.4rem, env(safe-area-inset-bottom, 0px));
+}
+.ax-mobile-nav .ax-dock-pill {
+  display: flex; align-items: center; justify-content: space-around;
+  max-width: 420px; margin: 0 auto; padding: 0.35rem 0.5rem;
+  border-radius: 18px; background: rgba(6,8,16,0.94);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
 }
 .ax-mobile-nav button {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 6px 12px; border-radius: 12px;
+  padding: 6px 14px; border-radius: 12px;
   background: transparent; border: none; cursor: pointer;
-  color: rgba(255,255,255,0.25); font-size: 16px;
+  color: rgba(255,255,255,0.3); font-size: 16px;
+  transition: all 0.2s; position: relative; min-width: 48px;
 }
-.ax-mobile-nav button span { font-size: 9px; font-weight: 500; }
+.ax-mobile-nav button span { font-size: 9px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
 .ax-mobile-nav button.ax-mn-active { color: #06b6d4; background: rgba(6,182,212,0.08); }
+.ax-mobile-nav button.ax-mn-active::after {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 2px; border-radius: 1px;
+  background: linear-gradient(90deg, #06b6d4, #a855f7);
+  box-shadow: 0 0 6px rgba(6,182,212,0.4);
+}
 @media (max-width: 768px) {
-  .ax-mobile-nav { display: flex; }
+  .ax-mobile-nav { display: block; }
+}
+
+/* ══════════════════════════════════════ */
+/* COCKPIT STATUS BAR                     */
+/* ══════════════════════════════════════ */
+.ax-cockpit-status {
+  height: 44px;
+  background: linear-gradient(to right, rgba(6,8,14,0.97), rgba(8,10,18,0.97));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  flex-shrink: 0;
+  z-index: 60;
+}
+
+.ax-cs-left { display: flex; align-items: center; gap: 0.6rem; }
+.ax-cs-brand { display: flex; align-items: center; gap: 0.4rem; }
+.ax-cs-time {
+  font-size: 0.65rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: rgba(255,255,255,0.35);
+}
+
+.ax-cs-center { display: none; align-items: center; gap: 0.6rem; }
+.ax-cs-metric { display: flex; align-items: center; gap: 0.3rem; }
+.ax-cs-val {
+  font-size: 0.65rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: rgba(255,255,255,0.85); font-weight: 600;
+}
+.ax-cs-label {
+  font-size: 0.5rem; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.ax-cs-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.08); }
+
+.ax-cs-right { display: flex; align-items: center; gap: 0.4rem; }
+
+@media (min-width: 640px) {
+  .ax-cs-center { display: flex; }
+  .ax-cockpit-status { padding: 0 1rem; }
+}
+
+/* Cockpit time updater */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

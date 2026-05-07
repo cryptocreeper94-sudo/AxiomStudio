@@ -47,6 +47,17 @@ export default function IDELayout() {
 
   useEffect(() => { trackPageView("/studio"); }, []);
 
+  // Cockpit clock
+  useEffect(() => {
+    const update = () => {
+      const el = document.getElementById("ax-cs-time");
+      if (el) el.textContent = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    };
+    update();
+    const t = setInterval(update, 30000);
+    return () => clearInterval(t);
+  }, []);
+
   // Queries
   const { data: agents = [] } = useQuery({ queryKey: ["agents"], queryFn: api.fetchModels });
   const { data: conversations = [] } = useQuery({
@@ -279,17 +290,58 @@ export default function IDELayout() {
   };
 
   return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+      {/* ── Cockpit Status Bar ── */}
+      <header className="ax-cockpit-status">
+        <div className="ax-cs-left">
+          <div className="ax-cs-brand">
+            <div style={{
+              width: 26, height: 26, borderRadius: 7,
+              background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12, fontWeight: 900, color: "#000",
+            }}>⬡</div>
+            <span style={{
+              fontSize: 11, fontWeight: 800, letterSpacing: "0.12em",
+              background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>AXIOM STUDIO</span>
+          </div>
+          <span className="ax-cs-time" id="ax-cs-time"></span>
+        </div>
+
+        <div className="ax-cs-center">
+          <div className="ax-cs-metric">
+            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px rgba(34,197,94,0.4)" }} />
+            <span className="ax-cs-val">{agents.length}</span>
+            <span className="ax-cs-label">Agents</span>
+          </div>
+          <div className="ax-cs-divider" />
+          <div className="ax-cs-metric">
+            <span className="ax-cs-val">{conversations.length}</span>
+            <span className="ax-cs-label">Chats</span>
+          </div>
+          <div className="ax-cs-divider" />
+          <div className="ax-cs-metric">
+            <span className="ax-cs-val">{creditData?.credits ?? "—"}</span>
+            <span className="ax-cs-label">Credits</span>
+          </div>
+        </div>
+
+        <div className="ax-cs-right">
+          <ProfileBadge
+            user={user}
+            token={token}
+            onLogout={logout}
+            onOpenCredits={() => setShowCreditStore(true)}
+            biometricsAvailable={biometricsAvailable}
+            biometricsEnrolled={biometricsEnrolled}
+            onEnrollBiometrics={enrollBiometrics}
+          />
+        </div>
+      </header>
+
     <div className="ax-ide">
-      {/* Profile Badge (upper-right) */}
-      <ProfileBadge
-        user={user}
-        token={token}
-        onLogout={logout}
-        onOpenCredits={() => setShowCreditStore(true)}
-        biometricsAvailable={biometricsAvailable}
-        biometricsEnrolled={biometricsEnrolled}
-        onEnrollBiometrics={enrollBiometrics}
-      />
 
       {/* Activity Bar */}
       <ActivityBar
@@ -455,13 +507,16 @@ export default function IDELayout() {
         </button>
       )}
 
-      {/* Mobile Bottom Nav */}
+      {/* Mobile Cockpit Dock */}
       <nav className="ax-mobile-nav">
-        <button onClick={() => handlePanelChange("files")} className={sidePanel === "files" ? "ax-mn-active" : ""}>📁<span>Files</span></button>
-        <button onClick={() => setSidePanel(null)}>✏️<span>Editor</span></button>
-        <button onClick={() => setChatCollapsed(false)}>🤖<span>AI</span></button>
-        <button onClick={() => setTerminalVisible(v => !v)}>⌨️<span>Terminal</span></button>
+        <div className="ax-dock-pill">
+          <button onClick={() => handlePanelChange("files")} className={sidePanel === "files" ? "ax-mn-active" : ""}>📁<span>Files</span></button>
+          <button onClick={() => setSidePanel(null)}>✏️<span>Editor</span></button>
+          <button onClick={() => setChatCollapsed(false)}>🤖<span>AI</span></button>
+          <button onClick={() => setTerminalVisible(v => !v)}>⌨️<span>Term</span></button>
+        </div>
       </nav>
+    </div>
     </div>
   );
 }
