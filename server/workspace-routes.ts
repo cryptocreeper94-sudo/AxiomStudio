@@ -18,6 +18,9 @@ const router = Router();
 // Base directory for all workspaces
 const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspaces");
 const JWT_SECRET = process.env.JWT_SECRET as string;
+if (!JWT_SECRET) {
+  console.error("[Workspace] FATAL: JWT_SECRET env var is not set. All workspace requests will fail.");
+}
 
 // Ensure base workspaces directory exists
 fs.mkdir(BASE_WORKSPACES_DIR, { recursive: true })
@@ -35,10 +38,17 @@ async function requireAuth(req: any, res: any, next: any) {
   const token = auth.split(" ")[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
-    req.user = decoded; // { id, role, ... }
-    
+    req.user = decoded; // { userId, username, ... }
+
+    // Support both "userId" (current login payload) and legacy "id"
+    const uid = decoded.userId || decoded.id;
+    if (!uid) {
+      res.status(401).json({ error: "Unauthorized: Token missing user identity" });
+      return;
+    }
+
     // Provision user workspace dynamically
-    req.userWorkspace = path.join(BASE_WORKSPACES_DIR, decoded.id);
+    req.userWorkspace = path.join(BASE_WORKSPACES_DIR, uid);
     await fs.mkdir(req.userWorkspace, { recursive: true });
     
     next();
