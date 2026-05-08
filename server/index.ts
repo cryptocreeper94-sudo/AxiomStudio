@@ -16,6 +16,7 @@ import { registerCoinbaseRoutes } from "./coinbase-routes.js";
 import notificationRoutes from "./notification-routes.js";
 import analyticsRoutes from "./analytics-routes.js";
 import workspaceRoutes from "./workspace-routes.js";
+import { setupTerminalWebSocket } from "./pty.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -118,13 +119,16 @@ async function startServer() {
   }
 
   const PORT = parseInt(process.env.PORT || "5100");
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`\n  ╔══════════════════════════════════════╗`);
     console.log(`  ║     AXIOM STUDIO IDE — v2.0.0        ║`);
     console.log(`  ║     DarkWave Studios LLC              ║`);
     console.log(`  ║     http://localhost:${PORT}             ║`);
     console.log(`  ╚══════════════════════════════════════╝\n`);
   });
+
+  // Attach WebSocket server for terminal
+  setupTerminalWebSocket(server);
 }
 
 startServer();
