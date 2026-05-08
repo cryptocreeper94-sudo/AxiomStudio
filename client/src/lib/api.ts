@@ -27,6 +27,11 @@ export async function createConversation(token: string, agentId: string, model: 
     headers: headers(token),
     body: JSON.stringify({ agentId, model }),
   });
+  if (!res.ok) {
+    let msg = `Status ${res.status}`;
+    try { msg = (await res.json()).error || msg; } catch {}
+    throw new Error(msg);
+  }
   return res.json();
 }
 

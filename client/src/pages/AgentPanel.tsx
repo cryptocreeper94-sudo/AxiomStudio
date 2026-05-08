@@ -106,15 +106,6 @@ export default function AgentPanel() {
   const handleSend = useCallback(async (message: string, contextFiles?: string[]) => {
     if (!token || isStreaming) return;
 
-    let convoId = activeConvoId;
-    if (!convoId) {
-      const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
-      const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
-      convoId = convo.id;
-      setActiveConvoId(convoId);
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    }
-
     // Optimistic user message
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
@@ -127,6 +118,23 @@ export default function AgentPanel() {
     setIsStreaming(true);
     setStreamingContent("");
     setRouteInfo(null);
+
+    let convoId = activeConvoId;
+    if (!convoId) {
+      try {
+        const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
+        const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
+        convoId = convo.id;
+        setActiveConvoId(convoId);
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      } catch (err: any) {
+        setMessages((prev) => [...prev, {
+          id: `err-${Date.now()}`, role: "assistant", content: `⚠️ Failed to create conversation: ${err.message}`, createdAt: new Date().toISOString()
+        }]);
+        setIsStreaming(false);
+        return;
+      }
+    }
 
     let fullContent = "";
     let finalInputTokens = 0;

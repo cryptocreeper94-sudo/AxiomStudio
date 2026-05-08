@@ -12,7 +12,7 @@
     "dev": "tsx server/index.ts",
     "dev:client": "vite dev --port 5101",
     "build": "npx vite build && npx tsc -p tsconfig.server.json",
-    "start": "node dist/server/index.js",
+    "start": "npx --yes drizzle-kit push && node dist/server/index.js",
     "check": "tsc --noEmit",
     "db:push": "drizzle-kit push"
   },
@@ -30,6 +30,7 @@
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.5.0",
+    "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.1",
     "express": "^5.2.1",
@@ -61,7 +62,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.0",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "drizzle-kit": "^0.31.4"
+    "@types/react-dom": "^19.2.0"
   }
 }

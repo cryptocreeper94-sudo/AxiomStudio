@@ -194,15 +194,6 @@ export default function IDELayout() {
 
   const handleSendMessage = useCallback(async (content: string, contextFilePaths?: string[]) => {
     if (!token || !content.trim()) return;
-    let convoId = activeConvoId;
-    if (!convoId) {
-      const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
-      const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
-      convoId = convo.id;
-      setActiveConvoId(convoId);
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    }
-
     // Build message with file context
     let enrichedContent = content;
     if (contextFilePaths && contextFilePaths.length > 0) {
@@ -225,6 +216,24 @@ export default function IDELayout() {
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
     setStreamingContent("");
+
+    let convoId = activeConvoId;
+    if (!convoId) {
+      try {
+        const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
+        const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
+        convoId = convo.id;
+        setActiveConvoId(convoId);
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      } catch (err: any) {
+        setMessages(prev => [...prev, {
+          id: `err-${Date.now()}`, role: "assistant", content: `⚠️ Failed to create conversation: ${err.message}`, createdAt: new Date().toISOString()
+        }]);
+        setIsStreaming(false);
+        return;
+      }
+    }
+
     try {
       const res = await fetch("/api/agent/chat", {
         method: "POST",
