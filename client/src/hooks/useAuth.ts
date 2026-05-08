@@ -73,9 +73,10 @@ export function useAuth(): AuthState {
     setBiometricsEnrolled(!!localStorage.getItem(BIO_CRED_KEY));
   }, []);
 
-  // Restore session on mount
+  // Restore session on mount — only use Axiom's own token, never the SSO token
+  // (tl-sso-token is signed by Trust Layer with a different secret/payload and will fail jwt.verify here)
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(SSO_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     const savedUser = localStorage.getItem(USER_KEY);
 
     if (saved && !isTokenExpired()) {
