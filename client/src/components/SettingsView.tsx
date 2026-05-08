@@ -237,6 +237,9 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                       <div style={s.toggleNob(settings.ai.autoRoute)} />
                     </button>
                   </div>
+                </>
+              )}
+
               {activeTab === "billing" && (
                 <motion.div
                   key="billing"
