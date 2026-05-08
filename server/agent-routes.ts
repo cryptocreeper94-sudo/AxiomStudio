@@ -536,22 +536,27 @@ export function registerAgentRoutes(app: Express): void {
 
   // ── Create conversation ────────────────────────────────────────────
   app.post("/api/agent/conversations", async (req: Request, res: Response) => {
-    const userId = requireAuth(req, res);
-    if (!userId) return;
+    try {
+      const userId = requireAuth(req, res);
+      if (!userId) return;
 
-    const { title, agentId, model } = req.body;
+      const { title, agentId, model } = req.body;
 
-    const [convo] = await db
-      .insert(agentConversations)
-      .values({
-        userId,
-        title: title || "New conversation",
-        agentId: agentId || "opus",
-        model: model || "claude-opus-4-20250514",
-      })
-      .returning();
+      const [convo] = await db
+        .insert(agentConversations)
+        .values({
+          userId,
+          title: title || "New conversation",
+          agentId: agentId || "opus",
+          model: model || "claude-opus-4-20250514",
+        })
+        .returning();
 
-    res.json(convo);
+      res.json(convo);
+    } catch (err: any) {
+      console.error("[Create Conversation] Error:", err.message);
+      res.status(500).json({ error: `Database error: ${err.message}` });
+    }
   });
 
   // ── Get conversation messages ──────────────────────────────────────
