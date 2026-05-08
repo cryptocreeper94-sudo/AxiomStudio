@@ -8,6 +8,7 @@ import { Terminal as XTerminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Plus, X, Maximize2, Minimize2 } from "lucide-react";
+import { useSettings } from "../contexts/SettingsContext";
 import "@xterm/xterm/css/xterm.css";
 
 interface Props {
@@ -22,6 +23,16 @@ export default function TerminalPanel({ token, visible, onClose }: Props) {
   const wsRef = useRef<WebSocket | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const { settings } = useSettings();
+
+  // Dynamic settings sync
+  useEffect(() => {
+    if (termRef.current) {
+      termRef.current.options.fontSize = settings.terminal.fontSize;
+      termRef.current.options.cursorBlink = settings.terminal.cursorBlink;
+      fitRef.current?.fit();
+    }
+  }, [settings.terminal.fontSize, settings.terminal.cursorBlink]);
 
   useEffect(() => {
     if (!visible || !containerRef.current) return;
@@ -55,11 +66,11 @@ export default function TerminalPanel({ token, visible, onClose }: Props) {
         brightWhite: "#f8fafc",
       },
       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-      fontSize: 13,
+      fontSize: settings.terminal.fontSize,
       lineHeight: 1.4,
-      cursorBlink: true,
+      cursorBlink: settings.terminal.cursorBlink,
       cursorStyle: "bar",
-      scrollback: 5000,
+      scrollback: 10000,
     });
 
     const fit = new FitAddon();

@@ -12,6 +12,7 @@ import TerminalPanel from "./TerminalPanel";
 import ChatView from "./ChatView";
 import LoginScreen from "./LoginScreen";
 import CreditStore from "./CreditStore";
+import SettingsView from "./SettingsView";
 import ProfileBadge from "./ProfileBadge";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
@@ -441,56 +442,7 @@ export default function IDELayout() {
                 <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Use terminal for git operations</div>
               </div>
             )}
-            {sidePanel === "settings" && (
-              <div className="ax-panel-placeholder">
-                <div className="ax-fe-header"><span className="ax-fe-title">SETTINGS</span></div>
-                <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
-                  <p style={{ marginBottom: 8 }}>Credits: {creditData?.credits ?? "—"}</p>
-                  <p style={{ marginBottom: 8 }}>User: {user?.displayName || user?.username}</p>
-                  <p style={{ marginBottom: 12 }}>Role: {user?.role || "member"}</p>
-
-                  {/* Buy Credits */}
-                  <button
-                    onClick={() => setShowCreditStore(true)}
-                    style={{
-                      width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700,
-                      background: "linear-gradient(135deg, #06b6d4, #a855f7)",
-                      border: "none", color: "#fff", cursor: "pointer", marginBottom: 12,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    ⚡ Buy Credits
-                  </button>
-
-                  {/* Biometric enrollment */}
-                  {biometricsAvailable && (
-                    <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Biometric Login</p>
-                      {biometricsEnrolled ? (
-                        <p style={{ fontSize: 11, color: "#22c55e" }}>✓ Enrolled — use Face ID / fingerprint to sign in</p>
-                      ) : (
-                        <button
-                          onClick={async () => {
-                            const err = await enrollBiometrics();
-                            if (err) alert(err);
-                          }}
-                          style={{
-                            padding: "8px 14px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                            background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)",
-                            color: "#06b6d4", cursor: "pointer",
-                          }}
-                        >
-                          🔐 Enable Biometrics
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  <button onClick={logout} style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", fontSize: 12 }}>Logout</button>
-                </div>
-              </div>
-            )}
+            {sidePanel === "settings" && <SettingsView />}
           </div>
           {/* Drag handle for side panel */}
           <div className="ax-resize-handle" onMouseDown={startDrag("side")} />
