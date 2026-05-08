@@ -73,10 +73,15 @@ export default function AgentPanel() {
     refetchInterval: 30000,
   });
 
-  // Load messages when conversation changes
   useEffect(() => {
-    if (!activeConvoId || !token) { setMessages([]); return; }
-    api.fetchMessages(token, activeConvoId).then(setMessages).catch(() => setMessages([]));
+    if (activeConvoId && token) {
+      api.fetchMessages(token, activeConvoId).then((data) => {
+        setMessages(prev => {
+          if (data.length === 0 && prev.length > 0) return prev;
+          return data;
+        });
+      }).catch(console.error);
+    }
   }, [activeConvoId, token]);
 
   // Select agent

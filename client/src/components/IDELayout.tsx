@@ -134,8 +134,15 @@ export default function IDELayout() {
   });
 
   useEffect(() => {
-    if (!activeConvoId || !token) { setMessages([]); return; }
-    api.fetchMessages(token, activeConvoId).then(setMessages).catch(() => setMessages([]));
+    if (activeConvoId && token) {
+      api.fetchMessages(token, activeConvoId).then((fetched) => {
+        setMessages(prev => {
+          // If we just created the convo, fetched will be empty. Don't wipe optimistic user msg!
+          if (fetched.length === 0 && prev.length > 0) return prev;
+          return fetched;
+        });
+      }).catch(console.error);
+    }
   }, [activeConvoId, token]);
 
   // ── File operations ──
@@ -194,7 +201,9 @@ export default function IDELayout() {
   }, [token, activeAgentId, agents, queryClient]);
 
   const handleSendMessage = useCallback(async (content: string, contextFilePaths?: string[]) => {
-    if (!token || !content.trim()) return;
+    if (!token || !content.trim() || isStreaming) return;
+    setIsStreaming(true); // Lock immediately to prevent double-clicks
+    
     // Build message with file context
     let enrichedContent = content;
     if (contextFilePaths && contextFilePaths.length > 0) {
@@ -210,20 +219,17 @@ export default function IDELayout() {
       }
     }
 
-    const userMsg: Message = {
-      id: `temp-${Date.now()}`, role: "user", content, createdAt: new Date().toISOString(),
-      contextFiles: contextFilePaths,
-    } as any;
-    setMessages(prev => [...prev, userMsg]);
-    setIsStreaming(true);
-    setStreamingContent("");
-
     let convoId = activeConvoId;
     if (!convoId) {
       try {
         const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
         const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
         convoId = convo.id;
+        
+        if (!convoId) {
+          throw new Error("Backend failed to return a valid conversation ID.");
+        }
+        
         setActiveConvoId(convoId);
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       } catch (err: any) {
@@ -231,9 +237,21 @@ export default function IDELayout() {
           id: `err-${Date.now()}`, role: "assistant", content: `⚠️ Failed to create conversation: ${err.message}`, createdAt: new Date().toISOString()
         }]);
         setIsStreaming(false);
+        setStreamingContent("");
         return;
       }
     }
+
+    // Add optimistic user message before sending
+    const userMsg: Message = {
+      id: `temp-${Date.now()}`,
+      role: "user",
+      content: content,
+      createdAt: new Date().toISOString(),
+      model: undefined
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setStreamingContent("");
 
     try {
       const res = await fetch("/api/agent/chat", {
