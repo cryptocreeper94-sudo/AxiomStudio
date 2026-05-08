@@ -16,11 +16,13 @@ import SettingsView from "./SettingsView";
 import ProfileBadge from "./ProfileBadge";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
+import { useIsMobile } from "../hooks/use-mobile";
 import * as api from "../lib/api";
 import { getLang } from "./MonacoEditor";
 import { trackPageView } from "../lib/analytics";
+import MobileLayout from "./mobile/MobileLayout";
 
-interface Message {
+export interface Message {
   id: string; role: string; content: string; model?: string;
   inputTokens?: number; outputTokens?: number; errorContext?: string; createdAt: string;
 }
@@ -28,6 +30,7 @@ interface Message {
 export default function IDELayout() {
   const { token, user, login, signup, loginWithGoogle, loginWithGitHub, logout, biometricsAvailable, biometricsEnrolled, enrollBiometrics, loginWithBiometrics } = useAuth();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // IDE state
   const [sidePanel, setSidePanel] = useState<SidePanel>("files");
@@ -391,6 +394,32 @@ export default function IDELayout() {
   );
 
 
+
+  if (isMobile) {
+    return (
+      <MobileLayout
+        token={token}
+        user={user}
+        agents={agents}
+        conversations={conversations}
+        openFiles={openFiles}
+        activeFilePath={activeFilePath}
+        onFileSelect={setActiveFilePath}
+        onContentChange={handleContentChange}
+        activeConvoId={activeConvoId}
+        activeAgentId={activeAgentId}
+        messages={messages}
+        isStreaming={isStreaming}
+        streamingContent={streamingContent}
+        onSendMessage={handleSendMessage}
+        onStopAgent={handleStopAgent}
+        onApplyCode={handleApplyCode}
+        creditData={creditData}
+        onLogout={logout}
+        onOpenCredits={() => setShowCreditStore(true)}
+      />
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
