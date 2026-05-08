@@ -5,6 +5,7 @@
  */
 import { useCallback, useRef } from "react";
 import Editor from "@monaco-editor/react";
+import { useSettings } from "../contexts/SettingsContext";
 
 interface Props {
   value: string;
@@ -39,10 +40,11 @@ function getLang(file: string): string {
 export { getLang };
 
 export default function MonacoEditor({ value, language, onChange, onSave, readOnly = false }: Props) {
-  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
+  const { settings } = useSettings();
 
   const handleMount = useCallback((editor: any, monaco: any) => {
-    editorRef.current = editor;
+    monacoRef.current = { editor, monaco };
 
     // Register Lume language
     if (!monaco.languages.getLanguages().some((l: any) => l.id === "lume")) {
@@ -107,9 +109,15 @@ export default function MonacoEditor({ value, language, onChange, onSave, readOn
 
     // Ctrl+S save
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      onSave?.();
+      if (settings.editor.formatOnSave) {
+        editor.getAction('editor.action.formatDocument').run().then(() => {
+          onSave?.();
+        });
+      } else {
+        onSave?.();
+      }
     });
-  }, [onSave]);
+  }, [onSave, settings.editor.formatOnSave]);
 
   return (
     <Editor
@@ -121,9 +129,12 @@ export default function MonacoEditor({ value, language, onChange, onSave, readOn
       theme="axiom-dark"
       options={{
         automaticLayout: true,
-        minimap: { enabled: true },
-        fontSize: 14, lineNumbers: "on", roundedSelection: true,
-        scrollBeyondLastLine: false, wordWrap: "on", tabSize: 2,
+        minimap: { enabled: settings.editor.minimap },
+        fontSize: settings.appearance.fontSize, 
+        lineNumbers: "on", roundedSelection: true,
+        scrollBeyondLastLine: false, 
+        wordWrap: settings.editor.wordWrap, 
+        tabSize: settings.editor.tabSize,
         insertSpaces: true,
         fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
         fontLigatures: true, cursorBlinking: "smooth",
