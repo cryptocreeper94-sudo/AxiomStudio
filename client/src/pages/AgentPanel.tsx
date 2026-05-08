@@ -111,6 +111,17 @@ export default function AgentPanel() {
   const handleSend = useCallback(async (message: string, contextFiles?: string[]) => {
     if (!token || isStreaming) return;
 
+    // Check credits before doing anything
+    const cost = creditData?.agentCosts?.[activeAgentId]?.credits ?? 0;
+    const currentBalance = creditData?.credits ?? 0;
+    if (cost > 0 && currentBalance < cost) {
+      setMessages(prev => [...prev, {
+        id: `err-${Date.now()}`, role: "assistant", content: `⚠️ Insufficient credits to use this agent. You have ${currentBalance} credits remaining but need ${cost} credits. Please buy more credits.`, createdAt: new Date().toISOString()
+      }]);
+      setIsStreaming(false);
+      return;
+    }
+
     // Optimistic user message
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
@@ -181,7 +192,7 @@ export default function AgentPanel() {
     // Refresh data
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
     queryClient.invalidateQueries({ queryKey: ["credits"] });
-  }, [token, activeConvoId, activeAgentId, isStreaming, agents, queryClient]);
+  }, [token, activeConvoId, activeAgentId, isStreaming, agents, queryClient, creditData]);
 
   // Retry
   const handleRetry = useCallback(() => {
@@ -244,7 +255,7 @@ export default function AgentPanel() {
     setIsStreaming(false);
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
     queryClient.invalidateQueries({ queryKey: ["credits"] });
-  }, [token, activeConvoId, activeAgentId, isStreaming, queryClient]);
+  }, [token, activeConvoId, activeAgentId, isStreaming, queryClient, creditData]);
 
   // Not logged in
   if (!token) {

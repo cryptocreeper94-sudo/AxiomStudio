@@ -204,6 +204,17 @@ export default function IDELayout() {
     if (!token || !content.trim() || isStreaming) return;
     setIsStreaming(true); // Lock immediately to prevent double-clicks
     
+    // Check credits before doing anything
+    const cost = creditData?.agentCosts?.[activeAgentId]?.credits ?? 0;
+    const currentBalance = creditData?.credits ?? 0;
+    if (cost > 0 && currentBalance < cost) {
+      setMessages(prev => [...prev, {
+        id: `err-${Date.now()}`, role: "assistant", content: `⚠️ Insufficient credits to use this agent. You have ${currentBalance} credits remaining but need ${cost} credits. Please buy more credits.`, createdAt: new Date().toISOString()
+      }]);
+      setIsStreaming(false);
+      return;
+    }
+
     // Build message with file context
     let enrichedContent = content;
     if (contextFilePaths && contextFilePaths.length > 0) {
@@ -315,7 +326,7 @@ export default function IDELayout() {
     }
     setIsStreaming(false);
     setStreamingContent("");
-  }, [token, activeConvoId, activeAgentId, agents, queryClient, routeInfo, openFiles]);
+  }, [token, activeConvoId, activeAgentId, agents, queryClient, routeInfo, openFiles, creditData]);
 
   // ── Apply code from agent to editor ──
   const handleApplyCode = useCallback((code: string, filename: string, _language: string) => {
@@ -460,7 +471,7 @@ export default function IDELayout() {
                 <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Use terminal for git operations</div>
               </div>
             )}
-            {sidePanel === "settings" && <SettingsView />}
+            {sidePanel === "settings" && <SettingsView credits={creditData?.credits ?? 0} onOpenCredits={() => setShowCreditStore(true)} />}
           </div>
           {/* Drag handle for side panel */}
           <div className="ax-resize-handle" onMouseDown={startDrag("side")} />

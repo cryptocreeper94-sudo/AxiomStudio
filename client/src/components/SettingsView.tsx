@@ -8,9 +8,15 @@ const SETTINGS_TABS = [
   { id: "editor", label: "Editor", icon: FileCode },
   { id: "terminal", label: "Terminal", icon: Terminal },
   { id: "ai", label: "AI Assistant", icon: Bot },
+  { id: "billing", label: "Billing & Credits", icon: Zap },
 ];
 
-export default function SettingsView() {
+interface Props {
+  onOpenCredits?: () => void;
+  credits?: number;
+}
+
+export default function SettingsView({ onOpenCredits, credits }: Props) {
   const { settings, updateSection, resetSettings } = useSettings();
   const [activeTab, setActiveTab] = useState("appearance");
   const [savedMsg, setSavedMsg] = useState(false);
@@ -231,7 +237,64 @@ export default function SettingsView() {
                       <div style={s.toggleNob(settings.ai.autoRoute)} />
                     </button>
                   </div>
-                </>
+              {activeTab === "billing" && (
+                <motion.div
+                  key="billing"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 30 }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <h2 style={{ fontSize: 18, fontWeight: 600, color: "white", margin: 0 }}>Billing & Credits</h2>
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0 }}>
+                      Manage your Pay-As-You-Go AI credits and view your usage.
+                    </p>
+                  </div>
+
+                  <div style={{ padding: 20, borderRadius: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Current Balance</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: credits !== undefined && credits > 20 ? "#06b6d4" : "#f87171" }}>
+                        {credits ?? 0} <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>credits</span>
+                      </div>
+                    </div>
+                    {onOpenCredits && (
+                      <button
+                        onClick={onOpenCredits}
+                        style={{
+                          padding: "10px 20px", borderRadius: 8, background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                          color: "white", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 8, boxShadow: "0 0 15px rgba(168, 85, 247, 0.3)"
+                        }}
+                      >
+                        <Zap size={14} /> Buy Credits
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ padding: 20, borderRadius: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: "white", margin: "0 0 15px 0" }}>Agent Pricing</h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom (Opus)</span>
+                        <span style={{ color: "#a855f7", fontWeight: 600 }}>10 credits / msg</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet)</span>
+                        <span style={{ color: "#06b6d4", fontWeight: 600 }}>3 credits / msg</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom GPT (GPT-4.1)</span>
+                        <span style={{ color: "#4ade80", fontWeight: 600 }}>6 credits / msg</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Free (Mini)</span>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>Free</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               )}
 
             </motion.div>

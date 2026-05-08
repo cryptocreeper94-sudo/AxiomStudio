@@ -120,7 +120,13 @@ export default function ProfileBadge({ user, token, onLogout, onOpenCredits, bio
           </p>
         </div>
         {credits !== null && (
-          <div style={{ marginLeft: 4, padding: "2px 8px", borderRadius: 6, background: "rgba(6,182,212,0.08)", fontSize: 10, fontWeight: 600, color: "#06b6d4" }}>
+          <div className={credits < 20 ? "animate-pulse" : ""} style={{ 
+            marginLeft: 4, padding: "2px 8px", borderRadius: 6, 
+            background: credits < 20 ? "rgba(248,113,113,0.15)" : "rgba(6,182,212,0.08)", 
+            fontSize: 10, fontWeight: 600, 
+            color: credits < 20 ? "#f87171" : "#06b6d4",
+            boxShadow: credits < 20 ? "0 0 8px rgba(248,113,113,0.5)" : "none"
+          }}>
             ⚡ {credits}
           </div>
         )}

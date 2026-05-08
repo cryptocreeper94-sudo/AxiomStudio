@@ -7,10 +7,10 @@
 
 // ── Credit Costs Per Agent ──────────────────────────────────────────
 export const AGENT_COSTS: Record<string, { credits: number; label: string }> = {
-  opus:   { credits: 3, label: "Axiom (Opus)" },
-  sonnet: { credits: 1, label: "Axiom Quick (Sonnet)" },
-  gpt4:   { credits: 2, label: "Axiom GPT (GPT-4.1)" },
-  lume:   { credits: 3, label: "Lume Agent (Opus)" },
+  opus:   { credits: 10, label: "Axiom (Opus)" },
+  sonnet: { credits: 3, label: "Axiom Quick (Sonnet)" },
+  gpt4:   { credits: 6, label: "Axiom GPT (GPT-4.1)" },
+  lume:   { credits: 10, label: "Lume Agent (Opus)" },
   mini:   { credits: 0, label: "Axiom Free (Mini)" },
   auto:   { credits: 0, label: "Auto-routed (varies)" },  // cost determined at route time
 };
