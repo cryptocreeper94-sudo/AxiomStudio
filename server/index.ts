@@ -19,6 +19,14 @@ import workspaceRoutes from "./workspace-routes.js";
 import { setupTerminalWebSocket } from "./pty.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Security: Enforce JWT_SECRET on boot
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET environment variable is missing.");
+  console.error("The application cannot start without a secure JWT secret.");
+  process.exit(1);
+}
+
 const app = express();
 
 // Trust proxy for Render (required for rate limiting behind reverse proxy)
@@ -28,8 +36,22 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // CORS + COOP (allow Firebase OAuth popups to communicate back)
-app.use((_req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+const ALLOWED_ORIGINS = [
+  "https://axiomstudio.dev",
+  "https://axiom-studio.app",
+  "http://localhost:5173",
+  process.env.APP_URL,
+].filter(Boolean) as string[];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    // Allow non-browser clients (like curl or postman during dev if needed)
+    // but default to APP_URL for credentials
+    res.header("Access-Control-Allow-Origin", process.env.APP_URL || "http://localhost:5173");
+  }
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   // Firebase OAuth uses popups — COOP must allow them to post back

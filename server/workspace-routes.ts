@@ -17,7 +17,7 @@ const router = Router();
 
 // Base directory for all workspaces
 const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspaces");
-const JWT_SECRET = process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Ensure base workspaces directory exists
 fs.mkdir(BASE_WORKSPACES_DIR, { recursive: true })
@@ -157,21 +157,4 @@ router.delete("/file", requireAuth, async (req: any, res) => {
   }
 });
 
-// POST /api/workspace/exec — Execute command (fallback for terminal)
-router.post("/exec", requireAuth, async (req: any, res) => {
-  const { command } = req.body;
-  if (!command) { res.status(400).json({ error: "No command" }); return; }
-  
-  try {
-    const { stdout, stderr } = await execAsync(command, {
-      cwd: req.userWorkspace,
-      timeout: 30000,
-      maxBuffer: 1024 * 1024,
-    });
-    res.json({ stdout, stderr });
-  } catch (err: any) {
-    res.json({ stdout: err.stdout || "", stderr: err.stderr || err.message });
-  }
-});
-
-export default router;
+  export default router;
