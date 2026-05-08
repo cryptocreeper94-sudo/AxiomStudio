@@ -24,7 +24,7 @@ export function setupTerminalWebSocket(server: any) {
       try {
         decoded = jwt.verify(
           token,
-          process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me"
+          process.env.JWT_SECRET as string
         );
       } catch {
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -53,12 +53,19 @@ export function setupTerminalWebSocket(server: any) {
         fs.mkdirSync(userWorkspace, { recursive: true });
       }
 
+      const safeEnv = {
+        PATH: process.env.PATH || "",
+        HOME: userWorkspace,
+        TERM: "xterm-color",
+        USER: userId,
+      };
+
       ptyProcess = pty.spawn(shell, [], {
         name: "xterm-color",
         cols: 80,
         rows: 24,
         cwd: userWorkspace,
-        env: process.env as any,
+        env: safeEnv as any,
       });
 
       ptyProcess.onData((data) => {

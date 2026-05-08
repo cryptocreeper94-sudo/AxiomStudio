@@ -37,10 +37,10 @@ async function checkWhitelist(email: string, app: string = "axiom-studio"): Prom
       return { allowed: true, entry: result.rows[0] };
     }
     return { allowed: false };
-  } catch {
-    // If table doesn't exist yet, allow all (graceful degradation)
-    console.warn("[Whitelist] Table not found — allowing all access");
-    return { allowed: true };
+  } catch (err: any) {
+    // Fail closed
+    console.error("[Whitelist] DB error — denying access:", err.message);
+    return { allowed: false };
   }
 }
 
@@ -52,7 +52,7 @@ function extractUserId(req: Request): string | null {
   try {
     const decoded = jwt.verify(
       authHeader.slice(7),
-      process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me"
+      process.env.JWT_SECRET as string
     ) as any;
     return decoded.userId || decoded.id || null;
   } catch {
@@ -71,7 +71,11 @@ function requireAuth(req: Request, res: Response): string | null {
 
 // ─── Credit Management ───────────────────────────────────────────────
 
-async function checkCredits(userId: string, agentId: string): Promise<boolean> {
+async function deductCreditsAtomic(
+  userId: string,
+  agentId: string,
+  description: string
+): Promise<boolean> {
   // Dev mode bypass — no credit gating without Firebase
   if (!process.env.FIREBASE_SERVICE_ACCOUNT) return true;
 
@@ -83,47 +87,29 @@ async function checkCredits(userId: string, agentId: string): Promise<boolean> {
   const cost = AGENT_CREDIT_COSTS[costKey]?.credits ?? 1;
   if (cost === 0) return true;
 
-  const [balance] = await db
-    .select()
-    .from(aiCreditBalances)
-    .where(eq(aiCreditBalances.userId, userId))
-    .limit(1);
-
-  return balance ? balance.credits >= cost : false;
-}
-
-async function deductCredits(
-  userId: string,
-  agentId: string,
-  description: string
-): Promise<void> {
-  const costKey = `agent-${agentId}` as keyof typeof AGENT_CREDIT_COSTS;
-  const cost = AGENT_CREDIT_COSTS[costKey]?.credits ?? 1;
-  if (cost === 0) return;
-
-  await db
+  // Atomic deduction
+  const [result] = await db
     .update(aiCreditBalances)
     .set({
       credits: sql`${aiCreditBalances.credits} - ${cost}`,
       totalUsed: sql`${aiCreditBalances.totalUsed} + ${cost}`,
       updatedAt: new Date(),
     })
-    .where(eq(aiCreditBalances.userId, userId));
+    .where(and(eq(aiCreditBalances.userId, userId), sql`${aiCreditBalances.credits} >= ${cost}`))
+    .returning();
 
-  const [balance] = await db
-    .select()
-    .from(aiCreditBalances)
-    .where(eq(aiCreditBalances.userId, userId))
-    .limit(1);
+  if (!result) return false;
 
   await db.insert(aiCreditTransactions).values({
     userId,
     type: "usage",
     amount: -cost,
-    balanceAfter: balance?.credits ?? 0,
+    balanceAfter: result.credits,
     description,
     category: "agent",
   });
+
+  return true;
 }
 
 // ─── Seed Agent Definitions ──────────────────────────────────────────
@@ -196,8 +182,8 @@ export function registerAgentRoutes(app: Express): void {
 
       const token = jwt.sign(
         { userId: user.id, username: user.username },
-        process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me",
-        { expiresIn: "30d" }
+        process.env.JWT_SECRET as string,
+        { expiresIn: "24h" }
       );
 
       res.json({
@@ -207,7 +193,7 @@ export function registerAgentRoutes(app: Express): void {
       });
     } catch (err: any) {
       console.error("[Auth Login] Error:", err.message, err.stack);
-      res.status(500).json({ success: false, error: "Server error during login", detail: err.message });
+      res.status(500).json({ success: false, error: "Server error during login" });
     }
   });
 
@@ -295,8 +281,8 @@ export function registerAgentRoutes(app: Express): void {
 
       const token = jwt.sign(
         { userId: newUser.id, username: newUser.username },
-        process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me",
-        { expiresIn: "30d" }
+        process.env.JWT_SECRET as string,
+        { expiresIn: "24h" }
       );
 
       res.json({
@@ -348,10 +334,16 @@ export function registerAgentRoutes(app: Express): void {
       if (!user) {
         // Auto-create user from Firebase profile
         const { allowed, entry } = await checkWhitelist(email, "axiom-studio");
+        
+        if (!allowed) {
+          res.status(403).json({ success: false, error: "Closed beta. Request access at darkwavestudios.io" });
+          return;
+        }
+
         const isOwner = entry?.access_level === "owner";
         const preGrantMatch = entry?.notes?.match(/pre-granted\s+(\d+)\s+credits/i);
         const preGrantedCredits = preGrantMatch ? parseInt(preGrantMatch[1]) : 0;
-        const startingCredits = isOwner ? 999999 : preGrantedCredits > 0 ? preGrantedCredits : entry?.access_level === "full" ? 100 : allowed ? 10 : 10;
+        const startingCredits = isOwner ? 999999 : preGrantedCredits > 0 ? preGrantedCredits : entry?.access_level === "full" ? 100 : 10;
 
         // Generate a unique username from email
         const baseUsername = email.split("@")[0].replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 20);
@@ -393,8 +385,8 @@ export function registerAgentRoutes(app: Express): void {
       // Issue app JWT
       const token = jwt.sign(
         { userId: user.id, username: user.username },
-        process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me",
-        { expiresIn: "30d" }
+        process.env.JWT_SECRET as string,
+        { expiresIn: "24h" }
       );
 
       res.json({
@@ -424,7 +416,7 @@ export function registerAgentRoutes(app: Express): void {
       const authHeader = req.headers.authorization;
       if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return; }
       const token = authHeader.replace("Bearer ", "");
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me") as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
 
       const { username, displayName, pin } = req.body;
       const updates: string[] = [];
@@ -634,15 +626,7 @@ export function registerAgentRoutes(app: Express): void {
       console.log(`[AutoRouter] Score: ${decision.score}/10 → ${decision.target} (${decision.reason})`);
     }
 
-    // Check credits
-    const hasCredits = await checkCredits(userId, activeAgent);
-    if (!hasCredits) {
-      res.status(402).json({
-        error: "Insufficient credits",
-        message: "Purchase more credits to continue using this agent.",
-      });
-      return;
-    }
+
 
     // Get agent definition (with fallback to seeds)
     let agent: any;
@@ -702,6 +686,16 @@ export function registerAgentRoutes(app: Express): void {
     // Override last user message with enriched version
     if (chatMessages.length > 0) {
       chatMessages[chatMessages.length - 1].content = enrichedMessage;
+    }
+
+    // Deduct credits atomically before streaming
+    const hasCredits = await deductCreditsAtomic(userId, activeAgent, `${agent.name} - ${message.slice(0, 50)}`);
+    if (!hasCredits) {
+      res.status(402).json({
+        error: "Insufficient credits",
+        message: "Purchase more credits to continue using this agent.",
+      });
+      return;
     }
 
     // Set SSE headers
@@ -773,8 +767,6 @@ export function registerAgentRoutes(app: Express): void {
       })
       .where(eq(agentConversations.id, conversationId));
 
-    // Deduct credits
-    await deductCredits(userId, activeAgent, `${agent.name} — ${message.slice(0, 50)}`);
 
     res.end();
   });

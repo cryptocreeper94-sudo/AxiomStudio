@@ -137,40 +137,5 @@ export default function TerminalPanel({ token, visible, onClose }: Props) {
 
 // Fallback local mode when WebSocket isn't available
 function setupLocalMode(term: XTerminal) {
-  let cmd = "";
-  term.write("$ ");
-  term.onData((data) => {
-    if (data === "\r") {
-      term.writeln("");
-      if (cmd.trim()) {
-        // Send command to REST API fallback
-        fetch("/api/workspace/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ command: cmd.trim() }),
-        })
-          .then(r => r.json())
-          .then(r => {
-            if (r.stdout) term.write(r.stdout.replace(/\n/g, "\r\n"));
-            if (r.stderr) term.write(`\x1b[31m${r.stderr.replace(/\n/g, "\r\n")}\x1b[0m`);
-            term.write("\r\n$ ");
-          })
-          .catch(() => {
-            term.writeln(`\x1b[31mCommand execution not available\x1b[0m`);
-            term.write("$ ");
-          });
-      } else {
-        term.write("$ ");
-      }
-      cmd = "";
-    } else if (data === "\x7f") {
-      if (cmd.length > 0) {
-        cmd = cmd.slice(0, -1);
-        term.write("\b \b");
-      }
-    } else {
-      cmd += data;
-      term.write(data);
-    }
-  });
+  term.writeln("\x1b[31m[Error] WebSocket connection failed. Terminal requires WebSockets.\x1b[0m");
 }
