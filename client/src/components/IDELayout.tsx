@@ -60,11 +60,25 @@ export default function IDELayout() {
       if (!draggingRef.current) return;
       e.preventDefault();
       if (draggingRef.current === "side") {
-        const newWidth = Math.min(Math.max(e.clientX - 48, 180), 500);
-        setSidePanelWidth(newWidth);
+        const calc = e.clientX - 48;
+        if (calc < 100) {
+          setSidePanel(null);
+          draggingRef.current = null;
+          document.body.style.cursor = "";
+          document.body.style.userSelect = "";
+        } else {
+          setSidePanelWidth(Math.min(Math.max(calc, 180), 500));
+        }
       } else if (draggingRef.current === "chat") {
-        const newWidth = Math.min(Math.max(window.innerWidth - e.clientX, 260), 600);
-        setChatPanelWidth(newWidth);
+        const calc = window.innerWidth - e.clientX;
+        if (calc < 150) {
+          setChatCollapsed(true);
+          draggingRef.current = null;
+          document.body.style.cursor = "";
+          document.body.style.userSelect = "";
+        } else {
+          setChatPanelWidth(Math.min(Math.max(calc, 260), 600));
+        }
       }
     };
     const handleMouseUp = () => { draggingRef.current = null; document.body.style.cursor = ""; document.body.style.userSelect = ""; };
