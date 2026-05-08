@@ -56,7 +56,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   // Firebase OAuth uses popups — COOP must allow them to post back
   res.header("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  if (_req.method === "OPTIONS") { res.sendStatus(200); return; }
+  if (req.method === "OPTIONS") { res.sendStatus(200); return; }
   next();
 });
 

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X } from "lucide-react";
-import EditorPanel from "../EditorPanel";
+import MonacoEditor from "../MonacoEditor";
+import { OpenFile } from "../EditorArea";
 import ChatView from "../ChatView";
 import FileExplorer from "../FileExplorer";
-import { OpenFile } from "../EditorArea";
 import { Message } from "../IDELayout";
 import TerminalPanel from "../TerminalPanel";
 
@@ -107,8 +107,9 @@ export default function MobileLayout({
                   <span className="uppercase text-[10px] bg-white/10 px-2 py-0.5 rounded">{activeFile.language}</span>
                 </div>
                 <div className="flex-1 relative">
-                  <EditorPanel
-                    file={activeFile}
+                  <MonacoEditor
+                    value={activeFile.content}
+                    language={activeFile.language}
                     onChange={(val) => onContentChange(activeFile.path, val)}
                   />
                 </div>
