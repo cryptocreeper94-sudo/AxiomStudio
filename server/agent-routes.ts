@@ -603,7 +603,7 @@ export function registerAgentRoutes(app: Express): void {
       req.body;
 
     if (!message || !conversationId) {
-      res.status(400).json({ error: "message and conversationId required" });
+      console.error("400 ERROR BODY:", req.body); res.status(400).json({ error: "message and conversationId required" });
       return;
     }
 
