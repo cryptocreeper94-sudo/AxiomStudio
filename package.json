@@ -41,6 +41,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.545.0",
     "marked": "^15.0.0",
+    "node-pty": "^1.1.0",
     "openai": "^6.16.0",
     "pg": "^8.16.3",
     "postcss": "^8.5.6",
