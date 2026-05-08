@@ -2,9 +2,12 @@ import { WebSocketServer, WebSocket } from "ws";
 import * as pty from "node-pty";
 import jwt from "jsonwebtoken";
 import os from "os";
+import path from "path";
+import fs from "fs";
 
 export function setupTerminalWebSocket(server: any) {
   const wss = new WebSocketServer({ noServer: true });
+  const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspaces");
 
   server.on("upgrade", (request: any, socket: any, head: any) => {
     if (request.url.startsWith("/ws/terminal")) {
@@ -17,8 +20,9 @@ export function setupTerminalWebSocket(server: any) {
         return;
       }
 
+      let decoded: any = null;
       try {
-        jwt.verify(
+        decoded = jwt.verify(
           token,
           process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me"
         );
@@ -29,21 +33,31 @@ export function setupTerminalWebSocket(server: any) {
       }
 
       wss.handleUpgrade(request, socket, head, (ws) => {
+        // Pass decoded user info via request object
+        (request as any).user = decoded;
         wss.emit("connection", ws, request);
       });
     }
   });
 
-  wss.on("connection", (ws: WebSocket) => {
+  wss.on("connection", (ws: WebSocket, req: any) => {
     const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
     
     let ptyProcess: pty.IPty | null = null;
     try {
+      const userId = req.user?.id || "anonymous";
+      const userWorkspace = path.join(BASE_WORKSPACES_DIR, userId);
+      
+      // Ensure directory exists synchronously (or fallback to cwd)
+      if (!fs.existsSync(userWorkspace)) {
+        fs.mkdirSync(userWorkspace, { recursive: true });
+      }
+
       ptyProcess = pty.spawn(shell, [], {
         name: "xterm-color",
         cols: 80,
         rows: 24,
-        cwd: process.env.HOME || process.cwd(),
+        cwd: userWorkspace,
         env: process.env as any,
       });
 

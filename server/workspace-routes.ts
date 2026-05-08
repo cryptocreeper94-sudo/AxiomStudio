@@ -2,7 +2,7 @@
  * Axiom Studio — Workspace File System Routes
  * Server-side proxy for reading/writing workspace files.
  * 
- * SECURITY: All routes require auth. File paths sandboxed to WORKSPACE_ROOT.
+ * SECURITY: All routes require auth. File paths sandboxed to BASE_WORKSPACES_DIR / userId.
  * DarkWave Studios LLC — Copyright 2026
  */
 import { Router } from "express";
@@ -10,47 +10,62 @@ import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import jwt from "jsonwebtoken";
 
 const execAsync = promisify(exec);
 const router = Router();
 
-// Workspace root — sandboxed directory
-const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspace");
+// Base directory for all workspaces
+const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspaces");
+const JWT_SECRET = process.env.JWT_SECRET || process.env.DATABASE_URL?.slice(0, 32) || "dw-axiom-fallback-secret-change-me";
 
-// Ensure workspace exists (non-blocking, non-fatal)
-fs.mkdir(WORKSPACE_ROOT, { recursive: true })
-  .then(() => console.log(`[Workspace] Root: ${WORKSPACE_ROOT}`))
+// Ensure base workspaces directory exists
+fs.mkdir(BASE_WORKSPACES_DIR, { recursive: true })
+  .then(() => console.log(`[Workspace] Multi-Tenant Root: ${BASE_WORKSPACES_DIR}`))
   .catch((e) => console.warn(`[Workspace] Could not create root dir: ${e.message}`));
 
-// Auth middleware
-function requireAuth(req: any, res: any, next: any) {
+// Auth middleware - strict JWT validation
+async function requireAuth(req: any, res: any, next: any) {
   const auth = req.headers.authorization;
   if (!auth?.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized: Missing token" });
     return;
   }
-  next();
+  
+  const token = auth.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    req.user = decoded; // { id, role, ... }
+    
+    // Provision user workspace dynamically
+    req.userWorkspace = path.join(BASE_WORKSPACES_DIR, decoded.id);
+    await fs.mkdir(req.userWorkspace, { recursive: true });
+    
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Unauthorized: Invalid token" });
+  }
 }
 
-// Sanitize path — prevent directory traversal
-function safePath(reqPath: string): string | null {
-  const resolved = path.resolve(WORKSPACE_ROOT, reqPath);
-  if (!resolved.startsWith(WORKSPACE_ROOT)) return null;
+// Sanitize path — prevent directory traversal outside user's isolated workspace
+function safePath(userWorkspace: string, reqPath: string): string | null {
+  const resolved = path.resolve(userWorkspace, reqPath || ".");
+  if (!resolved.startsWith(userWorkspace)) return null;
   return resolved;
 }
 
 // GET /api/workspace/tree — Directory tree
-router.get("/tree", requireAuth, async (_req, res) => {
+router.get("/tree", requireAuth, async (req: any, res) => {
   try {
-    const tree = await buildTree(WORKSPACE_ROOT, "workspace");
+    const tree = await buildTree(req.userWorkspace, req.userWorkspace, "workspace");
     res.json(tree);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-async function buildTree(dirPath: string, name: string, depth = 0): Promise<any> {
-  if (depth > 6) return { name, path: path.relative(WORKSPACE_ROOT, dirPath), type: "directory", children: [] };
+async function buildTree(userWorkspace: string, dirPath: string, name: string, depth = 0): Promise<any> {
+  if (depth > 6) return { name, path: path.relative(userWorkspace, dirPath).replace(/\\/g, "/"), type: "directory", children: [] };
   
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
   const children = [];
@@ -66,10 +81,10 @@ async function buildTree(dirPath: string, name: string, depth = 0): Promise<any>
 
   for (const entry of sorted) {
     const fullPath = path.join(dirPath, entry.name);
-    const relPath = path.relative(WORKSPACE_ROOT, fullPath).replace(/\\/g, "/");
+    const relPath = path.relative(userWorkspace, fullPath).replace(/\\/g, "/");
     
     if (entry.isDirectory()) {
-      children.push(await buildTree(fullPath, entry.name, depth + 1));
+      children.push(await buildTree(userWorkspace, fullPath, entry.name, depth + 1));
     } else {
       children.push({ name: entry.name, path: relPath, type: "file" });
     }
@@ -77,15 +92,15 @@ async function buildTree(dirPath: string, name: string, depth = 0): Promise<any>
 
   return {
     name,
-    path: path.relative(WORKSPACE_ROOT, dirPath).replace(/\\/g, "/") || ".",
+    path: path.relative(userWorkspace, dirPath).replace(/\\/g, "/") || ".",
     type: "directory",
     children,
   };
 }
 
 // GET /api/workspace/file?path=... — Read file
-router.get("/file", requireAuth, async (req, res) => {
-  const filePath = safePath(req.query.path as string);
+router.get("/file", requireAuth, async (req: any, res) => {
+  const filePath = safePath(req.userWorkspace, req.query.path as string);
   if (!filePath) { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
@@ -97,9 +112,9 @@ router.get("/file", requireAuth, async (req, res) => {
 });
 
 // PUT /api/workspace/file — Write file
-router.put("/file", requireAuth, async (req, res) => {
+router.put("/file", requireAuth, async (req: any, res) => {
   const { path: reqPath, content } = req.body;
-  const filePath = safePath(reqPath);
+  const filePath = safePath(req.userWorkspace, reqPath);
   if (!filePath) { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
@@ -112,8 +127,8 @@ router.put("/file", requireAuth, async (req, res) => {
 });
 
 // POST /api/workspace/mkdir — Create directory
-router.post("/mkdir", requireAuth, async (req, res) => {
-  const dirPath = safePath(req.body.path);
+router.post("/mkdir", requireAuth, async (req: any, res) => {
+  const dirPath = safePath(req.userWorkspace, req.body.path);
   if (!dirPath) { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
@@ -125,8 +140,8 @@ router.post("/mkdir", requireAuth, async (req, res) => {
 });
 
 // DELETE /api/workspace/file — Delete file or directory
-router.delete("/file", requireAuth, async (req, res) => {
-  const filePath = safePath(req.query.path as string);
+router.delete("/file", requireAuth, async (req: any, res) => {
+  const filePath = safePath(req.userWorkspace, req.query.path as string);
   if (!filePath) { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
@@ -143,13 +158,13 @@ router.delete("/file", requireAuth, async (req, res) => {
 });
 
 // POST /api/workspace/exec — Execute command (fallback for terminal)
-router.post("/exec", requireAuth, async (req, res) => {
+router.post("/exec", requireAuth, async (req: any, res) => {
   const { command } = req.body;
   if (!command) { res.status(400).json({ error: "No command" }); return; }
   
   try {
     const { stdout, stderr } = await execAsync(command, {
-      cwd: WORKSPACE_ROOT,
+      cwd: req.userWorkspace,
       timeout: 30000,
       maxBuffer: 1024 * 1024,
     });
