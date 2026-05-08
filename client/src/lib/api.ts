@@ -54,12 +54,13 @@ export async function* streamChat(
   conversationId: string,
   message: string,
   agentId: string,
-  errorContext?: string
+  errorContext?: string,
+  contextFiles?: string[]
 ): AsyncGenerator<{ type: string; content?: string; inputTokens?: number; outputTokens?: number; error?: string; model?: string; agent?: string; score?: number; reason?: string }> {
   const res = await fetch(`${BASE}/chat`, {
     method: "POST",
     headers: headers(token),
-    body: JSON.stringify({ conversationId, message, agentId, errorContext }),
+    body: JSON.stringify({ conversationId, message, agentId, errorContext, contextFiles }),
   });
 
   if (!res.ok) {

@@ -29,6 +29,7 @@ interface Message {
   outputTokens?: number;
   errorContext?: string;
   createdAt: string;
+  contextFiles?: string[];
 }
 
 export default function AgentPanel() {
@@ -102,14 +103,24 @@ export default function AgentPanel() {
   }, [token, activeConvoId, queryClient]);
 
   // Send message
-  const handleSend = useCallback(async (message: string) => {
-    if (!token || !activeConvoId || isStreaming) return;
+  const handleSend = useCallback(async (message: string, contextFiles?: string[]) => {
+    if (!token || isStreaming) return;
+
+    let convoId = activeConvoId;
+    if (!convoId) {
+      const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
+      const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
+      convoId = convo.id;
+      setActiveConvoId(convoId);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    }
 
     // Optimistic user message
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
       role: "user",
       content: message,
+      contextFiles,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -122,7 +133,7 @@ export default function AgentPanel() {
     let finalOutputTokens = 0;
 
     try {
-      for await (const chunk of api.streamChat(token, activeConvoId, message, activeAgentId)) {
+      for await (const chunk of api.streamChat(token, convoId!, message, activeAgentId, undefined, contextFiles)) {
         if (chunk.type === "text" && chunk.content) {
           fullContent += chunk.content;
           setStreamingContent(fullContent);

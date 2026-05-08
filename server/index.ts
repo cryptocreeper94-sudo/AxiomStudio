@@ -109,19 +109,10 @@ async function startServer() {
     // Development: use Vite dev middleware
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
+      configFile: path.resolve(__dirname, "../vite.config.ts"),
       server: { middlewareMode: true },
       root: path.resolve(__dirname, "../client"),
       appType: "spa",
-      optimizeDeps: {
-        noDiscovery: true,
-        include: [
-          "react",
-          "react-dom",
-          "react-dom/client",
-          "react/jsx-runtime",
-          "react/jsx-dev-runtime",
-        ],
-      },
     });
     app.use(vite.middlewares);
   }
