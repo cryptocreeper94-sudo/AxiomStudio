@@ -156,7 +156,7 @@ export default function Sidebar({
       <div className="p-3 border-t border-white/[0.06]">
         <div className="flex items-center justify-between text-[11px]">
           <span className="text-white/30">Credits</span>
-          <span className={`font-mono font-bold ${credits > 10 ? "text-cyan-400" : credits > 0 ? "text-amber-400" : "text-red-400"}`}>
+          <span className={`font-mono font-bold ${credits > 20 ? "text-cyan-400" : credits > 5 ? "text-amber-400" : "text-red-400 animate-pulse drop-shadow-[0_0_8px_rgba(248,113,113,0.8)]"}`}>
             {credits}
           </span>
         </div>
