@@ -39,6 +39,8 @@ app.use(express.urlencoded({ extended: true }));
 const ALLOWED_ORIGINS = [
   "https://axiomstudio.dev",
   "https://axiom-studio.app",
+  "http://localhost:5100",
+  "http://localhost:5101",
   "http://localhost:5173",
   process.env.APP_URL,
 ].filter(Boolean) as string[];

@@ -17,8 +17,8 @@ import {
   chatUsers,
   aiCreditBalances,
   aiCreditTransactions,
-  AGENT_CREDIT_COSTS,
 } from "../shared/schema.js";
+import { AGENT_COSTS } from "./tiers.js";
 import { getProviderStream, type ChatMessage } from "./agent-providers.js";
 import { AGENT_PROMPTS, AGENT_SEEDS } from "./agent-prompts.js";
 import { classifyMessage, ROUTE_MODELS } from "./auto-router.js";
@@ -27,6 +27,10 @@ import { verifyFirebaseToken } from "./firebase-admin.js";
 // ─── Whitelist Check ─────────────────────────────────────────────────
 
 async function checkWhitelist(email: string, app: string = "axiom-studio"): Promise<{ allowed: boolean; entry?: any }> {
+  // Dev bypass — skip whitelist when not in production
+  if (process.env.NODE_ENV !== "production") {
+    return { allowed: true, entry: { access_level: "full" } };
+  }
   try {
     const result = await pool.query(
       `SELECT * FROM ecosystem_whitelist
@@ -38,8 +42,8 @@ async function checkWhitelist(email: string, app: string = "axiom-studio"): Prom
     }
     return { allowed: false };
   } catch (err: any) {
-    // Fail closed
-    console.error("[Whitelist] DB error — denying access:", err.message);
+    // Fail closed in production, fail open in dev
+    console.error("[Whitelist] DB error:", err.message);
     return { allowed: false };
   }
 }
@@ -83,8 +87,7 @@ async function deductCreditsAtomic(
   const [user] = await db.select().from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
   if (user?.role === "owner") return true;
 
-  const costKey = `agent-${agentId}` as keyof typeof AGENT_CREDIT_COSTS;
-  const cost = AGENT_CREDIT_COSTS[costKey]?.credits ?? 1;
+  const cost = AGENT_COSTS[agentId]?.credits ?? 1;
   if (cost === 0) return true;
 
   // Atomic deduction
