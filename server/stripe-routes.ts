@@ -172,23 +172,26 @@ export function registerStripeRoutes(app: Express): void {
     const userId = extractUserId(req);
     if (!userId) { res.status(401).json({ error: "Auth required" }); return; }
 
-    const [user] = await db
-      .select({ id: chatUsers.id })
-      .from(chatUsers)
-      .where(eq(chatUsers.id, userId))
-      .limit(1);
+    try {
+      const [balance] = await db
+        .select({ credits: aiCreditBalances.credits })
+        .from(aiCreditBalances)
+        .where(eq(aiCreditBalances.userId, userId))
+        .limit(1);
 
-    const [balance] = await db
-      .select({ credits: aiCreditBalances.credits })
-      .from(aiCreditBalances)
-      .where(eq(aiCreditBalances.userId, userId))
-      .limit(1);
-
-    res.json({
-      model: "payg",
-      credits: balance?.credits ?? FREE_MONTHLY_CREDITS,
-      agentCosts: AGENT_COSTS,
-    });
+      res.json({
+        model: "payg",
+        credits: balance?.credits ?? FREE_MONTHLY_CREDITS,
+        agentCosts: AGENT_COSTS,
+      });
+    } catch (err: any) {
+      console.error("[Subscription] Error:", err.message);
+      res.json({
+        model: "payg",
+        credits: FREE_MONTHLY_CREDITS,
+        agentCosts: AGENT_COSTS,
+      });
+    }
   });
 
   // ── Stripe Webhook ──────────────────────────────────────────────
