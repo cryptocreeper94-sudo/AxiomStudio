@@ -599,6 +599,8 @@ export function registerAgentRoutes(app: Express): void {
       return;
     }
 
+    try {
+
     let activeAgent = agentId || "auto";
     let routedModel: string | null = null;
     let routeScore: number | null = null;
@@ -769,6 +771,15 @@ export function registerAgentRoutes(app: Express): void {
 
 
     res.end();
+    } catch (err: any) {
+      console.error("[Chat] Unhandled error:", err.message, err.stack);
+      if (!res.headersSent) {
+        res.status(500).json({ error: `Chat error: ${err.message}` });
+      } else {
+        res.write(`data: ${JSON.stringify({ type: "error", error: err.message })}\n\n`);
+        res.end();
+      }
+    }
   });
 
   // ── User credit balance ────────────────────────────────────────────
