@@ -81,7 +81,14 @@ export default function FileExplorer({ token, onOpenFile }: Props) {
       const res = await fetch("/api/workspace/tree", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+          const errData = await res.json();
+          throw new Error(errData.error || `Error ${res.status}`);
+        }
+        throw new Error(`Server error (${res.status}) — try refreshing`);
+      }
       const data = await res.json();
       setTree(data);
     } catch (err: any) {
