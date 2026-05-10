@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Cortex Bridge — Axiom Studio
  * Trust Layer Ecosystem · Lume-OS Connectivity Module
  * Generated: 2026-04-30 · DarkWave Studios LLC
@@ -17,7 +17,7 @@ const CORTEX_BRIDGE = {
   async register() {
     this.heartbeat.status = "registered";
     this.heartbeat.lastPing = new Date().toISOString();
-    console.log([Cortex] ${this.appName} registered with Lume-OS (ID: ${this.appId}));
+    console.log(`[Cortex] ${this.appName} registered with Lume-OS (ID: ${this.appId})`);
     return { appId: this.appId, status: "registered", tau: Date.now() };
   },
   async ping() {
