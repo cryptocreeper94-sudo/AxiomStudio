@@ -279,24 +279,24 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
             }}>{error}</p>
           )}
 
-          {/* ── Divider ── */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "12px", marginBottom: "18px",
-          }}>
-            <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
+          {/* ── Email/Password Toggle ── */}
+          <div style={{ marginBottom: "18px" }}>
             <button
               type="button"
               onClick={() => setShowLegacy(!showLegacy)}
               style={{
-                background: "none", border: "none", cursor: "pointer",
-                fontSize: "11px", color: "rgba(255,255,255,0.45)",
-                whiteSpace: "nowrap", fontFamily: "inherit",
-                padding: "2px 4px",
+                ...oauthBtnStyle,
+                background: showLegacy ? "rgba(6,182,212,0.08)" : "rgba(255,255,255,0.03)",
+                color: showLegacy ? "rgba(6,182,212,0.8)" : "rgba(255,255,255,0.45)",
+                borderColor: showLegacy ? "rgba(6,182,212,0.2)" : "rgba(255,255,255,0.06)",
+                fontSize: "13px",
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = showLegacy ? "rgba(6,182,212,0.08)" : "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = showLegacy ? "rgba(6,182,212,0.2)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.color = showLegacy ? "rgba(6,182,212,0.8)" : "rgba(255,255,255,0.45)"; }}
             >
-              {showLegacy ? "Hide" : "or sign in with"} email / password
+              <LogIn style={{ width: 16, height: 16 }} />
+              {showLegacy ? "Hide email / password" : "Sign in with email / password"}
             </button>
-            <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
           </div>
 
           {/* ── Legacy Form (collapsed by default) ── */}
