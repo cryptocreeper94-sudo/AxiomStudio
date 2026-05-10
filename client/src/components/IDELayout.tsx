@@ -120,7 +120,7 @@ export default function IDELayout() {
   useEffect(() => {
     const update = () => {
       const el = document.getElementById("ax-cs-time");
-      if (el) el.textContent = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      if (el) el.textContent = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "America/Chicago" });
     };
     update();
     const t = setInterval(update, 30000);
