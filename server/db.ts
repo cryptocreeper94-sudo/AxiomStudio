@@ -80,6 +80,29 @@ pool.query("SELECT 1").then(async () => {
       ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS messages_this_month INTEGER DEFAULT 0;
       ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS month_reset_at TIMESTAMP;
 
+      -- AI Credits
+      CREATE TABLE IF NOT EXISTS ai_credit_balances (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL UNIQUE,
+        credits INTEGER NOT NULL DEFAULT 0,
+        total_purchased INTEGER NOT NULL DEFAULT 0,
+        total_used INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS ai_credit_transactions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL,
+        type TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        balance_after INTEGER NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT,
+        stripe_session_id TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_credit_trans_user ON ai_credit_transactions(user_id);
+
       -- Workspace Files storage
       CREATE TABLE IF NOT EXISTS workspace_files (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
