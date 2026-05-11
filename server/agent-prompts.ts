@@ -123,8 +123,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "opus",
     name: "Axiom",
-    description: "Claude Opus 4 — Full-stack coding, architecture, debugging. The most capable agent.",
-    model: "claude-opus-4-5",
+    description: "Claude Opus 4.7 — Full-stack coding, architecture, debugging. The most capable agent.",
+    model: "claude-opus-4-7",
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.7",
@@ -159,8 +159,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "lume",
     name: "Lume Agent",
-    description: "Claude Opus 4 — Lume language specialist. LDIR, Trust Layer, Canon² expert.",
-    model: "claude-opus-4-5",
+    description: "Claude Opus 4.7 — Lume language specialist. LDIR, Trust Layer, Canon² expert.",
+    model: "claude-opus-4-7",
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.5",
