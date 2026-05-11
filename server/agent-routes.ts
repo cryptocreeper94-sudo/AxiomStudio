@@ -790,6 +790,18 @@ export function registerAgentRoutes(app: Express): void {
     const userId = requireAuth(req, res);
     if (!userId) return;
 
+    // Owner bypass for frontend UI checks
+    const [user] = await db.select({ role: chatUsers.role }).from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
+    if (user?.role === "owner") {
+      res.json({
+        credits: 999999,
+        totalPurchased: 0,
+        totalUsed: 0,
+        unlimited: true
+      });
+      return;
+    }
+
     const [balance] = await db
       .select()
       .from(aiCreditBalances)
