@@ -197,7 +197,7 @@ export default function IDELayout() {
   const handleNewChat = useCallback(async () => {
     if (!token) return;
     const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
-    const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
+    const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-3-opus-20240229");
     setActiveConvoId(convo.id);
     setMessages([]);
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -237,7 +237,7 @@ export default function IDELayout() {
     if (!convoId) {
       try {
         const agent = agents.find((a: any) => a.id === activeAgentId) || agents[0];
-        const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-opus-4-20250514");
+        const convo = await api.createConversation(token, activeAgentId, agent?.model || "claude-3-opus-20240229");
         convoId = convo.id;
         
         if (!convoId) {

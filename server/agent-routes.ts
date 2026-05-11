@@ -543,7 +543,7 @@ export function registerAgentRoutes(app: Express): void {
           userId,
           title: title || "New conversation",
           agentId: agentId || "opus",
-          model: model || "claude-opus-4-20250514",
+          model: model || "claude-3-opus-20240229",
         })
         .returning();
 
