@@ -137,16 +137,22 @@ export default function IDELayout() {
   });
 
   useEffect(() => {
-    if (activeConvoId && token) {
-      api.fetchMessages(token, activeConvoId).then((fetched) => {
-        setMessages(prev => {
-          // If we just created the convo, fetched will be empty. Don't wipe optimistic user msg!
-          if (fetched.length === 0 && prev.length > 0) return prev;
-          return fetched;
-        });
-      }).catch(console.error);
+    if (activeConvoId && token && !isStreaming) {
+      // Small delay to let the server persist messages before we re-fetch
+      const timeout = setTimeout(() => {
+        api.fetchMessages(token, activeConvoId).then((fetched) => {
+          setMessages(prev => {
+            // If we just created the convo, fetched will be empty. Don't wipe optimistic user msg!
+            if (fetched.length === 0 && prev.length > 0) return prev;
+            // Don't overwrite if local state has MORE messages (optimistic adds)
+            if (prev.length > fetched.length) return prev;
+            return fetched;
+          });
+        }).catch(console.error);
+      }, 500);
+      return () => clearTimeout(timeout);
     }
-  }, [activeConvoId, token]);
+  }, [activeConvoId, token, isStreaming]);
 
   // ── File operations ──
   const handleOpenFile = useCallback(async (path: string, name: string) => {
