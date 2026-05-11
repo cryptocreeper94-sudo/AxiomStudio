@@ -48,6 +48,7 @@ export default function IDELayout() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [toolActivity, setToolActivity] = useState<Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>>([]);
 
   // ── Bottom panel state ──
   const [bottomPanelHeight, setBottomPanelHeight] = useState(220);
@@ -273,6 +274,7 @@ export default function IDELayout() {
     };
     setMessages(prev => [...prev, userMsg]);
     setStreamingContent("");
+    setToolActivity([]); // reset tool trace for new message
 
     try {
       const res = await fetch("/api/agent/chat", {
@@ -318,6 +320,16 @@ export default function IDELayout() {
             if (parsed.type === "text" && parsed.content) { fullContent += parsed.content; setStreamingContent(fullContent); }
             if (parsed.type === "token" && parsed.token) { fullContent += parsed.token; setStreamingContent(fullContent); }
             if (parsed.type === "route") setRouteInfo(parsed);
+            if (parsed.type === "tool_call") {
+              setToolActivity(prev => [...prev, { tool: parsed.tool, args: parsed.args, done: false }]);
+            }
+            if (parsed.type === "tool_result") {
+              setToolActivity(prev => prev.map((t, i) =>
+                i === prev.length - 1 && t.tool === parsed.tool
+                  ? { ...t, result: parsed.result, isError: parsed.isError, done: true }
+                  : t
+              ));
+            }
             if (parsed.type === "error") { fullContent += `\n\n⚠️ ${parsed.error}`; setStreamingContent(fullContent); }
           } catch { /* incomplete JSON, will be buffered */ }
         }
@@ -336,10 +348,11 @@ export default function IDELayout() {
         createdAt: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errResponse]);
+    } finally {
+      setIsStreaming(false);
+      setStreamingContent("");
     }
-    setIsStreaming(false);
-    setStreamingContent("");
-  }, [token, activeConvoId, activeAgentId, agents, queryClient, routeInfo, openFiles, creditData]);
+  }, [token, activeConvoId, activeAgentId, isStreaming, agents, queryClient, routeInfo, openFiles, creditData]);
 
   // ── Apply code from agent to editor ──
   const handleApplyCode = useCallback((code: string, filename: string, _language: string) => {
@@ -688,6 +701,7 @@ export default function IDELayout() {
             onApplyCode={handleApplyCode}
             activeFileName={activeFilePath || undefined}
             openFiles={openFiles.map(f => ({ path: f.path, name: f.name }))}
+            toolActivity={toolActivity}
           />
         </div>
         </>

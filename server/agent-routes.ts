@@ -545,6 +545,7 @@ export function registerAgentRoutes(app: Express): void {
         })
         .returning();
 
+      console.log(`[Conversations] Created convoId=${convo.id} for userId=${userId}`);
       res.json(convo);
     } catch (err: any) {
       console.error("[Create Conversation] Error:", err.message);
@@ -559,12 +560,15 @@ export function registerAgentRoutes(app: Express): void {
       const userId = requireAuth(req, res);
       if (!userId) return;
 
+      console.log(`[Messages] GET convoId=${req.params.id} userId=${userId}`);
+
       const messages = await db
         .select()
         .from(agentMessages)
         .where(eq(agentMessages.conversationId, req.params.id))
         .orderBy(agentMessages.createdAt);
 
+      console.log(`[Messages] Found ${messages.length} messages`);
       res.json(messages);
     }
   );
@@ -595,8 +599,11 @@ export function registerAgentRoutes(app: Express): void {
     const { conversationId, message, agentId, contextFiles, errorContext } =
       req.body;
 
+    console.log(`[Chat] ► Received message #${Date.now()} | convoId=${conversationId} | agent=${agentId} | msg="${String(message).slice(0,60)}"`);
+
     if (!message || !conversationId) {
-      console.error("400 ERROR BODY:", req.body); res.status(400).json({ error: "message and conversationId required" });
+      console.error("[Chat] 400 — missing message or conversationId:", req.body);
+      res.status(400).json({ error: "message and conversationId required" });
       return;
     }
 
@@ -628,6 +635,9 @@ export function registerAgentRoutes(app: Express): void {
       routeReason = decision.reason;
       console.log(`[AutoRouter] Score: ${decision.score}/10 → ${decision.target} (${decision.reason})`);
     }
+
+    console.log(`[Chat] Using agent: ${activeAgent}`);
+
 
 
 
@@ -666,12 +676,14 @@ export function registerAgentRoutes(app: Express): void {
     }
 
     // Save user message
+    console.log(`[Chat] Saving user message to DB...`);
     await db.insert(agentMessages).values({
       conversationId,
       role: "user",
       content: message,
       errorContext: errorContext || null,
     });
+    console.log(`[Chat] User message saved.`);
 
     // Get conversation history (fresh fetch for non-auto path)
     const allHistory = await db
@@ -692,14 +704,17 @@ export function registerAgentRoutes(app: Express): void {
     }
 
     // Deduct credits atomically before streaming
+    console.log(`[Chat] Checking credits for user ${userId}...`);
     const hasCredits = await deductCreditsAtomic(userId, activeAgent, `${agent.name} - ${message.slice(0, 50)}`);
     if (!hasCredits) {
+      console.log(`[Chat] ✗ Insufficient credits`);
       res.status(402).json({
         error: "Insufficient credits",
         message: "Purchase more credits to continue using this agent.",
       });
       return;
     }
+    console.log(`[Chat] ✓ Credits OK — starting stream with model=${agent.model}`);
 
     // Set SSE headers
     res.setHeader("Content-Type", "text/event-stream");
@@ -723,11 +738,21 @@ export function registerAgentRoutes(app: Express): void {
     let inputTokens = 0;
     let outputTokens = 0;
 
+    // Look up user role for tool access control
+    const userRecord = await db
+      .select({ role: chatUsers.role })
+      .from(chatUsers)
+      .where(eq(chatUsers.id, userId))
+      .limit(1);
+    const userRole = userRecord[0]?.role ?? "member";
+
     const stream = getProviderStream(agent.provider, chatMessages, {
       model: agent.model,
       maxTokens: agent.maxTokens ?? 8192,
       temperature: parseFloat(String(agent.temperature ?? "0.7")),
       systemPrompt: agent.systemPrompt,
+      userId,
+      userRole,
     });
 
     for await (const chunk of stream) {
@@ -738,9 +763,16 @@ export function registerAgentRoutes(app: Express): void {
         inputTokens = chunk.inputTokens || 0;
         outputTokens = chunk.outputTokens || 0;
         res.write(`data: ${JSON.stringify({ type: "usage", inputTokens, outputTokens })}\n\n`);
+      } else if (chunk.type === "tool_call") {
+        console.log(`[Chat] 🔧 Tool call: ${chunk.tool}(${JSON.stringify(chunk.args)})`);
+        res.write(`data: ${JSON.stringify({ type: "tool_call", tool: chunk.tool, args: chunk.args })}\n\n`);
+      } else if (chunk.type === "tool_result") {
+        console.log(`[Chat] ✓ Tool result: ${chunk.tool} → ${String(chunk.result).slice(0, 80)}`);
+        res.write(`data: ${JSON.stringify({ type: "tool_result", tool: chunk.tool, result: chunk.result, isError: chunk.isError })}\n\n`);
       } else if (chunk.type === "error") {
         res.write(`data: ${JSON.stringify({ type: "error", error: chunk.error })}\n\n`);
       } else if (chunk.type === "done") {
+        console.log(`[Chat] Stream done. fullResponse length=${fullResponse.length}`);
         res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
       }
     }
@@ -771,9 +803,10 @@ export function registerAgentRoutes(app: Express): void {
       .where(eq(agentConversations.id, conversationId));
 
 
+    console.log(`[Chat] ✓ Response complete. Saved assistant message.`);
     res.end();
     } catch (err: any) {
-      console.error("[Chat] Unhandled error:", err.message, err.stack);
+      console.error("[Chat] ✗ UNHANDLED ERROR:", err.message, err.stack);
       if (!res.headersSent) {
         res.status(500).json({ error: `Chat error: ${err.message}` });
       } else {
