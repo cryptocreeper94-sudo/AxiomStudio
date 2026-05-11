@@ -16,7 +16,9 @@ const execAsync = promisify(exec);
 const router = Router();
 
 // Base directory for all workspaces
-const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspaces");
+// On Render/production, the project dir is read-only — use /tmp/workspaces
+const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT
+  || (process.env.NODE_ENV === "production" ? "/tmp/workspaces" : path.resolve(process.cwd(), "workspaces"));
 const JWT_SECRET = process.env.JWT_SECRET as string;
 if (!JWT_SECRET) {
   console.error("[Workspace] FATAL: JWT_SECRET env var is not set. All workspace requests will fail.");
