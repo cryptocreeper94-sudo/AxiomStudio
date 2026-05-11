@@ -65,6 +65,24 @@ pool.query("SELECT 1").then(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_convos_user ON agent_conversations(user_id);
       CREATE INDEX IF NOT EXISTS idx_agent_msgs_convo ON agent_messages(conversation_id);
+      
+      -- Chat Users schema updates (for shared DWTL tables)
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS ecosystem_pin_hash TEXT;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS trust_layer_id TEXT;
+
+      -- Workspace Files storage
+      CREATE TABLE IF NOT EXISTS workspace_files (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        is_directory BOOLEAN NOT NULL DEFAULT false,
+        size_bytes INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, file_path)
+      );
+      CREATE INDEX IF NOT EXISTS idx_ws_files_user ON workspace_files(user_id);
     `);
     console.log("[DB] Agent tables verified/created");
   } catch (migErr: any) {
