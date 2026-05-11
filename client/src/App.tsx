@@ -1,4 +1,4 @@
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import IDELayout from "./components/IDELayout";
 import AgentPanel from "./pages/AgentPanel";
 import "./ide.css";
@@ -10,9 +10,7 @@ export default function App() {
       <Route path="/chat" component={AgentPanel} />
       <Route path="/agent" component={AgentPanel} />
       <Route>
-        <div className="h-screen flex items-center justify-center">
-          <p className="text-gray-500">Page not found</p>
-        </div>
+        <Redirect to="/" />
       </Route>
     </Switch>
   );
