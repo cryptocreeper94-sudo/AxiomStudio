@@ -1,12 +1,11 @@
 /**
  * Axiom Studio — Service Worker
- * Offline-first caching with network-first for API calls.
+ * Network-first for navigation + API. Cache-first for static assets only.
  * DarkWave Studios LLC — Copyright 2026
  */
 
-const CACHE_NAME = 'axiom-studio-v1';
+const CACHE_NAME = 'axiom-studio-v2';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -17,14 +16,14 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static shell');
+      console.log('[SW] Caching static assets');
       return cache.addAll(STATIC_ASSETS);
     })
   );
   self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate — clean ALL old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -36,7 +35,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch — network-first for API, cache-first for assets
+// Fetch strategy
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -45,7 +44,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   if (url.protocol === 'chrome-extension:') return;
 
-  // API calls: network-first
+  // API calls: network-only (never cache API responses)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() => caches.match(request))
@@ -53,7 +52,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate
+  // Navigation requests (HTML pages): ALWAYS network-first
+  // This is critical for SPA routing — ensures the latest index.html
+  // is always served, preventing stale 404 pages from cache.
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match('/') || caches.match(request))
+    );
+    return;
+  }
+
+  // Static assets (JS, CSS, images): cache-first with background update
   event.respondWith(
     caches.match(request).then((cached) => {
       const networkFetch = fetch(request).then((response) => {
