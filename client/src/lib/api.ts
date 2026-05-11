@@ -79,21 +79,34 @@ export async function* streamChat(
 
   const decoder = new TextDecoder();
   let buffer = "";
+  const TIMEOUT_MS = 30000; // 30s inactivity guard
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      // Race the read against a timeout so we never hang forever
+      const readPromise = reader.read();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Stream timeout after 30s")), TIMEOUT_MS)
+      );
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
+      const { done, value } = await Promise.race([readPromise, timeoutPromise]);
+      if (done) break;
 
-    for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        try {
-          yield JSON.parse(line.slice(6));
-        } catch {}
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            yield JSON.parse(line.slice(6));
+          } catch {}
+        }
       }
     }
+  } catch (err: any) {
+    yield { type: "error", error: err.message || "Stream interrupted" };
+  } finally {
+    reader.cancel().catch(() => {});
   }
 }

@@ -109,6 +109,7 @@ export default function AgentPanel() {
 
   // Send message
   const handleSend = useCallback(async (message: string, contextFiles?: string[]) => {
+    console.log(`[handleSend] called | isStreaming=${isStreaming} | activeConvoId=${activeConvoId} | msg="${message.slice(0,40)}"`);
     if (!token || isStreaming) return;
 
     // Check credits before doing anything (skip for auto-route and free agents)
@@ -173,27 +174,26 @@ export default function AgentPanel() {
         }
       }
     } catch (err: any) {
-      fullContent = `**Error:** ${err.message || "Stream failed"}`;
+      fullContent = fullContent || `**Error:** ${err.message || "Stream failed"}`;
+    } finally {
+      // ALWAYS reset streaming state — no matter what happened above
+      const assistantMsg: Message = {
+        id: `resp-${Date.now()}`,
+        role: "assistant",
+        content: fullContent || "*(no response)*",
+        model: agents.find((a: any) => a.id === activeAgentId)?.model,
+        inputTokens: finalInputTokens,
+        outputTokens: finalOutputTokens,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+      setStreamingContent("");
+      setIsStreaming(false);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
     }
-
-    // Add assistant message
-    const assistantMsg: Message = {
-      id: `resp-${Date.now()}`,
-      role: "assistant",
-      content: fullContent,
-      model: agents.find((a: any) => a.id === activeAgentId)?.model,
-      inputTokens: finalInputTokens,
-      outputTokens: finalOutputTokens,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, assistantMsg]);
-    setStreamingContent("");
-    setIsStreaming(false);
-
-    // Refresh data
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    queryClient.invalidateQueries({ queryKey: ["credits"] });
   }, [token, activeConvoId, activeAgentId, isStreaming, agents, queryClient, creditData]);
+
 
   // Retry
   const handleRetry = useCallback(() => {
@@ -294,6 +294,10 @@ export default function AgentPanel() {
           sidebarOpen={sidebarOpen}
         />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
+          {/* DEBUG BAR — remove after fix */}
+          <div style={{ background: "#ff006620", border: "1px solid #ff0066", padding: "4px 8px", fontSize: "11px", fontFamily: "monospace", color: "#ff88aa" }}>
+            🐛 convoId: {activeConvoId || "NULL"} | streaming: {String(isStreaming)} | msgs: {messages.length}
+          </div>
           {/* Toolbar */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",

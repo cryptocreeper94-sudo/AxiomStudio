@@ -43,6 +43,7 @@ interface Props {
   activeFileName?: string;
   openFiles?: FileContextItem[];
   workspaceFiles?: FileContextItem[];
+  toolActivity?: Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>;
 }
 
 // ── Code Block with Apply Button ──
@@ -422,6 +423,7 @@ function FileContextBar({ files, selected, onToggle, onClear }: {
 export default function ChatView({
   messages, streamingContent, isStreaming, agentName, agentColor, agentModel,
   routeInfo, onSend, onRetry, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
+  toolActivity = [],
 }: Props) {
   const [input, setInput] = useState("");
   const [contextFiles, setContextFiles] = useState<string[]>([]);
@@ -538,6 +540,59 @@ export default function ChatView({
                 activeFileName={activeFileName}
               />
             ))}
+            {/* Tool Activity Panel — shown while streaming with tool calls */}
+            {isStreaming && toolActivity.length > 0 && (
+              <div style={{
+                margin: "8px 14px",
+                borderRadius: 10,
+                background: "rgba(99,102,241,0.06)",
+                border: "1px solid rgba(99,102,241,0.15)",
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  padding: "6px 10px",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  color: "rgba(167,139,250,0.7)",
+                  borderBottom: "1px solid rgba(99,102,241,0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}>⚙ AGENT ACTIONS</div>
+                {toolActivity.map((t, i) => (
+                  <div key={i} style={{
+                    padding: "5px 10px",
+                    borderBottom: i < toolActivity.length - 1 ? "1px solid rgba(99,102,241,0.06)" : undefined,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 7,
+                  }}>
+                    <span style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}>
+                      {!t.done ? "⏳" : t.isError ? "❌" : "✅"}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "rgba(167,139,250,0.9)" }}>
+                        {t.tool}({t.args ? Object.entries(t.args).map(([k, v]) => `${k}: "${String(v).slice(0, 40)}"`).join(", ") : ""})
+                      </div>
+                      {t.done && t.result && (
+                        <div style={{
+                          marginTop: 2,
+                          fontSize: 9,
+                          fontFamily: "'JetBrains Mono', monospace",
+                          color: t.isError ? "rgba(248,113,113,0.7)" : "rgba(255,255,255,0.3)",
+                          whiteSpace: "pre-wrap",
+                          maxHeight: 60,
+                          overflow: "hidden",
+                        }}>
+                          {t.result.slice(0, 200)}{t.result.length > 200 ? "…" : ""}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {isStreaming && streamingContent && (
               <div style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,0.015)" }}>
                 <div style={{
