@@ -69,6 +69,16 @@ pool.query("SELECT 1").then(async () => {
       -- Chat Users schema updates (for shared DWTL tables)
       ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS ecosystem_pin_hash TEXT;
       ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS trust_layer_id TEXT;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS ecosystem_app TEXT;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT false;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP DEFAULT NOW();
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS ad_free_subscription BOOLEAN DEFAULT false;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS ad_free_expires_at TIMESTAMP;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS subscription_tier TEXT DEFAULT 'free';
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS messages_this_month INTEGER DEFAULT 0;
+      ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS month_reset_at TIMESTAMP;
 
       -- Workspace Files storage
       CREATE TABLE IF NOT EXISTS workspace_files (
