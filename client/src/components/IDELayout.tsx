@@ -41,7 +41,9 @@ export default function IDELayout() {
   const [showCreditStore, setShowCreditStore] = useState(false);
 
   // Chat state (preserved from AgentPanel)
-  const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
+  const [activeConvoId, setActiveConvoId] = useState<string | null>(() => {
+    try { return localStorage.getItem('axiom_active_convo') || null; } catch { return null; }
+  });
   const [activeAgentId, setActiveAgentId] = useState("auto");
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
@@ -100,6 +102,20 @@ export default function IDELayout() {
   };
 
   useEffect(() => { trackPageView("/studio"); }, []);
+
+  // Persist active conversation to localStorage
+  useEffect(() => {
+    try {
+      if (activeConvoId) localStorage.setItem('axiom_active_convo', activeConvoId);
+      else localStorage.removeItem('axiom_active_convo');
+    } catch {}
+  }, [activeConvoId]);
+
+  // Stop agent (cancel streaming)
+  const handleStopAgent = useCallback(() => {
+    setIsStreaming(false);
+    setStreamingContent("");
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
