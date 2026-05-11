@@ -103,6 +103,9 @@ pool.query("SELECT 1").then(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_credit_trans_user ON ai_credit_transactions(user_id);
 
+      -- Force upgrade specific admin accounts to owner
+      UPDATE chat_users SET role = 'owner' WHERE email = 'cryptocreeper94@gmail.com';
+
       -- Workspace Files storage
       CREATE TABLE IF NOT EXISTS workspace_files (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
