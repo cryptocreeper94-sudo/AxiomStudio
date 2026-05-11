@@ -39,6 +39,7 @@ export async function fetchMessages(token: string, conversationId: string) {
   const res = await fetch(`${BASE}/conversations/${conversationId}/messages`, {
     headers: headers(token),
   });
+  if (!res.ok) throw new Error(`fetchMessages failed: ${res.status}`);
   return res.json();
 }
 
@@ -51,6 +52,7 @@ export async function deleteConversation(token: string, id: string) {
 
 export async function fetchCredits(token: string) {
   const res = await fetch(`${BASE}/credits`, { headers: headers(token) });
+  if (!res.ok) throw new Error(`fetchCredits failed: ${res.status}`);
   return res.json();
 }
 
