@@ -37,7 +37,9 @@ async function requireAuth(req: any, res: any, next: any) {
   
   const token = auth.split(" ")[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const secret = process.env.JWT_SECRET as string;
+    if (!secret) throw new Error("JWT_SECRET is missing");
+    const decoded = jwt.verify(token, secret) as any;
     req.user = decoded; // { userId, username, ... }
 
     // Support both "userId" (current login payload) and legacy "id"
