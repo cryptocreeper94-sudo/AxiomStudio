@@ -153,23 +153,21 @@ export default function IDELayout() {
     queryKey: ["credits", token], queryFn: () => api.fetchCredits(token!), enabled: !!token, refetchInterval: 30000,
   });
 
+  // Fetch messages when conversation changes (NOT when streaming state changes)
+  // The streaming handler adds messages to local state optimistically.
+  // Re-fetching on stream end caused a race condition that wiped conversations.
   useEffect(() => {
-    if (activeConvoId && token && !isStreaming) {
-      // Small delay to let the server persist messages before we re-fetch
-      const timeout = setTimeout(() => {
-        api.fetchMessages(token, activeConvoId).then((fetched) => {
-          setMessages(prev => {
-            // If we just created the convo, fetched will be empty. Don't wipe optimistic user msg!
-            if (fetched.length === 0 && prev.length > 0) return prev;
-            // Don't overwrite if local state has MORE messages (optimistic adds)
-            if (prev.length > fetched.length) return prev;
-            return fetched;
-          });
-        }).catch(console.error);
-      }, 500);
-      return () => clearTimeout(timeout);
+    if (activeConvoId && token) {
+      api.fetchMessages(token, activeConvoId).then((fetched) => {
+        setMessages(prev => {
+          // Don't wipe optimistic messages if server hasn't caught up yet
+          if (fetched.length === 0 && prev.length > 0) return prev;
+          if (prev.length > fetched.length) return prev;
+          return fetched;
+        });
+      }).catch(console.error);
     }
-  }, [activeConvoId, token, isStreaming]);
+  }, [activeConvoId, token]);
 
   // ── File operations ──
   const handleOpenFile = useCallback(async (path: string, name: string) => {
