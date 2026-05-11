@@ -186,7 +186,7 @@ export function registerAgentRoutes(app: Express): void {
       const token = jwt.sign(
         { userId: user.id, username: user.username },
         process.env.JWT_SECRET as string,
-        { expiresIn: "24h" }
+        { expiresIn: "30d" }
       );
 
       res.json({
@@ -285,7 +285,7 @@ export function registerAgentRoutes(app: Express): void {
       const token = jwt.sign(
         { userId: newUser.id, username: newUser.username },
         process.env.JWT_SECRET as string,
-        { expiresIn: "24h" }
+        { expiresIn: "30d" }
       );
 
       res.json({
@@ -389,7 +389,7 @@ export function registerAgentRoutes(app: Express): void {
       const token = jwt.sign(
         { userId: user.id, username: user.username },
         process.env.JWT_SECRET as string,
-        { expiresIn: "24h" }
+        { expiresIn: "30d" }
       );
 
       res.json({

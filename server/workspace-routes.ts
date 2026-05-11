@@ -36,27 +36,43 @@ async function requireAuth(req: any, res: any, next: any) {
   }
   
   const token = auth.split(" ")[1];
+  
+  // Step 1: Verify JWT
+  let decoded: any;
   try {
-    const secret = process.env.JWT_SECRET as string;
-    if (!secret) throw new Error("JWT_SECRET is missing");
-    const decoded = jwt.verify(token, secret) as any;
-    req.user = decoded; // { userId, username, ... }
-
-    // Support both "userId" (current login payload) and legacy "id"
-    const uid = decoded.userId || decoded.id;
-    if (!uid) {
-      res.status(401).json({ error: "Unauthorized: Token missing user identity" });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("[Workspace Auth] JWT_SECRET is not set!");
+      res.status(500).json({ error: "Server misconfiguration: JWT_SECRET missing" });
       return;
     }
+    decoded = jwt.verify(token, secret);
+  } catch (jwtErr: any) {
+    console.warn("[Workspace Auth] JWT verification failed:", jwtErr.message);
+    res.status(401).json({ error: `Unauthorized: ${jwtErr.message}` });
+    return;
+  }
 
-    // Provision user workspace dynamically
+  req.user = decoded;
+
+  // Step 2: Extract user ID
+  const uid = decoded.userId || decoded.id;
+  if (!uid) {
+    res.status(401).json({ error: "Unauthorized: Token missing user identity" });
+    return;
+  }
+
+  // Step 3: Provision workspace directory
+  try {
     req.userWorkspace = path.join(BASE_WORKSPACES_DIR, uid);
     await fs.mkdir(req.userWorkspace, { recursive: true });
-    
-    next();
-  } catch (err) {
-    res.status(401).json({ error: "Unauthorized: Invalid token" });
+  } catch (fsErr: any) {
+    console.error("[Workspace Auth] Failed to create workspace dir:", fsErr.message);
+    res.status(500).json({ error: `Workspace init failed: ${fsErr.message}` });
+    return;
   }
+  
+  next();
 }
 
 // Sanitize path — prevent directory traversal outside user's isolated workspace

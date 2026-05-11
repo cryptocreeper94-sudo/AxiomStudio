@@ -85,6 +85,15 @@ export default function FileExplorer({ token, onOpenFile }: Props) {
         const ct = res.headers.get("content-type") || "";
         if (ct.includes("application/json")) {
           const errData = await res.json();
+          if (res.status === 401) {
+            // Token is expired or invalid — clear stale session
+            localStorage.removeItem("axiom_token");
+            localStorage.removeItem("axiom_user");
+            localStorage.removeItem("axiom_token_expiry");
+            // Force page reload after a brief delay so user sees the message
+            setTimeout(() => window.location.reload(), 1500);
+            throw new Error((errData.error || "Session expired") + " — reloading...");
+          }
           throw new Error(errData.error || `Error ${res.status}`);
         }
         throw new Error(`Server error (${res.status}) — try refreshing`);
