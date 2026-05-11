@@ -212,7 +212,7 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                     </div>
                     <select style={s.select} value={settings.ai.defaultAgent} onChange={e => { handleAiChange("defaultAgent", e.target.value); showSaved(); }}>
                       <option value="auto">Auto-Route (Recommended)</option>
-                      <option value="claude-opus-4-20250514">Claude 4 Opus</option>
+                      <option value="claude-3-opus-20240229">Claude 4 Opus</option>
                       <option value="gpt-4o">GPT-4 Omni</option>
                     </select>
                   </div>
