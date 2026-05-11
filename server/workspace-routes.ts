@@ -7,8 +7,8 @@
  */
 import { Router } from "express";
 import jwt from "jsonwebtoken";
-import { db } from "./db";
-import { workspaceFiles } from "../shared/schema";
+import { db } from "./db.js";
+import { workspaceFiles } from "../shared/schema.js";
 import { eq, and, like, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import path from "path";
