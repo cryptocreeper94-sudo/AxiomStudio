@@ -84,7 +84,7 @@ export async function classifyMessage(
 
 // Model mapping for each route target
 export const ROUTE_MODELS: Record<RouteTarget, { model: string; provider: string; agentId: string }> = {
-  opus: { model: "claude-opus-4-5", provider: "anthropic", agentId: "opus" },
+  opus: { model: "claude-opus-4-7", provider: "anthropic", agentId: "opus" },
   sonnet: { model: "claude-sonnet-4-5", provider: "anthropic", agentId: "sonnet" },
   mini: { model: "gpt-4o-mini", provider: "openai", agentId: "mini" },
 };
