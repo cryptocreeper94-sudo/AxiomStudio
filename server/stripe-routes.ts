@@ -55,6 +55,18 @@ export function registerStripeRoutes(app: Express): void {
     if (!userId) { res.status(401).json({ error: "Auth required" }); return; }
 
     try {
+      // Owner bypass
+      const [user] = await db.select({ role: chatUsers.role }).from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
+      if (user?.role === "owner") {
+        res.json({
+          credits: 999999,
+          totalPurchased: 0,
+          totalUsed: 0,
+          agentCosts: AGENT_COSTS,
+        });
+        return;
+      }
+
       const [balance] = await db
         .select({
           credits: aiCreditBalances.credits,
