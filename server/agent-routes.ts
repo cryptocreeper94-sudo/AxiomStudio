@@ -27,10 +27,7 @@ import { verifyFirebaseToken } from "./firebase-admin.js";
 // ─── Whitelist Check ─────────────────────────────────────────────────
 
 async function checkWhitelist(email: string, app: string = "axiom-studio"): Promise<{ allowed: boolean; entry?: any }> {
-  // Dev bypass — skip whitelist when not in production
-  if (process.env.NODE_ENV !== "production") {
-    return { allowed: true, entry: { access_level: "full" } };
-  }
+  // Open beta — allow all users. Whitelist is checked but failures are non-blocking.
   try {
     const result = await pool.query(
       `SELECT * FROM ecosystem_whitelist
@@ -40,11 +37,12 @@ async function checkWhitelist(email: string, app: string = "axiom-studio"): Prom
     if (result.rows.length > 0) {
       return { allowed: true, entry: result.rows[0] };
     }
-    return { allowed: false };
+    // Open beta: allow even if not on whitelist
+    return { allowed: true, entry: { access_level: "beta" } };
   } catch (err: any) {
-    // Fail closed in production, fail open in dev
-    console.error("[Whitelist] DB error:", err.message);
-    return { allowed: false };
+    // Table may not exist — allow anyway during open beta
+    console.warn("[Whitelist] Check skipped (open beta):", err.message);
+    return { allowed: true, entry: { access_level: "beta" } };
   }
 }
 
@@ -757,9 +755,9 @@ export function registerAgentRoutes(app: Express): void {
       outputTokens,
     });
 
-    // Update conversation
+    // Update conversation title from first user message
     const title =
-      allHistory.length <= 1
+      allHistory.length <= 2
         ? message.slice(0, 80) + (message.length > 80 ? "..." : "")
         : undefined;
 
@@ -785,35 +783,7 @@ export function registerAgentRoutes(app: Express): void {
     }
   });
 
-  // ── User credit balance ────────────────────────────────────────────
-  app.get("/api/agent/credits", async (req: Request, res: Response) => {
-    const userId = requireAuth(req, res);
-    if (!userId) return;
-
-    // Owner bypass for frontend UI checks
-    const [user] = await db.select({ role: chatUsers.role }).from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
-    if (user?.role === "owner") {
-      res.json({
-        credits: 999999,
-        totalPurchased: 0,
-        totalUsed: 0,
-        unlimited: true
-      });
-      return;
-    }
-
-    const [balance] = await db
-      .select()
-      .from(aiCreditBalances)
-      .where(eq(aiCreditBalances.userId, userId))
-      .limit(1);
-
-    res.json({
-      credits: balance?.credits ?? 0,
-      totalPurchased: balance?.totalPurchased ?? 0,
-      totalUsed: balance?.totalUsed ?? 0,
-    });
-  });
+  // Credit balance is handled exclusively by stripe-routes.ts (includes agentCosts)
 
   console.log("[Axiom Studio] Agent routes registered");
 }

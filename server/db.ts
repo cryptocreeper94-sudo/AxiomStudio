@@ -103,6 +103,17 @@ pool.query("SELECT 1").then(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_credit_trans_user ON ai_credit_transactions(user_id);
 
+      -- Ecosystem whitelist (open beta — table must exist even if unused)
+      CREATE TABLE IF NOT EXISTS ecosystem_whitelist (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL,
+        apps TEXT[] DEFAULT ARRAY['all'],
+        access_level TEXT DEFAULT 'full',
+        active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_whitelist_email ON ecosystem_whitelist(email);
+
       -- Force upgrade specific admin accounts to owner
       UPDATE chat_users SET role = 'owner' WHERE email = 'cryptocreeper94@gmail.com';
 
