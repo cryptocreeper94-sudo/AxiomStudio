@@ -213,8 +213,9 @@ export default function IDELayout() {
     if (!token || !content.trim() || isStreaming) return;
     setIsStreaming(true); // Lock immediately to prevent double-clicks
     
-    // Check credits before doing anything
-    const cost = creditData?.agentCosts?.[activeAgentId]?.credits ?? 0;
+    // Check credits before doing anything (skip for auto-route and free agents)
+    const agentCost = creditData?.agentCosts?.[activeAgentId];
+    const cost = activeAgentId === "auto" ? 0 : (agentCost?.credits ?? 0);
     const currentBalance = creditData?.credits ?? 0;
     if (cost > 0 && currentBalance < cost) {
       setMessages(prev => [...prev, {
@@ -301,12 +302,15 @@ export default function IDELayout() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = "";
+      let sseBuffer = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
-        for (const line of lines) {
+        sseBuffer += decoder.decode(value, { stream: true });
+        const parts = sseBuffer.split("\n");
+        sseBuffer = parts.pop() || ""; // Keep incomplete line in buffer
+        for (const line of parts) {
+          if (!line.startsWith("data: ")) continue;
           const payload = line.slice(6);
           if (payload === "[DONE]") continue;
           try {
@@ -315,7 +319,7 @@ export default function IDELayout() {
             if (parsed.type === "token" && parsed.token) { fullContent += parsed.token; setStreamingContent(fullContent); }
             if (parsed.type === "route") setRouteInfo(parsed);
             if (parsed.type === "error") { fullContent += `\n\n⚠️ ${parsed.error}`; setStreamingContent(fullContent); }
-          } catch { fullContent += payload; setStreamingContent(fullContent); }
+          } catch { /* incomplete JSON, will be buffered */ }
         }
       }
       const assistantMsg: Message = {

@@ -223,10 +223,10 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
     });
   }, [msg.content, isUser, onApply, activeFileName]);
 
-  const modelShort = msg.model?.includes("opus") ? "Opus 4"
-    : msg.model?.includes("sonnet") ? "Sonnet 4"
+  const modelShort = msg.model?.includes("claude-3-opus") ? "Claude 3 Opus"
+    : msg.model?.includes("claude-3-5-sonnet") ? "Claude 3.5 Sonnet"
     : msg.model?.includes("4.1") ? "GPT-4.1"
-    : msg.model?.includes("4o-mini") ? "4o Mini"
+    : msg.model?.includes("4o-mini") ? "GPT-4o Mini"
     : msg.model || "";
 
   return (

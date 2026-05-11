@@ -111,8 +111,9 @@ export default function AgentPanel() {
   const handleSend = useCallback(async (message: string, contextFiles?: string[]) => {
     if (!token || isStreaming) return;
 
-    // Check credits before doing anything
-    const cost = creditData?.agentCosts?.[activeAgentId]?.credits ?? 0;
+    // Check credits before doing anything (skip for auto-route and free agents)
+    const agentCost = creditData?.agentCosts?.[activeAgentId];
+    const cost = activeAgentId === "auto" ? 0 : (agentCost?.credits ?? 0);
     const currentBalance = creditData?.credits ?? 0;
     if (cost > 0 && currentBalance < cost) {
       setMessages(prev => [...prev, {
