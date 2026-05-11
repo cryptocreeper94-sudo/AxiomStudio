@@ -212,8 +212,9 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                     </div>
                     <select style={s.select} value={settings.ai.defaultAgent} onChange={e => { handleAiChange("defaultAgent", e.target.value); showSaved(); }}>
                       <option value="auto">Auto-Route (Recommended)</option>
-                      <option value="claude-3-opus-20240229">Claude 4 Opus</option>
-                      <option value="gpt-4o">GPT-4 Omni</option>
+                      <option value="claude-opus-4-7">Claude Opus 4.7 (Best)</option>
+                      <option value="claude-sonnet-4-5">Claude Sonnet 4 (Fast)</option>
+                      <option value="gpt-4.1">GPT-4.1</option>
                     </select>
                   </div>
 
@@ -258,8 +259,8 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                   <div style={{ padding: 20, borderRadius: 12, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
                       <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Current Balance</div>
-                      <div style={{ fontSize: 28, fontWeight: 700, color: credits !== undefined && credits > 20 ? "#06b6d4" : "#f87171" }}>
-                        {credits ?? 0} <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>credits</span>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: credits !== undefined && credits > 200 ? "#06b6d4" : credits !== undefined && credits > 50 ? "#f59e0b" : "#f87171" }}>
+                        {(credits ?? 0).toLocaleString()} <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>credits</span>
                       </div>
                     </div>
                     {onOpenCredits && (
@@ -280,20 +281,23 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                     <h3 style={{ fontSize: 14, fontWeight: 600, color: "white", margin: "0 0 15px 0" }}>Agent Pricing</h3>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom (Opus)</span>
-                        <span style={{ color: "#a855f7", fontWeight: 600 }}>10 credits / msg</span>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom (Opus 4.7)</span>
+                        <span style={{ color: "#a855f7", fontWeight: 600 }}>27 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet)</span>
-                        <span style={{ color: "#06b6d4", fontWeight: 600 }}>3 credits / msg</span>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet 4)</span>
+                        <span style={{ color: "#06b6d4", fontWeight: 600 }}>5 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom GPT (GPT-4.1)</span>
-                        <span style={{ color: "#4ade80", fontWeight: 600 }}>6 credits / msg</span>
+                        <span style={{ color: "#4ade80", fontWeight: 600 }}>8 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Free (Mini)</span>
                         <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>Free</span>
+                      </div>
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+                        $0.01 per credit &middot; Credits never expire
                       </div>
                     </div>
                   </div>

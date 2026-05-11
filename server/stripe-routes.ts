@@ -275,6 +275,54 @@ export function registerStripeRoutes(app: Express): void {
             });
 
             console.log(`[Stripe] Credit purchase: user=${userId} pack=${packId} credits=+${credits} balance=${newBalance}`);
+
+            // Send purchase confirmation email via Resend
+            const resendKey = process.env.RESEND_API_KEY;
+            if (resendKey) {
+              try {
+                const userRow = await db.select({ email: chatUsers.email, displayName: chatUsers.displayName })
+                  .from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
+                const userEmail = userRow[0]?.email;
+                const userName = userRow[0]?.displayName || "there";
+                if (userEmail) {
+                  await fetch("https://api.resend.com/emails", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
+                    body: JSON.stringify({
+                      from: "Axiom Studio <billing@axiomstudio.dev>",
+                      to: userEmail,
+                      subject: `Your ${credits.toLocaleString()} Axiom credits are ready`,
+                      html: `
+                        <div style="font-family:-apple-system,sans-serif;max-width:520px;margin:0 auto;background:#0d1117;color:#e2e8f0;border-radius:16px;overflow:hidden;">
+                          <div style="background:linear-gradient(135deg,#06b6d4,#a855f7);padding:32px;text-align:center;">
+                            <h1 style="margin:0;font-size:24px;font-weight:800;color:white;">Credits Added ⚡</h1>
+                          </div>
+                          <div style="padding:32px;">
+                            <p style="font-size:16px;color:#94a3b8;margin:0 0 24px;">Hey ${userName},</p>
+                            <p style="font-size:15px;color:#cbd5e1;line-height:1.6;">Your <strong style="color:#06b6d4;">${credits.toLocaleString()} credits</strong> from the <strong>${packId}</strong> pack have been added to your account.</p>
+                            <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
+                              <div style="font-size:36px;font-weight:800;color:#06b6d4;">${newBalance.toLocaleString()}</div>
+                              <div style="font-size:13px;color:#64748b;margin-top:4px;">Total credits available</div>
+                            </div>
+                            <p style="font-size:13px;color:#475569;">Credits never expire. Use them on any Axiom agent at any time.</p>
+                            <div style="text-align:center;margin-top:28px;">
+                              <a href="https://axiomstudio.dev" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#06b6d4,#a855f7);color:white;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">Open Axiom Studio</a>
+                            </div>
+                          </div>
+                          <div style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+                            <p style="font-size:11px;color:#334155;margin:0;">DarkWave Studios LLC &middot; <a href="https://axiomstudio.dev" style="color:#06b6d4;">axiomstudio.dev</a></p>
+                          </div>
+                        </div>
+                      `,
+                    }),
+                  });
+                  console.log(`[Resend] Purchase confirmation sent to ${userEmail}`);
+                }
+              } catch (emailErr: any) {
+                console.warn("[Resend] Email failed (non-fatal):", emailErr.message);
+              }
+            }
+
           }
         } else if (meta.type === "axiom_subscription") {
           // ── Legacy subscription handling ──
