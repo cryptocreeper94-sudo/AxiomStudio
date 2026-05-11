@@ -140,3 +140,17 @@ export const AGENT_CREDIT_COSTS = {
   "agent-mini": { credits: 0, label: "GPT-4o-mini (Free)" },
   "agent-lume": { credits: 3, label: "Lume Agent Message" },
 } as const;
+
+// ============ WORKSPACE STORAGE ============
+
+export const workspaceFiles = pgTable("workspace_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(), // References chat_users(id)
+  filePath: text("file_path").notNull(),
+  content: text("content").notNull().default(""),
+  isDirectory: boolean("is_directory").notNull().default(false),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+

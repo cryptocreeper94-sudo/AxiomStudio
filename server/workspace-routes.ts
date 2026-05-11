@@ -1,33 +1,19 @@
 /**
- * Axiom Studio — Workspace File System Routes
+ * Axiom Studio — Workspace File System Routes (Database Backed)
  * Server-side proxy for reading/writing workspace files.
  * 
- * SECURITY: All routes require auth. File paths sandboxed to BASE_WORKSPACES_DIR / userId.
+ * SECURITY: All routes require auth.
  * DarkWave Studios LLC — Copyright 2026
  */
 import { Router } from "express";
-import fs from "fs/promises";
-import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
 import jwt from "jsonwebtoken";
+import { db } from "./db";
+import { workspaceFiles } from "../shared/schema";
+import { eq, and, like, or } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import path from "path";
 
-const execAsync = promisify(exec);
 const router = Router();
-
-// Base directory for all workspaces
-// On Render/production, the project dir is read-only — use /tmp/workspaces
-const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT
-  || (process.env.NODE_ENV === "production" ? "/tmp/workspaces" : path.resolve(process.cwd(), "workspaces"));
-const JWT_SECRET = process.env.JWT_SECRET as string;
-if (!JWT_SECRET) {
-  console.error("[Workspace] FATAL: JWT_SECRET env var is not set. All workspace requests will fail.");
-}
-
-// Ensure base workspaces directory exists
-fs.mkdir(BASE_WORKSPACES_DIR, { recursive: true })
-  .then(() => console.log(`[Workspace] Multi-Tenant Root: ${BASE_WORKSPACES_DIR}`))
-  .catch((e) => console.warn(`[Workspace] Could not create root dir: ${e.message}`));
 
 // Auth middleware - strict JWT validation
 async function requireAuth(req: any, res: any, next: any) {
@@ -63,106 +49,185 @@ async function requireAuth(req: any, res: any, next: any) {
     res.status(401).json({ error: "Unauthorized: Token missing user identity" });
     return;
   }
-
-  // Step 3: Provision workspace directory
-  try {
-    req.userWorkspace = path.join(BASE_WORKSPACES_DIR, uid);
-    await fs.mkdir(req.userWorkspace, { recursive: true });
-  } catch (fsErr: any) {
-    console.error("[Workspace Auth] Failed to create workspace dir:", fsErr.message);
-    res.status(500).json({ error: `Workspace init failed: ${fsErr.message}` });
-    return;
-  }
+  
+  // Store the UID on the request
+  req.uid = uid;
   
   next();
 }
 
-// Sanitize path — prevent directory traversal outside user's isolated workspace
-function safePath(userWorkspace: string, reqPath: string): string | null {
-  const resolved = path.resolve(userWorkspace, reqPath || ".");
-  if (!resolved.startsWith(userWorkspace)) return null;
-  return resolved;
+// Sanitize path — prevent directory traversal
+function isSafePath(reqPath: string): boolean {
+  if (!reqPath) return false;
+  // Prevent directory traversal by normalizing posix path
+  const normalized = path.posix.normalize(reqPath);
+  if (normalized.startsWith("..") || normalized.startsWith("/")) return false;
+  return true;
+}
+
+function normalizePath(p: string): string {
+  if (!p || p === ".") return "";
+  return path.posix.normalize(p).replace(/\/$/, "");
 }
 
 // GET /api/workspace/tree — Directory tree
 router.get("/tree", requireAuth, async (req: any, res) => {
   try {
-    const tree = await buildTree(req.userWorkspace, req.userWorkspace, "workspace");
-    res.json(tree);
+    const files = await db.select({
+      filePath: workspaceFiles.filePath,
+      isDirectory: workspaceFiles.isDirectory,
+    }).from(workspaceFiles).where(eq(workspaceFiles.userId, req.uid));
+
+    // Build tree structure
+    const root: any = { name: "workspace", path: ".", type: "directory", children: [] };
+    
+    // Create a map to easily look up directories
+    const dirMap = new Map<string, any>();
+    dirMap.set("", root);
+
+    // Sort files to ensure parent dirs come before children (shortest path first)
+    files.sort((a, b) => a.filePath.length - b.filePath.length);
+
+    for (const file of files) {
+      const parts = file.filePath.split("/");
+      const name = parts.pop()!;
+      const parentPath = parts.join("/");
+
+      // If parent dir doesn't exist in map yet, we might need to create virtual parents
+      let currentParentPath = "";
+      let currentParent = root;
+      
+      for (const part of parts) {
+        currentParentPath = currentParentPath ? `${currentParentPath}/${part}` : part;
+        if (!dirMap.has(currentParentPath)) {
+          const newDir = { name: part, path: currentParentPath, type: "directory", children: [] };
+          currentParent.children.push(newDir);
+          dirMap.set(currentParentPath, newDir);
+        }
+        currentParent = dirMap.get(currentParentPath);
+      }
+
+      // Add the actual file/dir
+      if (file.isDirectory) {
+        if (!dirMap.has(file.filePath)) {
+          const dirNode = { name, path: file.filePath, type: "directory", children: [] };
+          currentParent.children.push(dirNode);
+          dirMap.set(file.filePath, dirNode);
+        }
+      } else {
+        currentParent.children.push({ name, path: file.filePath, type: "file" });
+      }
+    }
+
+    // Sort children
+    const sortChildren = (node: any) => {
+      node.children.sort((a: any, b: any) => {
+        if (a.type === "directory" && b.type === "file") return -1;
+        if (a.type === "file" && b.type === "directory") return 1;
+        return a.name.localeCompare(b.name);
+      });
+      for (const child of node.children) {
+        if (child.type === "directory") {
+          sortChildren(child);
+        }
+      }
+    };
+    sortChildren(root);
+
+    res.json(root);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-async function buildTree(userWorkspace: string, dirPath: string, name: string, depth = 0): Promise<any> {
-  if (depth > 6) return { name, path: path.relative(userWorkspace, dirPath).replace(/\\/g, "/"), type: "directory", children: [] };
-  
-  const entries = await fs.readdir(dirPath, { withFileTypes: true });
-  const children = [];
-  
-  // Sort: directories first, then files, alphabetical
-  const sorted = entries
-    .filter(e => !e.name.startsWith(".") && e.name !== "node_modules" && e.name !== "dist" && e.name !== ".git")
-    .sort((a, b) => {
-      if (a.isDirectory() && !b.isDirectory()) return -1;
-      if (!a.isDirectory() && b.isDirectory()) return 1;
-      return a.name.localeCompare(b.name);
-    });
-
-  for (const entry of sorted) {
-    const fullPath = path.join(dirPath, entry.name);
-    const relPath = path.relative(userWorkspace, fullPath).replace(/\\/g, "/");
-    
-    if (entry.isDirectory()) {
-      children.push(await buildTree(userWorkspace, fullPath, entry.name, depth + 1));
-    } else {
-      children.push({ name: entry.name, path: relPath, type: "file" });
-    }
-  }
-
-  return {
-    name,
-    path: path.relative(userWorkspace, dirPath).replace(/\\/g, "/") || ".",
-    type: "directory",
-    children,
-  };
-}
-
 // GET /api/workspace/file?path=... — Read file
 router.get("/file", requireAuth, async (req: any, res) => {
-  const filePath = safePath(req.userWorkspace, req.query.path as string);
-  if (!filePath) { res.status(400).json({ error: "Invalid path" }); return; }
+  const reqPath = normalizePath(req.query.path as string);
+  if (!isSafePath(reqPath) || reqPath === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
-    const content = await fs.readFile(filePath, "utf-8");
-    res.json({ content, path: req.query.path });
+    const records = await db.select()
+      .from(workspaceFiles)
+      .where(and(
+        eq(workspaceFiles.userId, req.uid),
+        eq(workspaceFiles.filePath, reqPath)
+      ))
+      .limit(1);
+
+    if (records.length === 0) {
+      res.status(404).json({ error: `File not found: ${reqPath}` });
+      return;
+    }
+
+    res.json({ content: records[0].content, path: reqPath });
   } catch (err: any) {
-    res.status(404).json({ error: `File not found: ${req.query.path}` });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // PUT /api/workspace/file — Write file
 router.put("/file", requireAuth, async (req: any, res) => {
-  const { path: reqPath, content } = req.body;
-  const filePath = safePath(req.userWorkspace, reqPath);
-  if (!filePath) { res.status(400).json({ error: "Invalid path" }); return; }
+  const reqPath = normalizePath(req.body.path);
+  const content = req.body.content || "";
+  
+  if (!isSafePath(reqPath) || reqPath === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, content, "utf-8");
+    // Upsert the file
+    await db.insert(workspaceFiles)
+      .values({
+        userId: req.uid,
+        filePath: reqPath,
+        content: content,
+        isDirectory: false,
+        sizeBytes: Buffer.byteLength(content, 'utf8')
+      })
+      .onConflictDoUpdate({
+        target: [workspaceFiles.userId, workspaceFiles.filePath],
+        set: { 
+          content: content,
+          sizeBytes: Buffer.byteLength(content, 'utf8'),
+          updatedAt: sql`NOW()`
+        }
+      });
+
+    // Also optionally ensure parent directories exist
+    const parentParts = reqPath.split("/");
+    parentParts.pop(); // Remove file name
+    let currentPath = "";
+    
+    for (const part of parentParts) {
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      await db.insert(workspaceFiles)
+        .values({
+          userId: req.uid,
+          filePath: currentPath,
+          isDirectory: true
+        })
+        .onConflictDoNothing();
+    }
+
     res.json({ success: true, path: reqPath });
   } catch (err: any) {
+    console.error("[Workspace PUT error]", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // POST /api/workspace/mkdir — Create directory
 router.post("/mkdir", requireAuth, async (req: any, res) => {
-  const dirPath = safePath(req.userWorkspace, req.body.path);
-  if (!dirPath) { res.status(400).json({ error: "Invalid path" }); return; }
+  const dirPath = normalizePath(req.body.path);
+  if (!isSafePath(dirPath) || dirPath === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
-    await fs.mkdir(dirPath, { recursive: true });
+    await db.insert(workspaceFiles)
+      .values({
+        userId: req.uid,
+        filePath: dirPath,
+        isDirectory: true
+      })
+      .onConflictDoNothing();
+      
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -171,20 +236,19 @@ router.post("/mkdir", requireAuth, async (req: any, res) => {
 
 // DELETE /api/workspace/file — Delete file or directory
 router.delete("/file", requireAuth, async (req: any, res) => {
-  const filePath = safePath(req.userWorkspace, req.query.path as string);
-  if (!filePath) { res.status(400).json({ error: "Invalid path" }); return; }
+  const reqPath = normalizePath(req.query.path as string);
+  if (!isSafePath(reqPath) || reqPath === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
   try {
-    const stat = await fs.stat(filePath);
-    if (stat.isDirectory()) {
-      await fs.rm(filePath, { recursive: true });
-    } else {
-      await fs.unlink(filePath);
-    }
+    // Delete the file itself and any nested children if it's a directory
+    const pattern = `${reqPath}/%`;
+    await db.execute(
+      sql`DELETE FROM workspace_files WHERE user_id = ${req.uid} AND (file_path = ${reqPath} OR file_path LIKE ${pattern})`
+    );
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-  export default router;
+export default router;
