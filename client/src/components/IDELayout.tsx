@@ -42,7 +42,7 @@ export default function IDELayout() {
 
   // Chat state (preserved from AgentPanel)
   const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
-  const [activeAgentId, setActiveAgentId] = useState("opus");
+  const [activeAgentId, setActiveAgentId] = useState("auto");
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
