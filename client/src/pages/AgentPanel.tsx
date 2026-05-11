@@ -35,7 +35,9 @@ interface Message {
 export default function AgentPanel() {
   const { token, user, login, signup, logout } = useAuth();
   const queryClient = useQueryClient();
-  const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
+  const [activeConvoId, setActiveConvoId] = useState<string | null>(() => {
+    try { return localStorage.getItem('axiom_active_convo') || null; } catch { return null; }
+  });
   const [activeAgentId, setActiveAgentId] = useState("auto");
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
@@ -51,6 +53,14 @@ export default function AgentPanel() {
   useEffect(() => {
     trackPageView("/studio");
   }, []);
+
+  // Persist active conversation to localStorage
+  useEffect(() => {
+    try {
+      if (activeConvoId) localStorage.setItem('axiom_active_convo', activeConvoId);
+      else localStorage.removeItem('axiom_active_convo');
+    } catch {}
+  }, [activeConvoId]);
 
   // Fetch agents
   const { data: agents = [] } = useQuery({
@@ -294,10 +304,7 @@ export default function AgentPanel() {
           sidebarOpen={sidebarOpen}
         />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
-          {/* DEBUG BAR — remove after fix */}
-          <div style={{ background: "#ff006620", border: "1px solid #ff0066", padding: "4px 8px", fontSize: "11px", fontFamily: "monospace", color: "#ff88aa" }}>
-            🐛 convoId: {activeConvoId || "NULL"} | streaming: {String(isStreaming)} | msgs: {messages.length}
-          </div>
+
           {/* Toolbar */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
