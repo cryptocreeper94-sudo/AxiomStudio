@@ -4,8 +4,11 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 import { useState, useEffect } from "react";
-import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone } from "lucide-react";
+import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone, ChevronDown } from "lucide-react";
 import "./landing.css";
+
+const SLIDES = ["/bg/slide-1.png", "/bg/slide-2.png", "/bg/slide-3.png", "/bg/slide-4.png"];
+const SLIDE_DURATION = 7000;
 
 const FEATURES = [
   { icon: <Bot className="w-5 h-5" />, bg: "rgba(6, 182, 212, 0.12)", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, GPT-4o — switch models mid-conversation. Each agent remembers context." },
@@ -26,11 +29,26 @@ const AGENTS = [
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  // Fix body scroll — override the IDE's overflow:hidden
+  useEffect(() => {
+    document.body.classList.add("landing-page-active");
+    return () => document.body.classList.remove("landing-page-active");
+  }, []);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  // Ken Burns slideshow timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % SLIDES.length);
+    }, SLIDE_DURATION);
+    return () => clearInterval(timer);
   }, []);
 
   const copyCmd = () => {
@@ -58,8 +76,25 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ── */}
+      {/* ── Hero with Ken Burns ── */}
       <section className="landing-hero">
+        {/* Ken Burns Slides */}
+        {SLIDES.map((src, i) => (
+          <div
+            key={i}
+            className="hero-slide"
+            style={{
+              backgroundImage: `url(${src})`,
+              opacity: i === activeSlide ? 1 : 0,
+              animation: `kenburns-${(i % 4) + 1} ${SLIDE_DURATION}ms ease-in-out infinite alternate`,
+            }}
+          />
+        ))}
+        {/* Dark cinematic overlay */}
+        <div className="hero-overlay" />
+        {/* Color wash */}
+        <div className="hero-color-wash" />
+
         {/* Particles */}
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} className="particle" />
@@ -111,6 +146,11 @@ export default function LandingPage() {
               <span className="str">✓ AI agents ready</span>
             </pre>
           </div>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="scroll-hint">
+          <ChevronDown className="w-6 h-6" />
         </div>
       </section>
 
