@@ -6,6 +6,7 @@ import fs from "fs";
 
 let pty: any = null;
 try {
+  // @ts-ignore
   pty = await import("node-pty");
 } catch {
   console.warn("[PTY] node-pty not available — terminal disabled in this environment");
