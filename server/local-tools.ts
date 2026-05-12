@@ -579,6 +579,7 @@ let browserPage: any = null;
 
 async function getBrowser() {
   if (browserInstance && browserPage) return { browser: browserInstance, page: browserPage };
+  // @ts-ignore
   const puppeteer = await import("puppeteer");
   browserInstance = await puppeteer.default.launch({
     headless: true,
