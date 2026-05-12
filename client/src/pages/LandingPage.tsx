@@ -107,8 +107,8 @@ export default function LandingPage() {
           </div>
 
           <h1 className="hero-title">
-            The AI IDE That<br />
-            <span className="gradient">Lives On Your Machine</span>
+            The Code Editor That<br />
+            <span className="gradient">Thinks With You</span>
           </h1>
 
           <p className="hero-sub">
