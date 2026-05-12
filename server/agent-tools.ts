@@ -9,6 +9,10 @@
 
 import { exec } from "child_process";
 import { promisify } from "util";
+import { readFileSync, readdirSync, statSync, existsSync, rmSync, mkdirSync } from "fs";
+import { join, relative, extname } from "path";
+import { tmpdir } from "os";
+import { randomUUID } from "crypto";
 import { db } from "./db.js";
 import { workspaceFiles } from "../shared/schema.js";
 import { eq, and, like, ilike } from "drizzle-orm";
@@ -107,6 +111,25 @@ export const ANTHROPIC_TOOLS: any[] = [
       required: ["command"],
     },
   },
+  {
+    name: "import_github",
+    description:
+      "Import a public GitHub repository into the user's cloud workspace. Clones the repo, reads all text files, and stores them persistently in the workspace database. Use this when the user wants to work with an existing project. Supports public repos only.",
+    input_schema: {
+      type: "object",
+      properties: {
+        repo_url: {
+          type: "string",
+          description: "GitHub repository URL, e.g. 'https://github.com/user/repo' or 'user/repo'",
+        },
+        target_dir: {
+          type: "string",
+          description: "Optional subdirectory in workspace to import into, e.g. 'my-project'. Defaults to repo name.",
+        },
+      },
+      required: ["repo_url"],
+    },
+  },
 ];
 
 // OpenAI function-calling format (wraps Anthropic defs)
@@ -142,6 +165,11 @@ export async function executeTool(
           return "Error: run_command is restricted to owner accounts only.";
         }
         return await toolRunCommand(args.command, args.cwd);
+      case "import_github":
+        if (userRole !== "owner") {
+          return "Error: import_github is restricted to owner accounts only.";
+        }
+        return await toolImportGitHub(args.repo_url, args.target_dir, userId);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -347,4 +375,168 @@ async function toolRunCommand(command: string, cwd?: string): Promise<string> {
 
 function normalizePath(p: string): string {
   return p.replace(/^\/+/, "").replace(/\\/g, "/").replace(/\/+$/, "").trim();
+}
+
+// ─── import_github (owner-only) ────────────────────────────────────────
+
+const SKIP_DIRS = new Set([".git", "node_modules", "dist", ".next", "__pycache__", ".venv", "vendor", "build"]);
+const BINARY_EXTS = new Set([
+  ".png", ".jpg", ".jpeg", ".gif", ".ico", ".webp", ".svg", ".bmp",
+  ".mp3", ".mp4", ".wav", ".ogg", ".webm", ".avi",
+  ".zip", ".tar", ".gz", ".rar", ".7z",
+  ".woff", ".woff2", ".ttf", ".eot", ".otf",
+  ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+  ".exe", ".dll", ".so", ".dylib", ".bin",
+  ".pyc", ".class", ".o", ".a",
+  ".glb", ".gltf", ".fbx", ".obj",
+  ".lock",
+]);
+const MAX_FILE_SIZE = 512 * 1024; // 512KB per file
+const MAX_FILES = 2000;
+
+async function toolImportGitHub(
+  repoUrl: string,
+  targetDir: string | undefined,
+  userId: string
+): Promise<string> {
+  if (!repoUrl) return "Error: repo_url is required";
+
+  // Normalize URL
+  let url = repoUrl.trim();
+  if (!url.startsWith("http")) {
+    url = `https://github.com/${url}`;
+  }
+  url = url.replace(/\.git$/, "");
+  if (!url.includes("github.com")) {
+    return "Error: Only GitHub repositories are supported. Provide a URL like https://github.com/user/repo";
+  }
+
+  // Extract repo name for default target dir
+  const repoName = url.split("/").pop() || "project";
+  const dest = targetDir || repoName;
+
+  // Create temp directory
+  const tmpDir = join(tmpdir(), `axiom-import-${randomUUID()}`);
+
+  try {
+    mkdirSync(tmpDir, { recursive: true });
+
+    // Clone (shallow, single branch for speed)
+    console.log(`[Import] Cloning ${url} → ${tmpDir}`);
+    await execAsync(`git clone --depth 1 --single-branch "${url}.git" repo`, {
+      cwd: tmpDir,
+      timeout: 60000, // 60s for large repos
+      maxBuffer: 1024 * 1024,
+    });
+
+    const repoDir = join(tmpDir, "repo");
+    if (!existsSync(repoDir)) {
+      return "Error: Clone failed — repository not found or is private.";
+    }
+
+    // Walk the repo and collect text files
+    const files: { path: string; content: string }[] = [];
+
+    function walkDir(dir: string) {
+      if (files.length >= MAX_FILES) return;
+      let entries: string[];
+      try {
+        entries = readdirSync(dir);
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (SKIP_DIRS.has(entry)) continue;
+        const fullPath = join(dir, entry);
+        let stat;
+        try {
+          stat = statSync(fullPath);
+        } catch {
+          continue;
+        }
+        if (stat.isDirectory()) {
+          walkDir(fullPath);
+        } else if (stat.isFile()) {
+          const ext = extname(entry).toLowerCase();
+          if (BINARY_EXTS.has(ext)) continue;
+          if (stat.size > MAX_FILE_SIZE) continue;
+          if (stat.size === 0) continue;
+
+          try {
+            const content = readFileSync(fullPath, "utf-8");
+            // Skip files that look binary (contain null bytes)
+            if (content.includes("\0")) continue;
+            const relPath = relative(repoDir, fullPath).replace(/\\/g, "/");
+            files.push({ path: `${dest}/${relPath}`, content });
+          } catch {
+            // Skip unreadable files
+          }
+        }
+      }
+    }
+
+    walkDir(repoDir);
+
+    if (files.length === 0) {
+      return "Error: No importable text files found in the repository.";
+    }
+
+    // Insert all files into workspace_files
+    let imported = 0;
+    for (const file of files) {
+      const sizeBytes = Buffer.byteLength(file.content, "utf8");
+
+      // Ensure parent directories exist
+      const parts = file.path.split("/");
+      for (let i = 1; i < parts.length; i++) {
+        const dirPath = parts.slice(0, i).join("/");
+        await db.insert(workspaceFiles).values({
+          userId,
+          filePath: dirPath,
+          isDirectory: true,
+          content: "",
+          sizeBytes: 0,
+        }).onConflictDoNothing();
+      }
+
+      // Upsert file
+      const existing = await db
+        .select({ id: workspaceFiles.id })
+        .from(workspaceFiles)
+        .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, file.path)))
+        .limit(1);
+
+      if (existing.length) {
+        await db
+          .update(workspaceFiles)
+          .set({ content: file.content, sizeBytes, updatedAt: new Date() })
+          .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, file.path)));
+      } else {
+        await db.insert(workspaceFiles).values({
+          userId,
+          filePath: file.path,
+          isDirectory: false,
+          content: file.content,
+          sizeBytes,
+        });
+      }
+      imported++;
+    }
+
+    console.log(`[Import] Successfully imported ${imported} files from ${url} → ${dest}/`);
+    return `Successfully imported ${imported} files from ${url} into "${dest}/". Use list_directory("${dest}") to browse the project.`;
+
+  } catch (err: any) {
+    if (err.message?.includes("not found") || err.stderr?.includes("not found")) {
+      return "Error: Repository not found. Make sure it's a valid public GitHub URL.";
+    }
+    return `Error importing repository: ${err.message}`;
+  } finally {
+    // Clean up temp directory
+    try {
+      rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup
+    }
+  }
 }
