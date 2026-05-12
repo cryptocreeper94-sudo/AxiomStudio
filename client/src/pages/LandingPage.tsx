@@ -166,9 +166,6 @@ export default function LandingPage() {
         </p>
 
         <div className="feature-carousel">
-          <button className="carousel-arrow carousel-prev" onClick={() => setFeatureIdx((featureIdx - 1 + FEATURES.length) % FEATURES.length)}>
-            <ChevronLeft className="w-5 h-5" />
-          </button>
           <div className="carousel-track">
             {FEATURES.map((f, i) => {
               const offset = (i - featureIdx + FEATURES.length) % FEATURES.length;
@@ -196,17 +193,22 @@ export default function LandingPage() {
               );
             })}
           </div>
-          <button className="carousel-arrow carousel-next" onClick={() => setFeatureIdx((featureIdx + 1) % FEATURES.length)}>
-            <ChevronRight className="w-5 h-5" />
-          </button>
-          <div className="carousel-dots">
-            {FEATURES.map((_, i) => (
-              <button
-                key={i}
-                className={`carousel-dot ${i === featureIdx ? "active" : ""}`}
-                onClick={() => setFeatureIdx(i)}
-              />
-            ))}
+          <div className="carousel-controls">
+            <button className="carousel-arrow" onClick={() => setFeatureIdx((featureIdx - 1 + FEATURES.length) % FEATURES.length)}>
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="carousel-dots">
+              {FEATURES.map((_, i) => (
+                <button
+                  key={i}
+                  className={`carousel-dot ${i === featureIdx ? "active" : ""}`}
+                  onClick={() => setFeatureIdx(i)}
+                />
+              ))}
+            </div>
+            <button className="carousel-arrow" onClick={() => setFeatureIdx((featureIdx + 1) % FEATURES.length)}>
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </section>

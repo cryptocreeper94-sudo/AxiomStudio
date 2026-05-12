@@ -383,8 +383,9 @@ html { scroll-behavior: smooth; }
 .feature-carousel {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 .carousel-track {
@@ -452,14 +453,17 @@ html { scroll-behavior: smooth; }
   color: white;
 }
 
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
 .carousel-dots {
   display: flex;
-  justify-content: center;
+  align-items: center;
   gap: 8px;
-  position: absolute;
-  bottom: -2rem;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 .carousel-dot {
