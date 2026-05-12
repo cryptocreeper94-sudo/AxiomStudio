@@ -134,7 +134,7 @@ html { scroll-behavior: smooth; }
   z-index: 1;
   background:
     radial-gradient(ellipse at 30% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+    radial-gradient(ellipse at 70% 80%, rgba(140, 20, 40, 0.06) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -221,7 +221,7 @@ html { scroll-behavior: smooth; }
 }
 
 .hero-title .gradient {
-  background: linear-gradient(135deg, #06b6d4 0%, #a855f7 40%, #38bdf8 70%, #06b6d4 100%);
+  background: linear-gradient(135deg, #06b6d4 0%, #1e3a8a 40%, #38bdf8 70%, #06b6d4 100%);
   background-size: 300% 300%;
   animation: gradient-shift 8s ease infinite;
   -webkit-background-clip: text;
@@ -379,26 +379,105 @@ html { scroll-behavior: smooth; }
   margin-bottom: 3rem;
 }
 
-/* ── Feature Grid ── */
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+/* ── Feature Carousel ── */
+.feature-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.feature-card {
-  padding: 2rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.3s ease;
+.carousel-track {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
 }
 
-.feature-card:hover {
+.feature-slide {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 380px;
+  margin-left: -190px;
+  padding: 2.5rem;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(6, 182, 212, 0.2);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.feature-slide.active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(6, 182, 212, 0.15);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 60px rgba(6, 182, 212, 0.06);
+}
+
+.feature-slide h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.feature-slide p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.carousel-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.carousel-arrow:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: rgba(6, 182, 212, 0.3);
+  color: white;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  position: absolute;
+  bottom: -2rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0;
+}
+
+.carousel-dot.active {
+  background: #06b6d4;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+  width: 20px;
+  border-radius: 4px;
 }
 
 .feature-icon {
@@ -567,8 +646,19 @@ html { scroll-behavior: smooth; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .feature-grid {
-    grid-template-columns: 1fr;
+  .feature-slide {
+    width: 280px;
+    margin-left: -140px;
+    padding: 1.75rem;
+  }
+
+  .carousel-arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .carousel-track {
+    height: 220px;
   }
 
   .install-block {
@@ -654,7 +744,7 @@ html { scroll-behavior: smooth; }
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #06b6d4, #a855f7);
+  background: linear-gradient(135deg, #06b6d4, #1e3a8a);
   display: flex;
   align-items: center;
   justify-content: center;
