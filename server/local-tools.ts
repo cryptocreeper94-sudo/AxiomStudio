@@ -167,6 +167,38 @@ export const LOCAL_ANTHROPIC_TOOLS: any[] = [
       required: ["url"],
     },
   },
+  {
+    name: "browser_action",
+    description:
+      "Control a headless browser. Navigate to URLs, click elements, type text, take screenshots, and read page content. The browser persists between calls.",
+    input_schema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: ["navigate", "click", "type", "screenshot", "read_page", "close"],
+          description: "The browser action to perform",
+        },
+        url: {
+          type: "string",
+          description: "URL to navigate to (for 'navigate' action)",
+        },
+        selector: {
+          type: "string",
+          description: "CSS selector for the element to interact with (for 'click' and 'type' actions)",
+        },
+        text: {
+          type: "string",
+          description: "Text to type into the element (for 'type' action)",
+        },
+        save_path: {
+          type: "string",
+          description: "File path to save screenshot (for 'screenshot' action). Defaults to workspace/screenshot.png",
+        },
+      },
+      required: ["action"],
+    },
+  },
 ];
 
 // OpenAI function-calling format
@@ -221,6 +253,8 @@ export async function executeLocalTool(
         return await localWebSearch(args.query);
       case "browse_url":
         return await localBrowseUrl(args.url);
+      case "browser_action":
+        return await localBrowserAction(args.action, args);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -535,5 +569,78 @@ async function localBrowseUrl(url: string): Promise<string> {
     return `Content from ${url}:\n\n${text}`;
   } catch (err: any) {
     return `Error fetching URL: ${err.message}`;
+  }
+}
+
+// ─── browser_action ────────────────────────────────────────────────────
+
+let browserInstance: any = null;
+let browserPage: any = null;
+
+async function getBrowser() {
+  if (browserInstance && browserPage) return { browser: browserInstance, page: browserPage };
+  const puppeteer = await import("puppeteer");
+  browserInstance = await puppeteer.default.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
+  browserPage = await browserInstance.newPage();
+  await browserPage.setViewport({ width: 1280, height: 720 });
+  return { browser: browserInstance, page: browserPage };
+}
+
+async function localBrowserAction(action: string, args: Record<string, any>): Promise<string> {
+  if (!action) return "Error: action is required";
+
+  try {
+    if (action === "close") {
+      if (browserInstance) { await browserInstance.close(); browserInstance = null; browserPage = null; }
+      return "Browser closed.";
+    }
+
+    const { page } = await getBrowser();
+
+    switch (action) {
+      case "navigate": {
+        if (!args.url) return "Error: url is required for navigate";
+        const url = args.url.startsWith("http") ? args.url : "https://" + args.url;
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
+        const title = await page.title();
+        return `Navigated to ${url}\nTitle: ${title}`;
+      }
+      case "click": {
+        if (!args.selector) return "Error: selector is required for click";
+        await page.waitForSelector(args.selector, { timeout: 5000 });
+        await page.click(args.selector);
+        return `Clicked element: ${args.selector}`;
+      }
+      case "type": {
+        if (!args.selector) return "Error: selector is required for type";
+        if (!args.text) return "Error: text is required for type";
+        await page.waitForSelector(args.selector, { timeout: 5000 });
+        await page.type(args.selector, args.text);
+        return `Typed "${args.text}" into ${args.selector}`;
+      }
+      case "screenshot": {
+        const savePath = args.save_path || "screenshot.png";
+        const fullPath = resolvePath(savePath);
+        const parentDir = resolve(fullPath, "..");
+        if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
+        await page.screenshot({ path: fullPath, fullPage: false });
+        const size = statSync(fullPath).size;
+        return `Screenshot saved to ${fullPath} (${(size / 1024).toFixed(1)}KB)`;
+      }
+      case "read_page": {
+        const content = await page.evaluate(() => document.body?.innerText || "");
+        const title = await page.title();
+        const url = page.url();
+        const truncated = content.length > 16000 ? content.slice(0, 16000) + "\n[truncated]" : content;
+        return `Page: ${title}\nURL: ${url}\n\n${truncated}`;
+      }
+      default:
+        return `Error: Unknown action "${action}". Use: navigate, click, type, screenshot, read_page, close`;
+    }
+  } catch (err: any) {
+    return `Browser error: ${err.message}`;
   }
 }
