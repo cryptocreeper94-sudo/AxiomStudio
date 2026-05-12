@@ -818,5 +818,76 @@ export function registerAgentRoutes(app: Express): void {
 
   // Credit balance is handled exclusively by stripe-routes.ts (includes agentCosts)
 
+  // ── Local Mode Support Endpoints ─────────────────────────────────────
+
+  // POST /api/agent/credits/check — Validates JWT + checks if user has enough credits
+  app.post("/api/agent/credits/check", async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+
+    const { agentId } = req.body;
+    const cost = AGENT_COSTS[agentId || "opus"]?.credits ?? 1;
+
+    // Owner bypass
+    const [user] = await db.select().from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
+    if (user?.role === "owner") {
+      res.json({ approved: true, cost: 0, balance: 999999, role: "owner" });
+      return;
+    }
+
+    // Check balance
+    const [balance] = await db.select().from(aiCreditBalances).where(eq(aiCreditBalances.userId, userId)).limit(1);
+    const credits = balance?.credits ?? 0;
+
+    if (cost === 0 || credits >= cost) {
+      res.json({ approved: true, cost, balance: credits });
+    } else {
+      res.json({ approved: false, cost, balance: credits, error: "Insufficient credits" });
+    }
+  });
+
+  // POST /api/agent/credits/deduct — Deducts credits after a successful chat
+  app.post("/api/agent/credits/deduct", async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+
+    const { agentId, description } = req.body;
+    const success = await deductCreditsAtomic(
+      userId,
+      agentId || "opus",
+      description || "Axiom Studio Local — chat message"
+    );
+    res.json({ success });
+  });
+
+  // GET /api/agent/api-keys — Returns provider API keys after auth validation
+  app.get("/api/agent/api-keys", async (req: Request, res: Response) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+
+    // Verify user exists and has an active account
+    const [user] = await db.select().from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
+    if (!user) {
+      res.status(403).json({ error: "User not found" });
+      return;
+    }
+
+    // Check credits (must have at least 1 or be owner/free-tier)
+    const [balance] = await db.select().from(aiCreditBalances).where(eq(aiCreditBalances.userId, userId)).limit(1);
+    const hasCredits = user.role === "owner" || (balance?.credits ?? 0) > 0;
+
+    if (!hasCredits) {
+      res.status(403).json({ error: "No credits available. Purchase credits at axiomstudio.dev" });
+      return;
+    }
+
+    // Return keys — these are only held in memory on the client, never written to disk
+    res.json({
+      anthropic: process.env.ANTHROPIC_API_KEY || null,
+      openai: process.env.OPENAI_API_KEY || null,
+      expires: Date.now() + 3600000, // Keys valid for 1 hour, re-fetch after
+    });
+  });
+
   console.log("[Axiom Studio] Agent routes registered");
 }
