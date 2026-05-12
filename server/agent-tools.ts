@@ -15,7 +15,7 @@ import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { db } from "./db.js";
 import { workspaceFiles } from "../shared/schema.js";
-import { eq, and, like, ilike } from "drizzle-orm";
+import { eq, and, like, ilike, sql } from "drizzle-orm";
 
 const execAsync = promisify(exec);
 
@@ -130,6 +130,30 @@ export const ANTHROPIC_TOOLS: any[] = [
       required: ["repo_url"],
     },
   },
+  {
+    name: "generate_image",
+    description: "Generate an image using DALL-E 3. Returns the URL of the generated image.",
+    input_schema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string", description: "Text description of the image to generate" },
+        size: { type: "string", description: "Optional size, default is 1024x1024" }
+      },
+      required: ["prompt"],
+    },
+  },
+  {
+    name: "push_to_depot",
+    description: "Push the current cloud workspace files to an Axiom Depot repository. Creates the repository if it does not exist, or creates a new snapshot if it does.",
+    input_schema: {
+      type: "object",
+      properties: {
+        repo_name: { type: "string", description: "Name of the repository" },
+        message: { type: "string", description: "Snapshot commit message describing the changes" }
+      },
+      required: ["repo_name", "message"],
+    },
+  },
 ];
 
 // OpenAI function-calling format (wraps Anthropic defs)
@@ -170,6 +194,10 @@ export async function executeTool(
           return "Error: import_github is restricted to owner accounts only.";
         }
         return await toolImportGitHub(args.repo_url, args.target_dir, userId);
+      case "generate_image":
+        return await toolGenerateImage(args.prompt, args.size);
+      case "push_to_depot":
+        return await toolPushToDepot(args.repo_name, args.message, userId);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -538,5 +566,108 @@ async function toolImportGitHub(
     } catch {
       // Best-effort cleanup
     }
+  }
+}
+
+// ─── generate_image ────────────────────────────────────────────────────
+
+async function toolGenerateImage(prompt: string, size?: string): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return "Error: OPENAI_API_KEY not set. Image generation requires an OpenAI API key.";
+  
+  try {
+    const res = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        prompt,
+        n: 1,
+        size: size || "1024x1024",
+        model: "dall-e-3",
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const imageUrl = data.data[0].url;
+    return `Image generated successfully!\nURL: ${imageUrl}`;
+  } catch (err: any) {
+    return `Error generating image: ${err.message}`;
+  }
+}
+
+// ─── push_to_depot ─────────────────────────────────────────────────────
+
+async function toolPushToDepot(repoName: string, message: string, userId: string): Promise<string> {
+  if (!repoName) return "Error: repo_name is required";
+  
+  try {
+    // 1. Get all files for user
+    const files = await db
+      .select({ path: workspaceFiles.filePath, content: workspaceFiles.content, isDirectory: workspaceFiles.isDirectory })
+      .from(workspaceFiles)
+      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.isDirectory, false)));
+      
+    if (!files.length) return "Error: Workspace is empty. Nothing to push.";
+
+    const slug = repoName.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    
+    // 2. Find or create repo
+    let repoId: string;
+    const existing = await db.execute(sql`SELECT id FROM depot_repos WHERE user_id = ${userId} AND slug = ${slug}`);
+    
+    if (existing.rows && existing.rows.length > 0) {
+      repoId = String(existing.rows[0].id);
+    } else {
+      const inserted = await db.execute(sql`
+        INSERT INTO depot_repos (user_id, name, slug, description, is_private)
+        VALUES (${userId}, ${repoName}, ${slug}, 'Pushed from Axiom Studio', false)
+        RETURNING id
+      `);
+      repoId = String(inserted.rows[0].id);
+    }
+
+    // 3. Create snapshot
+    const totalSize = files.reduce((acc, f) => acc + (f.content?.length || 0), 0);
+    const snap = await db.execute(sql`
+      INSERT INTO depot_snapshots (repo_id, user_id, message, file_count, total_size_bytes)
+      VALUES (${repoId}, ${userId}, ${message || 'Update from Axiom Studio'}, ${files.length}, ${totalSize})
+      RETURNING id
+    `);
+    const snapshotId = String(snap.rows[0].id);
+
+    // 4. Update files
+    await db.execute(sql`DELETE FROM depot_files WHERE repo_id = ${repoId}`);
+    
+    for (const f of files) {
+      const ext = f.path?.match(/\.[a-z]+$/i)?.[0] || '';
+      await db.execute(sql`
+        INSERT INTO depot_files (repo_id, snapshot_id, file_path, content, size_bytes, language, is_directory)
+        VALUES (${repoId}, ${snapshotId}, ${f.path}, ${f.content || ''}, ${f.content?.length || 0}, ${ext}, false)
+      `);
+    }
+
+    // 5. Update stats
+    await db.execute(sql`
+      UPDATE depot_repos SET
+        file_count = ${files.length},
+        total_size_bytes = ${totalSize},
+        snapshot_count = snapshot_count + 1,
+        last_snapshot_at = NOW(),
+        updated_at = NOW()
+      WHERE id = ${repoId}
+    `);
+
+    // 6. Log activity
+    await db.execute(sql`
+      INSERT INTO depot_activity (repo_id, user_id, action, details)
+      VALUES (${repoId}, ${userId}, 'push', 'Pushed from Axiom Studio IDE')
+    `);
+
+    return `Successfully pushed ${files.length} files to Axiom Depot repository '${repoName}'. You can view it at axiomdepot.tlid.io.`;
+  } catch (err: any) {
+    return `Error pushing to Depot: ${err.message}`;
   }
 }
