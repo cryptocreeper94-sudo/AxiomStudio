@@ -289,7 +289,7 @@ export function registerStripeRoutes(app: Express): void {
                     method: "POST",
                     headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
                     body: JSON.stringify({
-                      from: "Axiom Studio <billing@axiomstudio.dev>",
+                      from: "Axiom Studio Billing <billing@axiomstudio.dev>",
                       to: userEmail,
                       subject: `Your ${credits.toLocaleString()} Axiom credits are ready`,
                       html: `
@@ -311,6 +311,7 @@ export function registerStripeRoutes(app: Express): void {
                           </div>
                           <div style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
                             <p style="font-size:11px;color:#334155;margin:0;">DarkWave Studios LLC &middot; <a href="https://axiomstudio.dev" style="color:#06b6d4;">axiomstudio.dev</a></p>
+                            <p style="font-size:10px;color:#1e293b;margin:6px 0 0;"><a href="https://darkwavestudios.io/terms" style="color:#475569;text-decoration:none;">Terms</a> &middot; <a href="https://darkwavestudios.io/privacy" style="color:#475569;text-decoration:none;">Privacy</a> &middot; <a href="mailto:support@axiomstudio.dev" style="color:#475569;text-decoration:none;">support@axiomstudio.dev</a></p>
                           </div>
                         </div>
                       `,

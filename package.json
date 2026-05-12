@@ -13,6 +13,7 @@
   "bin": {
     "axiom-studio": "./bin/axiom-studio.js"
   },
+  "main": "dist/electron/main.js",
   "files": [
     "bin/",
     "dist/",
@@ -31,7 +32,31 @@
     "build": "npx vite build && npx tsc -p tsconfig.server.json",
     "start": "node dist/server/index.js",
     "check": "tsc --noEmit",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "electron:dev": "npm run build && electron .",
+    "electron:build": "npm run build && electron-builder build --win --mac"
+  },
+  "build": {
+    "appId": "dev.axiomstudio.app",
+    "productName": "Axiom Studio",
+    "directories": {
+      "output": "release"
+    },
+    "asarUnpack": [
+      "**/*.node",
+      "dist/public/**/*"
+    ],
+    "files": [
+      "dist/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "icon": "build/icon.ico"
+    }
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -86,6 +111,10 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.0",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0"
+    "@types/react-dom": "^19.2.0",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "electron-packager": "^17.1.2",
+    "electron-winstaller": "^5.4.0"
   }
 }

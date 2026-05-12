@@ -10,6 +10,6 @@
     "rootDir": ".",
     "resolveJsonModule": true
   },
-  "include": ["server/**/*", "shared/**/*"],
+  "include": ["server/**/*", "shared/**/*", "electron/**/*"],
   "exclude": ["node_modules", "dist", "client"]
 }

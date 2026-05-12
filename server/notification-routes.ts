@@ -63,9 +63,9 @@ router.post("/sms-optin", async (req: Request, res: Response) => {
             Authorization: `Bearer ${resendKey}`,
           },
           body: JSON.stringify({
-            from: "Axiom Studio <noreply@axiomstudio.dev>",
+            from: "Axiom Studio Notifications <notifications@axiomstudio.dev>",
             to: email,
-            subject: "SMS Notifications Enabled - Axiom Studio",
+            subject: "SMS Notifications Enabled — Axiom Studio",
             html: `
               <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
                 <h2 style="color: #06b6d4; margin-bottom: 12px;">SMS Notifications Enabled</h2>
@@ -79,6 +79,11 @@ router.post("/sms-optin", async (req: Request, res: Response) => {
                 <hr style="border: 1px solid #1e293b; margin: 24px 0;" />
                 <p style="color: #475569; font-size: 11px;">
                   DarkWave Studios LLC | <a href="https://axiomstudio.dev" style="color: #06b6d4;">axiomstudio.dev</a>
+                </p>
+                <p style="color: #334155; font-size: 10px; margin-top: 4px;">
+                  <a href="https://darkwavestudios.io/terms" style="color: #475569; text-decoration: none;">Terms</a> &middot;
+                  <a href="https://darkwavestudios.io/privacy" style="color: #475569; text-decoration: none;">Privacy</a> &middot;
+                  <a href="mailto:support@axiomstudio.dev" style="color: #475569; text-decoration: none;">support@axiomstudio.dev</a>
                 </p>
               </div>
             `,
