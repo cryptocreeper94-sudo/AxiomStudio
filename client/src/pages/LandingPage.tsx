@@ -4,8 +4,39 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 import { useState, useEffect } from "react";
-import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone, ChevronDown, ChevronLeft, ChevronRight, Image } from "lucide-react";
+import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone, ChevronDown, ChevronLeft, ChevronRight, Image, Menu, X, BookOpen, Clock, Sparkles } from "lucide-react";
 import "./landing.css";
+
+const BLOG_POSTS = [
+  {
+    title: "Why Multi-Agent AI Is the Future of Development",
+    excerpt: "Single-model coding tools hit a ceiling. By routing tasks to specialized agents — Opus for architecture, Sonnet for quick fixes — Axiom Studio delivers expert-level assistance at every layer of the stack.",
+    date: "May 10, 2026",
+    tag: "AI Engineering",
+    readTime: "6 min read",
+  },
+  {
+    title: "Local Mode: Full Power, Zero Compromise",
+    excerpt: "Run Axiom Studio on your machine with one command. Access your real filesystem, native git, and local terminal — no sandboxes, no upload limits, no latency.",
+    date: "May 8, 2026",
+    tag: "Product",
+    readTime: "4 min read",
+  },
+  {
+    title: "Building AXIOM42: A Deterministic Knowledge Engine",
+    excerpt: "How we built a cognitive substrate that answers factual questions without hallucination — using regex-gated deterministic response packs instead of probabilistic generation.",
+    date: "May 5, 2026",
+    tag: "Research",
+    readTime: "8 min read",
+  },
+  {
+    title: "Image Generation Meets Code: DALL-E 3 in Your IDE",
+    excerpt: "Generate assets, UI mockups, and diagrams without leaving your editor. Axiom Studio's image generation tool saves directly to your project directory.",
+    date: "May 2, 2026",
+    tag: "Features",
+    readTime: "3 min read",
+  },
+];
 
 const SLIDES = ["/bg/slide-1.png", "/bg/slide-2.png", "/bg/slide-3.png", "/bg/slide-4.png"];
 const SLIDE_DURATION = 7000;
@@ -32,6 +63,38 @@ export default function LandingPage() {
   const [copied, setCopied] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [featureIdx, setFeatureIdx] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // SEO meta tags
+  useEffect(() => {
+    document.title = "Axiom Studio — AI Code Editor | Multi-Agent IDE by DarkWave Studios";
+    const setMeta = (name: string, content: string, property = false) => {
+      const attr = property ? "property" : "name";
+      let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement;
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, name); document.head.appendChild(el); }
+      el.content = content;
+    };
+    setMeta("description", "Axiom Studio is a multi-agent AI coding IDE with Claude Opus, Sonnet, and GPT-4o. Full filesystem access, native git, real terminal. Cloud or local — same power.");
+    setMeta("keywords", "AI code editor, AI IDE, Claude Opus, GPT-4o, multi-agent coding, local AI development, DarkWave Studios, Axiom Studio");
+    setMeta("robots", "index, follow");
+    setMeta("author", "DarkWave Studios LLC");
+    setMeta("og:title", "Axiom Studio — AI Code Editor | Multi-Agent IDE", true);
+    setMeta("og:description", "Multi-agent AI coding environment with Claude Opus, Sonnet, GPT-4o. Full filesystem access, real terminal, native git. Cloud or local.", true);
+    setMeta("og:url", "https://axiomstudio.dev", true);
+    setMeta("og:type", "website", true);
+    setMeta("og:site_name", "Axiom Studio", true);
+    setMeta("twitter:title", "Axiom Studio — AI Code Editor");
+    setMeta("twitter:description", "Multi-agent AI IDE with Claude Opus, Sonnet, GPT-4o. Cloud or local.");
+  }, []);
 
   // Fix body scroll — override the IDE's overflow:hidden
   useEffect(() => {
@@ -72,11 +135,29 @@ export default function LandingPage() {
         <div className="nav-links">
           <a href="#features">Features</a>
           <a href="#agents">Agents</a>
-          <a href="#install">Install</a>
-          <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio" target="_blank" rel="noopener">GitHub</a>
+          <a href="#blog">Blog</a>
+          {!isMobile && <a href="#install">Install</a>}
           <a href="/ide" className="nav-cta">Open IDE</a>
         </div>
+        <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+          {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </nav>
+
+      {/* ── Mobile Menu ── */}
+      {menuOpen && (
+        <div className="mobile-menu" onClick={() => setMenuOpen(false)}>
+          <div className="mobile-menu-panel" onClick={(e) => e.stopPropagation()}>
+            <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
+            <a href="#agents" onClick={() => setMenuOpen(false)}>Agents</a>
+            <a href="#blog" onClick={() => setMenuOpen(false)}>Blog</a>
+            {!isMobile && <a href="#install" onClick={() => setMenuOpen(false)}>Install Local</a>}
+            <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio" target="_blank" rel="noopener" onClick={() => setMenuOpen(false)}>GitHub</a>
+            <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)", margin: "8px 0" }} />
+            <a href="/ide" className="mobile-menu-cta" onClick={() => setMenuOpen(false)}>Open IDE →</a>
+          </div>
+        </div>
+      )}
 
       {/* ── Hero with Ken Burns ── */}
       <section className="landing-hero">
@@ -105,7 +186,7 @@ export default function LandingPage() {
         <div className="hero-content">
           <div className="hero-badge">
             <span className="dot" />
-            Now available on npm
+            {isMobile ? "Cloud IDE — Free to start" : "Now available on npm"}
           </div>
 
           <h1 className="hero-title">
@@ -114,40 +195,45 @@ export default function LandingPage() {
           </h1>
 
           <p className="hero-sub">
-            Multi-agent coding environment with full filesystem access.
-            Run in the cloud or install locally. Same agents, same power.
+            {isMobile
+              ? "Multi-agent AI coding from any device. Claude Opus, Sonnet, GPT-4o — one account, instant access."
+              : "Multi-agent coding environment with full filesystem access. Run in the cloud or install locally. Same agents, same power."}
           </p>
 
           <div className="hero-ctas">
             <a href="/ide" className="cta-primary">
-              Start Free <ArrowRight className="w-4 h-4" />
+              {isMobile ? "Open Cloud IDE" : "Start Free"} <ArrowRight className="w-4 h-4" />
             </a>
-            <a href="#install" className="cta-secondary">
-              <Terminal className="w-4 h-4" />
-              Install Local
-            </a>
+            {!isMobile && (
+              <a href="#install" className="cta-secondary">
+                <Terminal className="w-4 h-4" />
+                Install Local
+              </a>
+            )}
           </div>
 
-          {/* Code preview */}
-          <div className="code-window">
-            <div className="code-window-bar">
-              <div className="code-dot" style={{ background: "#ff5f57" }} />
-              <div className="code-dot" style={{ background: "#febc2e" }} />
-              <div className="code-dot" style={{ background: "#28c840" }} />
-              <span style={{ marginLeft: 12, fontSize: 12, color: "rgba(255,255,255,0.35)" }}>terminal</span>
+          {/* Code preview — desktop only */}
+          {!isMobile && (
+            <div className="code-window">
+              <div className="code-window-bar">
+                <div className="code-dot" style={{ background: "#ff5f57" }} />
+                <div className="code-dot" style={{ background: "#febc2e" }} />
+                <div className="code-dot" style={{ background: "#28c840" }} />
+                <span style={{ marginLeft: 12, fontSize: 12, color: "rgba(255,255,255,0.35)" }}>terminal</span>
+              </div>
+              <pre>
+                <span className="cm"># Install and run — one command</span>{"\n"}
+                <span className="prompt" style={{ color: "#a855f7" }}>$</span> <span className="fn">npx</span> <span className="var">axiom-studio</span>{"\n"}
+                {"\n"}
+                <span className="cm"># Or use the cloud IDE at axiomstudio.dev</span>{"\n"}
+                <span className="cm"># Same account, same agents, same credits</span>{"\n"}
+                {"\n"}
+                <span className="str">✓ Axiom Studio running at localhost:5100</span>{"\n"}
+                <span className="str">✓ Full filesystem access enabled</span>{"\n"}
+                <span className="str">✓ AI agents ready</span>
+              </pre>
             </div>
-            <pre>
-              <span className="cm"># Install and run — one command</span>{"\n"}
-              <span className="prompt" style={{ color: "#a855f7" }}>$</span> <span className="fn">npx</span> <span className="var">axiom-studio</span>{"\n"}
-              {"\n"}
-              <span className="cm"># Or use the cloud IDE at axiomstudio.dev</span>{"\n"}
-              <span className="cm"># Same account, same agents, same credits</span>{"\n"}
-              {"\n"}
-              <span className="str">✓ Axiom Studio running at localhost:5100</span>{"\n"}
-              <span className="str">✓ Full filesystem access enabled</span>{"\n"}
-              <span className="str">✓ AI agents ready</span>
-            </pre>
-          </div>
+          )}
         </div>
 
         {/* Scroll hint */}
@@ -242,61 +328,89 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Install ── */}
-      <section className="landing-section" id="install">
-        <span className="section-label">Get Started</span>
-        <h2 className="section-title">Use It Anywhere</h2>
-        <p className="section-sub">
-          Cloud for quick access from any device. Local for full power on your machine.
-          Same account works everywhere.
-        </p>
+      {/* ── Install (desktop only) ── */}
+      {!isMobile && (
+        <section className="landing-section" id="install">
+          <span className="section-label">Get Started</span>
+          <h2 className="section-title">Use It Anywhere</h2>
+          <p className="section-sub">
+            Cloud for quick access from any device. Local for full power on your machine.
+            Same account works everywhere.
+          </p>
 
-        <div className="install-block">
-          <div className="install-card" style={{ borderColor: "rgba(6, 182, 212, 0.15)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <Monitor className="w-5 h-5" style={{ color: "#06b6d4" }} />
-              <h3>Cloud IDE</h3>
+          <div className="install-block">
+            <div className="install-card" style={{ borderColor: "rgba(6, 182, 212, 0.15)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <Monitor className="w-5 h-5" style={{ color: "#06b6d4" }} />
+                <h3>Cloud IDE</h3>
+              </div>
+              <p>No install. Open your browser, sign in, start coding. Works on desktop, tablet, and phone.</p>
+              <a href="/ide" className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px" }}>
+                Open IDE <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
-            <p>No install. Open your browser, sign in, start coding. Works on desktop, tablet, and phone.</p>
-            <a href="/ide" className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px" }}>
-              Open IDE <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
 
-          <div className="install-card" style={{ borderColor: "rgba(168, 85, 247, 0.15)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <Terminal className="w-5 h-5" style={{ color: "#a855f7" }} />
-              <h3>Local Mode</h3>
-            </div>
-            <p>Full filesystem access. Real terminal. Native git. Requires Node.js 18+.</p>
-            <div className="install-cmd" onClick={copyCmd} style={{ cursor: "pointer" }}>
-              <span className="prompt">$</span>
-              <span>npx axiom-studio</span>
-              <button className="copy-btn">{copied ? "Copied!" : "Copy"}</button>
-            </div>
-          </div>
-        </div>
-
-        {/* How it works */}
-        <div style={{ marginTop: "3rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-          {[
-            { step: "1", label: "Install Node.js", sub: "nodejs.org" },
-            { step: "2", label: "Run the command", sub: "npx axiom-studio" },
-            { step: "3", label: "Login & code", sub: "Browser opens automatically" },
-          ].map((s, i) => (
-            <div key={i} style={{
-              display: "flex", alignItems: "center", gap: 12, padding: "12px 20px",
-              borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-            }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #0891b2, #7c3aed)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "white", flexShrink: 0,
-              }}>{s.step}</div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{s.label}</div>
-                <div style={{ fontSize: 11, color: "#64748b" }}>{s.sub}</div>
+            <div className="install-card" style={{ borderColor: "rgba(168, 85, 247, 0.15)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <Terminal className="w-5 h-5" style={{ color: "#a855f7" }} />
+                <h3>Local Mode</h3>
+              </div>
+              <p>Full filesystem access. Real terminal. Native git. Requires Node.js 18+.</p>
+              <div className="install-cmd" onClick={copyCmd} style={{ cursor: "pointer" }}>
+                <span className="prompt">$</span>
+                <span>npx axiom-studio</span>
+                <button className="copy-btn">{copied ? "Copied!" : "Copy"}</button>
               </div>
             </div>
+          </div>
+
+          {/* How it works */}
+          <div style={{ marginTop: "3rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+            {[
+              { step: "1", label: "Install Node.js", sub: "nodejs.org" },
+              { step: "2", label: "Run the command", sub: "npx axiom-studio" },
+              { step: "3", label: "Login & code", sub: "Browser opens automatically" },
+            ].map((s, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "12px 20px",
+                borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #0891b2, #7c3aed)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "white", flexShrink: 0,
+                }}>{s.step}</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{s.label}</div>
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{s.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Blog ── */}
+      <section className="landing-section" id="blog">
+        <span className="section-label">Engineering Blog</span>
+        <h2 className="section-title">From the Lab</h2>
+        <p className="section-sub">
+          Deep dives into AI engineering, product updates, and the research behind Axiom Studio.
+        </p>
+
+        <div className="blog-grid">
+          {BLOG_POSTS.map((post, i) => (
+            <article className="blog-card" key={i}>
+              <div className="blog-tag">
+                <Sparkles className="w-3 h-3" />
+                {post.tag}
+              </div>
+              <h3 className="blog-title">{post.title}</h3>
+              <p className="blog-excerpt">{post.excerpt}</p>
+              <div className="blog-meta">
+                <span><Clock className="w-3 h-3" /> {post.date}</span>
+                <span><BookOpen className="w-3 h-3" /> {post.readTime}</span>
+              </div>
+            </article>
           ))}
         </div>
       </section>
@@ -364,6 +478,8 @@ export default function LandingPage() {
           <a href="https://dwtl.io">Trust Layer</a>
           {" · "}
           <a href="https://lume-lang.org">Lume</a>
+          {" · "}
+          <a href="#blog">Blog</a>
         </p>
         <p>DarkWave Studios LLC · 2026 · All Rights Reserved</p>
         <p style={{ fontSize: 9, color: "#334155", marginTop: 8 }}>
