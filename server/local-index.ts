@@ -14,6 +14,7 @@
 
 import "dotenv/config";
 import express from "express";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
@@ -454,8 +455,8 @@ app.get("/api/analytics/costs", (_req, res) => res.json({ total: 0 }));
 
 // ── Serve frontend ──
 async function startServer() {
-  // Auth init for tenant mode
-  if (!IS_OWNER_MODE) {
+  // Auth init for tenant mode (skip in Electron — no terminal for interactive login)
+  if (!IS_OWNER_MODE && !process.env.IS_ELECTRON) {
     const authed = await initAuth();
     if (!authed) {
       console.error("\n  ✗ Authentication failed. Cannot start.\n");
@@ -463,18 +464,26 @@ async function startServer() {
     }
   }
 
-  if (process.env.NODE_ENV === "production") {
-    const publicDir = path.resolve(__dirname, "../public");
+  if (process.env.NODE_ENV === "production" || process.env.IS_ELECTRON) {
+    let publicDir = path.resolve(__dirname, "../public");
+    if (publicDir.includes("app.asar")) {
+      publicDir = publicDir.replace("app.asar", "app.asar.unpacked");
+    }
     app.use(express.static(publicDir));
     app.get("/{*splat}", (_req, res) => {
-      res.sendFile(path.join(publicDir, "index.html"));
+      try {
+        const html = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
+        res.send(html);
+      } catch (err) {
+        res.status(500).send("Error loading app shell: " + err);
+      }
     });
   } else {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      configFile: path.resolve(__dirname, "../vite.config.ts"),
+      configFile: path.resolve(__dirname, "../../vite.config.ts"), // fixed path for local dev
       server: { middlewareMode: true },
-      root: path.resolve(__dirname, "../client"),
+      root: path.resolve(__dirname, "../../client"), // fixed path
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -492,11 +501,15 @@ async function startServer() {
     console.log(`  ║   Mode: ${mode.padEnd(33)}║`);
     console.log(`  ╚══════════════════════════════════════════╝\n`);
 
-    try {
-      const { default: openBrowser } = await import("open");
-      openBrowser(`http://localhost:${PORT}`);
-    } catch {
-      console.log(`  → Open http://localhost:${PORT} in your browser`);
+    if (!process.env.IS_ELECTRON) {
+      try {
+        const { default: openBrowser } = await import("open");
+        openBrowser(`http://localhost:${PORT}`);
+      } catch {
+        console.log(`  → Open http://localhost:${PORT} in your browser`);
+      }
+    } else {
+      console.log(`  → Electron app started.`);
     }
   });
 

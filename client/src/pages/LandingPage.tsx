@@ -58,6 +58,65 @@ const AGENTS = [
   { name: "o3-mini", model: "o3-mini", img: "/agents/o3mini.png", border: "rgba(180, 60, 30, 0.3)", cost: "1 credit" },
 ];
 
+const DEMO_CODE_LINES = [
+  'import React, { useState, useEffect } from "react";',
+  'import { AreaChart, Area, XAxis, Tooltip } from "recharts";',
+  '',
+  'export default function Dashboard() {',
+  '  const [data, setData] = useState([]);',
+  '  const [dark, setDark] = useState(true);',
+  '',
+  '  useEffect(() => {',
+  '    const interval = setInterval(() => {',
+  '      setData(prev => [...prev.slice(-20), {',
+  '        time: Date.now(),',
+  '        value: Math.random() * 100,',
+  '        users: Math.floor(Math.random() * 500),',
+  '      }]);',
+  '    }, 1000);',
+  '    return () => clearInterval(interval);',
+  '  }, []);',
+  '',
+  '  return (',
+  '    <div className={dark ? "dark" : ""}>',
+  '      <AreaChart data={data} width={600} height={300}>',
+  '        <Area type="monotone" dataKey="value" />',
+  '      </AreaChart>',
+  '    </div>',
+  '  );',
+  '}',
+];
+
+function DemoTypingEffect() {
+  const [visibleLines, setVisibleLines] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisibleLines(prev => {
+        if (prev >= DEMO_CODE_LINES.length) {
+          // Reset after a pause
+          setTimeout(() => setVisibleLines(0), 2000);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 400);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <pre className="demo-code">
+      {DEMO_CODE_LINES.slice(0, visibleLines).map((line, i) => (
+        <div key={i} className="demo-code-line">
+          <span className="demo-line-num">{i + 1}</span>
+          <span className="demo-line-text">{line}</span>
+        </div>
+      ))}
+      <span className="demo-cursor">|</span>
+    </pre>
+  );
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -133,11 +192,12 @@ export default function LandingPage() {
           Axiom Studio
         </a>
         <div className="nav-links">
+          <a href="#demo">Demo</a>
           <a href="#features">Features</a>
           <a href="#agents">Agents</a>
           <a href="#blog">Blog</a>
-          {!isMobile && <a href="#install">Install</a>}
-          <a href="/ide" className="nav-cta">Open IDE</a>
+          {!isMobile && <a href="#install">Download</a>}
+          <a href="/ide" className="nav-cta">Open Cloud IDE</a>
         </div>
         <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
           {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -151,7 +211,7 @@ export default function LandingPage() {
             <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
             <a href="#agents" onClick={() => setMenuOpen(false)}>Agents</a>
             <a href="#blog" onClick={() => setMenuOpen(false)}>Blog</a>
-            {!isMobile && <a href="#install" onClick={() => setMenuOpen(false)}>Install Local</a>}
+            {!isMobile && <a href="#install" onClick={() => setMenuOpen(false)}>Download App</a>}
             <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio" target="_blank" rel="noopener" onClick={() => setMenuOpen(false)}>GitHub</a>
             <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)", margin: "8px 0" }} />
             <a href="/ide" className="mobile-menu-cta" onClick={() => setMenuOpen(false)}>Open IDE →</a>
@@ -206,8 +266,8 @@ export default function LandingPage() {
             </a>
             {!isMobile && (
               <a href="#install" className="cta-secondary">
-                <Terminal className="w-4 h-4" />
-                Install Local
+                <Monitor className="w-4 h-4" />
+                Download App
               </a>
             )}
           </div>
@@ -222,10 +282,10 @@ export default function LandingPage() {
                 <span style={{ marginLeft: 12, fontSize: 12, color: "rgba(255,255,255,0.35)" }}>terminal</span>
               </div>
               <pre>
-                <span className="cm"># Install and run — one command</span>{"\n"}
-                <span className="prompt" style={{ color: "#a855f7" }}>$</span> <span className="fn">npx</span> <span className="var">axiom-studio</span>{"\n"}
+                <span className="cm"># Download the native Windows application</span>{"\n"}
+                <span className="prompt" style={{ color: "#a855f7" }}>$</span> <span className="fn">curl</span> <span className="var">-O https://axiomstudio.dev/Axiom-Studio-Setup.exe</span>{"\n"}
                 {"\n"}
-                <span className="cm"># Or use the cloud IDE at axiomstudio.dev</span>{"\n"}
+                <span className="cm"># Or open the Cloud IDE at axiomstudio.dev</span>{"\n"}
                 <span className="cm"># Same account, same agents, same credits</span>{"\n"}
                 {"\n"}
                 <span className="str">✓ Axiom Studio running at localhost:5100</span>{"\n"}
@@ -239,6 +299,95 @@ export default function LandingPage() {
         {/* Scroll hint */}
         <div className="scroll-hint">
           <ChevronDown className="w-6 h-6" />
+        </div>
+      </section>
+
+      {/* ── Free Credits Banner ── */}
+      <section className="free-credits-banner">
+        <div className="credits-banner-content">
+          <div className="credits-banner-icon">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div className="credits-banner-text">
+            <h3>50 Free Credits on Signup</h3>
+            <p>No credit card required. Start building with Claude Opus, Sonnet, and GPT-4o — completely free.</p>
+          </div>
+          <a href="/ide" className="credits-banner-cta">
+            Claim Free Credits <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
+
+      {/* ── See It In Action — Demo Walkthrough ── */}
+      <section className="landing-section" id="demo">
+        <span className="section-label">See It In Action</span>
+        <h2 className="section-title">Watch Axiom Build a Project</h2>
+        <p className="section-sub">
+          See how a single prompt turns into a full-stack application — AI agents writing code,
+          running commands, and deploying in real time.
+        </p>
+
+        <div className="demo-container">
+          <div className="demo-window">
+            <div className="demo-window-bar">
+              <div className="code-dot" style={{ background: "#ff5f57" }} />
+              <div className="code-dot" style={{ background: "#febc2e" }} />
+              <div className="code-dot" style={{ background: "#28c840" }} />
+              <span style={{ marginLeft: 12, fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Axiom Studio — Live Demo</span>
+            </div>
+            <div className="demo-content">
+              <div className="demo-sidebar">
+                <div className="demo-sidebar-header">
+                  <Code2 className="w-4 h-4" style={{ color: "#06b6d4" }} />
+                  <span>EXPLORER</span>
+                </div>
+                <div className="demo-file active">📄 App.tsx</div>
+                <div className="demo-file">📄 index.css</div>
+                <div className="demo-file">📄 api.ts</div>
+                <div className="demo-file">📁 components/</div>
+                <div className="demo-file">📁 server/</div>
+                <div className="demo-file">📄 package.json</div>
+              </div>
+              <div className="demo-editor">
+                <div className="demo-typing-area">
+                  <DemoTypingEffect />
+                </div>
+              </div>
+              <div className="demo-chat">
+                <div className="demo-chat-header">
+                  <Bot className="w-4 h-4" style={{ color: "#a855f7" }} />
+                  <span>AI Assistant</span>
+                </div>
+                <div className="demo-msg user">
+                  <span className="demo-msg-role">You</span>
+                  Build me a dashboard with live charts and dark mode
+                </div>
+                <div className="demo-msg assistant">
+                  <span className="demo-msg-role">Opus</span>
+                  I'll create a React dashboard with Recharts, including a responsive layout, dark theme, and live-updating data feeds. Let me start with the component structure...
+                </div>
+                <div className="demo-msg tool">
+                  <Zap className="w-3 h-3" /> Writing App.tsx — 142 lines
+                </div>
+                <div className="demo-msg tool">
+                  <Terminal className="w-3 h-3" /> npm install recharts
+                </div>
+                <div className="demo-msg tool">
+                  <Zap className="w-3 h-3" /> Writing DashboardChart.tsx — 89 lines
+                </div>
+                <div className="demo-msg assistant">
+                  <span className="demo-msg-role">Opus</span>
+                  ✓ Dashboard complete! You've got 3 chart types with live data, responsive grid layout, and a dark/light mode toggle. Run <code>npm run dev</code> to preview.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="demo-caption">
+            <p>This is what one prompt looks like inside Axiom Studio. The AI writes code, installs packages, and builds your project — all in under 30 seconds.</p>
+            <a href="/ide" className="cta-primary" style={{ marginTop: 16, display: "inline-flex" }}>
+              Try It Free <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
         </div>
       </section>
 
@@ -352,24 +501,22 @@ export default function LandingPage() {
 
             <div className="install-card" style={{ borderColor: "rgba(168, 85, 247, 0.15)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <Terminal className="w-5 h-5" style={{ color: "#a855f7" }} />
-                <h3>Local Mode</h3>
+                <Monitor className="w-5 h-5" style={{ color: "#a855f7" }} />
+                <h3>Desktop App</h3>
               </div>
-              <p>Full filesystem access. Real terminal. Native git. Requires Node.js 18+.</p>
-              <div className="install-cmd" onClick={copyCmd} style={{ cursor: "pointer" }}>
-                <span className="prompt">$</span>
-                <span>npx axiom-studio</span>
-                <button className="copy-btn">{copied ? "Copied!" : "Copy"}</button>
-              </div>
+              <p>Full filesystem access. Native terminal and git. Fast Electron desktop application for Windows.</p>
+              <a href="#" onClick={(e) => { e.preventDefault(); alert('Executable building in progress. Run "npm run electron:dev" for now!'); }} className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #a855f7, #6366f1)", border: "none" }}>
+                Download for Windows (.exe)
+              </a>
             </div>
           </div>
 
           {/* How it works */}
           <div style={{ marginTop: "3rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             {[
-              { step: "1", label: "Install Node.js", sub: "nodejs.org" },
-              { step: "2", label: "Run the command", sub: "npx axiom-studio" },
-              { step: "3", label: "Login & code", sub: "Browser opens automatically" },
+              { step: "1", label: "Download", sub: "Axiom-Studio-Setup.exe" },
+              { step: "2", label: "Install", sub: "Double click to run" },
+              { step: "3", label: "Login & code", sub: "Native app opens instantly" },
             ].map((s, i) => (
               <div key={i} style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 20px",
@@ -480,6 +627,13 @@ export default function LandingPage() {
           <a href="https://lume-lang.org">Lume</a>
           {" · "}
           <a href="#blog">Blog</a>
+        </p>
+        <p style={{ marginBottom: 8 }}>
+          <a href="https://darkwavestudios.io/terms">Terms of Service</a>
+          {" · "}
+          <a href="https://darkwavestudios.io/privacy">Privacy Policy</a>
+          {" · "}
+          <a href="mailto:support@axiomstudio.dev">support@axiomstudio.dev</a>
         </p>
         <p>DarkWave Studios LLC · 2026 · All Rights Reserved</p>
         <p style={{ fontSize: 9, color: "#334155", marginTop: 8 }}>

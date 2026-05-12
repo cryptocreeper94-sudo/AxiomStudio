@@ -7,6 +7,7 @@
 
 import "dotenv/config";
 import express from "express";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
@@ -128,7 +129,12 @@ async function startServer() {
     const publicDir = path.resolve(__dirname, "../public");
     app.use(express.static(publicDir));
     app.get("/{*splat}", (_req, res) => {
-      res.sendFile(path.join(publicDir, "index.html"));
+      try {
+        const html = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
+        res.send(html);
+      } catch (err) {
+        res.status(500).send("Error loading app shell: " + err);
+      }
     });
   } else {
     // Development: use Vite dev middleware
