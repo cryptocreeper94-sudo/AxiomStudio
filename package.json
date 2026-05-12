@@ -1,17 +1,33 @@
 {
   "name": "axiom-studio",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "private": true,
-  "description": "Axiom Studio — Multi-Agent AI Coding IDE by DarkWave Studios",
+  "description": "Axiom Studio — Multi-Agent AI Coding IDE by DarkWave Studios. Local mode with full filesystem access.",
   "license": "UNLICENSED",
+  "author": "DarkWave Studios LLC",
+  "homepage": "https://axiomstudio.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cryptocreeper94-sudo/Axiom-Studio.git"
+  },
+  "bin": {
+    "axiom-studio": "./bin/axiom-studio.js"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "public/",
+    "shared/",
+    "README.md"
+  ],
   "engines": {
-    "node": "22.x"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "tsx server/index.ts",
     "dev:client": "vite dev --port 5101",
     "local": "cross-env AXIOM_LOCAL=true tsx server/local-index.ts",
+    "prepublishOnly": "npm run build",
     "build": "npx vite build && npx tsc -p tsconfig.server.json",
     "start": "node dist/server/index.js",
     "check": "tsc --noEmit",
