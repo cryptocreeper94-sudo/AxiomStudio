@@ -47,7 +47,6 @@
     "@xterm/xterm": "^6.0.0",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.9.0",
     "cross-env": "^10.1.0",
     "dotenv": "^16.5.0",
     "drizzle-kit": "^0.31.4",
@@ -61,7 +60,6 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.545.0",
     "marked": "^15.0.0",
-    "node-pty": "^1.1.0",
     "open": "^11.0.0",
     "openai": "^6.16.0",
     "pg": "^8.16.3",
@@ -78,6 +76,8 @@
     "zod": "^3.25.76"
   },
   "optionalDependencies": {
+    "better-sqlite3": "^12.9.0",
+    "node-pty": "^1.1.0",
     "puppeteer": "^24.43.1"
   },
   "devDependencies": {

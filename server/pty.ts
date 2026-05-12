@@ -1,11 +1,22 @@
 import { WebSocketServer, WebSocket } from "ws";
-import * as pty from "node-pty";
 import jwt from "jsonwebtoken";
 import os from "os";
 import path from "path";
 import fs from "fs";
 
+let pty: any = null;
+try {
+  pty = await import("node-pty");
+} catch {
+  console.warn("[PTY] node-pty not available — terminal disabled in this environment");
+}
+
 export function setupTerminalWebSocket(server: any) {
+  if (!pty) {
+    console.warn("[PTY] Terminal WebSocket disabled — node-pty not installed");
+    return;
+  }
+
   const wss = new WebSocketServer({ noServer: true });
   const BASE_WORKSPACES_DIR = process.env.WORKSPACE_ROOT || path.resolve(process.cwd(), "workspaces");
 
@@ -43,7 +54,7 @@ export function setupTerminalWebSocket(server: any) {
   wss.on("connection", (ws: WebSocket, req: any) => {
     const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
     
-    let ptyProcess: pty.IPty | null = null;
+    let ptyProcess: any = null;
     try {
       const userId = req.user?.id || "anonymous";
       const userWorkspace = path.join(BASE_WORKSPACES_DIR, userId);
@@ -68,13 +79,13 @@ export function setupTerminalWebSocket(server: any) {
         env: safeEnv as any,
       });
 
-      ptyProcess.onData((data) => {
+      ptyProcess.onData((data: string) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(data);
         }
       });
 
-      ws.on("message", (msg) => {
+      ws.on("message", (msg: any) => {
         ptyProcess?.write(msg.toString());
       });
 
