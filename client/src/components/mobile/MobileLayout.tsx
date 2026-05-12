@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X } from "lucide-react";
+import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X, LogOut, CreditCard, Settings, User, ChevronRight } from "lucide-react";
 import MonacoEditor from "../MonacoEditor";
 import { OpenFile } from "../EditorArea";
 import ChatView from "../ChatView";
@@ -51,6 +51,8 @@ export default function MobileLayout({
   onOpenCredits,
 }: MobileLayoutProps) {
   const [activeTab, setActiveTab] = useState<"files" | "editor" | "preview" | "console" | "ai">("editor");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const TABS = [
     { id: "files", icon: Folder, label: "Files" },
@@ -64,10 +66,172 @@ export default function MobileLayout({
 
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-white overflow-hidden">
+      {/* ── Slide-out Drawer (Hamburger Menu) ── */}
+      {drawerOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+              zIndex: 200, transition: "opacity 0.3s",
+            }}
+          />
+          {/* Drawer */}
+          <div style={{
+            position: "fixed", top: 0, left: 0, bottom: 0, width: "80vw", maxWidth: 320,
+            background: "#0c0c10", borderRight: "1px solid rgba(255,255,255,0.08)",
+            zIndex: 201, padding: "0", display: "flex", flexDirection: "column",
+            animation: "slide-in-left 0.25s ease-out",
+          }}>
+            {/* Drawer Header */}
+            <div style={{
+              padding: "20px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 16, fontWeight: 800, color: "white",
+                }}>
+                  {(user?.displayName || user?.email || "U")[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{user?.displayName || "User"}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{user?.email || ""}</div>
+                </div>
+              </div>
+              <button onClick={() => setDrawerOpen(false)} style={{
+                background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", padding: 4,
+              }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Account Info */}
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{
+                padding: "12px 16px", borderRadius: 12, background: "rgba(6,182,212,0.06)",
+                border: "1px solid rgba(6,182,212,0.12)",
+              }}>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Credits</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#67e8f9" }}>
+                  {creditData?.credits ?? "—"}
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Items */}
+            <div style={{ flex: 1, padding: "8px 12px", overflowY: "auto" }}>
+              {[
+                { icon: <User className="w-4 h-4" />, label: "Account", action: () => {} },
+                { icon: <CreditCard className="w-4 h-4" />, label: "Buy Credits", action: () => { onOpenCredits(); setDrawerOpen(false); } },
+                { icon: <Settings className="w-4 h-4" />, label: "Settings", action: () => {} },
+              ].map((item, i) => (
+                <button
+                  key={i}
+                  onClick={item.action}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 12px", borderRadius: 10, background: "none",
+                    border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer",
+                    fontSize: 14, fontWeight: 500, transition: "background 0.15s",
+                    textAlign: "left",
+                  }}
+                >
+                  {item.icon}
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  <ChevronRight className="w-4 h-4" style={{ color: "rgba(255,255,255,0.2)" }} />
+                </button>
+              ))}
+
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "8px 0" }} />
+
+              {/* Recent conversations */}
+              <div style={{ padding: "8px 12px", fontSize: 11, color: "rgba(255,255,255,0.3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Recent Chats
+              </div>
+              {conversations.slice(0, 5).map((c: any) => (
+                <button
+                  key={c.id}
+                  onClick={() => { setDrawerOpen(false); setActiveTab("ai"); }}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 12px", borderRadius: 8, background: "none",
+                    border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer",
+                    fontSize: 13, textAlign: "left",
+                  }}
+                >
+                  <Bot className="w-3.5 h-3.5" style={{ color: "#06b6d4", flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {c.title || "Untitled"}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Logout */}
+            <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <button
+                onClick={onLogout}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "12px", borderRadius: 10, background: "rgba(244,63,94,0.06)",
+                  border: "1px solid rgba(244,63,94,0.12)", color: "#fb7185",
+                  cursor: "pointer", fontSize: 13, fontWeight: 600,
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Three-dot Menu Dropdown ── */}
+      {menuOpen && (
+        <>
+          <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 150 }} />
+          <div style={{
+            position: "fixed", top: 52, right: 12, zIndex: 151,
+            background: "#1a1a22", border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 12, padding: "6px", minWidth: 180,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+          }}>
+            {[
+              { icon: <CreditCard className="w-4 h-4" />, label: "Buy Credits", action: () => { onOpenCredits(); setMenuOpen(false); } },
+              { icon: <Settings className="w-4 h-4" />, label: "Settings", action: () => setMenuOpen(false) },
+              { icon: <LogOut className="w-4 h-4" style={{ color: "#fb7185" }} />, label: "Sign Out", action: onLogout, danger: true },
+            ].map((item, i) => (
+              <button
+                key={i}
+                onClick={item.action}
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 12px", borderRadius: 8, background: "none",
+                  border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500,
+                  color: (item as any).danger ? "#fb7185" : "rgba(255,255,255,0.7)",
+                  textAlign: "left", transition: "background 0.15s",
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Top Bar */}
       <header className="flex-none h-14 border-b border-white/10 bg-[#0a0a0a]/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <button className="p-2 -ml-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition-colors">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 -ml-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition-colors"
+          >
             <Menu className="w-5 h-5 text-white/70" />
           </button>
           <div className="flex flex-col">
@@ -84,7 +248,10 @@ export default function MobileLayout({
           <button className="w-8 h-8 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center active:bg-green-500/30">
             <Play className="w-4 h-4 fill-current" />
           </button>
-          <button className="p-2 rounded-lg hover:bg-white/5 active:bg-white/10 text-white/70">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-2 rounded-lg hover:bg-white/5 active:bg-white/10 text-white/70"
+          >
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
@@ -158,7 +325,7 @@ export default function MobileLayout({
               onStop={onStopAgent}
               onApplyCode={onApplyCode}
               contextFiles={activeFilePath ? [activeFilePath] : []}
-              activeAgentId={activeAgentId} // Need this prop too! Let's pass it next.
+              activeAgentId={activeAgentId}
               agents={agents}
             />
           </div>
