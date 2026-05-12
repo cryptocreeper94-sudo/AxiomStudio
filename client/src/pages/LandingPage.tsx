@@ -4,32 +4,34 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 import { useState, useEffect } from "react";
-import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone, ChevronDown } from "lucide-react";
+import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone, ChevronDown, ChevronLeft, ChevronRight, Image } from "lucide-react";
 import "./landing.css";
 
 const SLIDES = ["/bg/slide-1.png", "/bg/slide-2.png", "/bg/slide-3.png", "/bg/slide-4.png"];
 const SLIDE_DURATION = 7000;
 
 const FEATURES = [
-  { icon: <Bot className="w-5 h-5" />, bg: "rgba(6, 182, 212, 0.12)", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, GPT-4o — switch models mid-conversation. Each agent remembers context." },
-  { icon: <Monitor className="w-5 h-5" />, bg: "rgba(168, 85, 247, 0.12)", title: "Full IDE in Browser", desc: "Monaco editor, file explorer, real terminal — everything you need without leaving the browser." },
+  { icon: <Bot className="w-5 h-5" />, bg: "rgba(6, 182, 212, 0.12)", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, GPT-4o — auto-routed to the best model for each task. No manual switching." },
+  { icon: <Monitor className="w-5 h-5" />, bg: "rgba(20, 40, 80, 0.25)", title: "Full IDE in Browser", desc: "Monaco editor, file explorer, real terminal — everything you need without leaving the browser." },
   { icon: <Terminal className="w-5 h-5" />, bg: "rgba(56, 189, 248, 0.12)", title: "Real Terminal", desc: "Not a sandbox. A real shell on your machine. Run git, npm, python — anything." },
   { icon: <GitBranch className="w-5 h-5" />, bg: "rgba(34, 197, 94, 0.12)", title: "Native Git", desc: "Push, pull, branch, merge — directly from the IDE. No copy-pasting commands." },
-  { icon: <Zap className="w-5 h-5" />, bg: "rgba(250, 204, 21, 0.12)", title: "Local Mode", desc: "Install locally with npx. Full filesystem access, no cloud dependency. Same credits." },
-  { icon: <Shield className="w-5 h-5" />, bg: "rgba(244, 63, 94, 0.12)", title: "Enterprise Security", desc: "OAuth, biometrics, Trust Layer SSO. Your code stays on your machine in local mode." },
+  { icon: <Image className="w-5 h-5" />, bg: "rgba(220, 50, 70, 0.12)", title: "Image Generation", desc: "Generate images with DALL-E 3 directly in your project. Save to disk or preview inline." },
+  { icon: <Zap className="w-5 h-5" />, bg: "rgba(250, 204, 21, 0.12)", title: "Local Mode", desc: "Install locally with npx. Full filesystem access, web search, browser automation. Same credits." },
+  { icon: <Shield className="w-5 h-5" />, bg: "rgba(140, 20, 30, 0.15)", title: "Enterprise Security", desc: "OAuth, biometrics, Trust Layer SSO. Your code stays on your machine in local mode." },
 ];
 
 const AGENTS = [
-  { name: "Opus", model: "claude-opus-4-7", icon: "🧠", bg: "rgba(168, 85, 247, 0.1)", border: "rgba(168, 85, 247, 0.2)", cost: "3 credits" },
-  { name: "Sonnet", model: "claude-sonnet-4-20250514", icon: "⚡", bg: "rgba(6, 182, 212, 0.1)", border: "rgba(6, 182, 212, 0.2)", cost: "1 credit" },
-  { name: "GPT-4o", model: "gpt-4o", icon: "🌀", bg: "rgba(34, 197, 94, 0.1)", border: "rgba(34, 197, 94, 0.2)", cost: "2 credits" },
-  { name: "o3-mini", model: "o3-mini", icon: "🔬", bg: "rgba(250, 204, 21, 0.1)", border: "rgba(250, 204, 21, 0.2)", cost: "1 credit" },
+  { name: "Opus", model: "claude-opus-4-7", img: "/agents/opus.png", border: "rgba(30, 58, 138, 0.4)", cost: "3 credits" },
+  { name: "Sonnet", model: "claude-sonnet-4-20250514", img: "/agents/sonnet.png", border: "rgba(6, 182, 212, 0.3)", cost: "1 credit" },
+  { name: "GPT-4o", model: "gpt-4o", img: "/agents/gpt4o.png", border: "rgba(34, 197, 94, 0.3)", cost: "2 credits" },
+  { name: "o3-mini", model: "o3-mini", img: "/agents/o3mini.png", border: "rgba(180, 60, 30, 0.3)", cost: "1 credit" },
 ];
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [featureIdx, setFeatureIdx] = useState(0);
 
   // Fix body scroll — override the IDE's overflow:hidden
   useEffect(() => {
@@ -154,7 +156,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features ── */}
+      {/* ── Features Carousel ── */}
       <section className="landing-section" id="features">
         <span className="section-label">Capabilities</span>
         <h2 className="section-title">Everything You Need to Ship</h2>
@@ -163,34 +165,73 @@ export default function LandingPage() {
           Cloud or local — you choose.
         </p>
 
-        <div className="feature-grid">
-          {FEATURES.map((f, i) => (
-            <div className="feature-card" key={i}>
-              <div className="feature-icon" style={{ background: f.bg, color: "white" }}>
-                {f.icon}
-              </div>
-              <h3>{f.title}</h3>
-              <p>{f.desc}</p>
-            </div>
-          ))}
+        <div className="feature-carousel">
+          <button className="carousel-arrow carousel-prev" onClick={() => setFeatureIdx((featureIdx - 1 + FEATURES.length) % FEATURES.length)}>
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="carousel-track">
+            {FEATURES.map((f, i) => {
+              const offset = (i - featureIdx + FEATURES.length) % FEATURES.length;
+              const isCenter = offset === 0;
+              const isLeft = offset === FEATURES.length - 1;
+              const isRight = offset === 1;
+              const visible = isCenter || isLeft || isRight;
+              return (
+                <div
+                  className={`feature-slide ${isCenter ? "active" : ""}`}
+                  key={i}
+                  style={{
+                    transform: isCenter ? "translateX(0) scale(1)" : isLeft ? "translateX(-110%) scale(0.85)" : isRight ? "translateX(110%) scale(0.85)" : "translateX(200%) scale(0.7)",
+                    opacity: visible ? 1 : 0,
+                    pointerEvents: isCenter ? "auto" : "none",
+                    zIndex: isCenter ? 3 : 1,
+                  }}
+                >
+                  <div className="feature-icon" style={{ background: f.bg, color: "white" }}>
+                    {f.icon}
+                  </div>
+                  <h3>{f.title}</h3>
+                  <p>{f.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+          <button className="carousel-arrow carousel-next" onClick={() => setFeatureIdx((featureIdx + 1) % FEATURES.length)}>
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <div className="carousel-dots">
+            {FEATURES.map((_, i) => (
+              <button
+                key={i}
+                className={`carousel-dot ${i === featureIdx ? "active" : ""}`}
+                onClick={() => setFeatureIdx(i)}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── Agents ── */}
       <section className="landing-section" id="agents">
         <span className="section-label">AI Agents</span>
-        <h2 className="section-title">Pick Your Model</h2>
+        <h2 className="section-title">Smart Auto-Routing</h2>
         <p className="section-sub">
-          Switch between the best AI models instantly. Each agent has full tool access —
-          file editing, terminal, git, and more.
+          Your request is automatically routed to the best model for the job.
+          Complex architecture? Opus. Quick fix? Sonnet. Every agent has full tool access —
+          file editing, terminal, git, image generation, web search, and browser automation.
         </p>
 
         <div className="agent-grid">
           {AGENTS.map((a, i) => (
             <div className="agent-card" key={i} style={{ borderColor: a.border }}>
-              <div className="agent-icon" style={{ background: a.bg }}>
-                {a.icon}
-              </div>
+              <img
+                src={a.img}
+                alt={a.name}
+                style={{
+                  width: 56, height: 56, borderRadius: 12, objectFit: "cover",
+                  marginBottom: 12, border: `1px solid ${a.border}`,
+                }}
+              />
               <h4>{a.name}</h4>
               <div className="model">{a.model}</div>
               <div className="cost">{a.cost} / message</div>
