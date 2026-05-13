@@ -288,8 +288,8 @@ router.delete("/file", requireAuth, async (req: any, res) => {
 });
 
 // GET /api/workspace/serve/* — Serve raw file content for iframe previews
-router.get("/serve/*", requireAuth, async (req: any, res: any) => {
-  const rawPath = req.params[0] || "index.html";
+router.get("/serve/*filepath", requireAuth, async (req: any, res: any) => {
+  const rawPath = req.params.filepath || "index.html";
   if (!isSafePath(normalizePath(rawPath)) || normalizePath(rawPath) === "") {
     res.status(400).send("Invalid path");
     return;

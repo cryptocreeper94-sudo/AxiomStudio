@@ -140,8 +140,8 @@ router.delete("/file", (req: any, res) => {
 });
 
 // GET /api/workspace/serve/* — Serve raw file content for iframe previews
-router.get("/serve/*", (req: any, res: any) => {
-  const rawPath = req.params[0] || "index.html";
+router.get("/serve/*filepath", (req: any, res: any) => {
+  const rawPath = req.params.filepath || "index.html";
   const full = resolvePath(req, rawPath);
   
   if (!existsSync(full)) {
