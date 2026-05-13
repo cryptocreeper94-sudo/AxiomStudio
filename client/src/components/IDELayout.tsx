@@ -53,6 +53,7 @@ export default function IDELayout() {
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [toolActivity, setToolActivity] = useState<Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>>([]);
   const abortRef = useRef<AbortController | null>(null);
+  const pendingArtifactPathRef = useRef<string | null>(null);
 
   // ── Bottom panel state ──
   const [bottomPanelHeight, setBottomPanelHeight] = useState(220);
@@ -351,6 +352,9 @@ export default function IDELayout() {
             if (parsed.type === "route") setRouteInfo(parsed);
             if (parsed.type === "tool_call") {
               setToolActivity(prev => [...prev, { tool: parsed.tool, args: parsed.args, done: false }]);
+              if ((parsed.tool === "write_to_file" || parsed.tool === "write_file" || parsed.tool === "replace_file_content") && parsed.args?.TargetFile?.endsWith(".md")) {
+                pendingArtifactPathRef.current = parsed.args.TargetFile;
+              }
             }
             if (parsed.type === "tool_result") {
               setToolActivity(prev => prev.map((t, i) =>
@@ -358,6 +362,13 @@ export default function IDELayout() {
                   ? { ...t, result: parsed.result, isError: parsed.isError, done: true }
                   : t
               ));
+              if (pendingArtifactPathRef.current && !parsed.isError && (parsed.tool === "write_to_file" || parsed.tool === "write_file" || parsed.tool === "replace_file_content")) {
+                const target = pendingArtifactPathRef.current;
+                setTimeout(() => {
+                  handleOpenFile(target, target.split(/[\\/]/).pop() || target);
+                }, 500);
+                pendingArtifactPathRef.current = null;
+              }
             }
             if (parsed.type === "error") { fullContent += `\n\n⚠️ ${parsed.error}`; setStreamingContent(fullContent); }
           } catch { /* incomplete JSON, will be buffered */ }
