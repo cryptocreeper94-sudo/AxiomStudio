@@ -387,7 +387,7 @@ async function toolRunCommand(command: string, cwd?: string): Promise<string> {
     const { stdout, stderr } = await execAsync(command, {
       cwd: cwd || process.cwd(),
       timeout: 30000,
-      maxBuffer: 8 * 1024,
+      maxBuffer: 128 * 1024,
       windowsHide: true,
       shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
     });

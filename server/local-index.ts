@@ -346,7 +346,13 @@ app.post("/api/agent/chat", async (req, res) => {
         }
 
         let finalMsg: Anthropic.Message;
-        finalMsg = await stream.finalMessage();
+        try {
+          finalMsg = await stream.finalMessage();
+        } catch (e: any) {
+          console.warn("[Local Anthropic] finalMessage() failed:", e.message);
+          res.write(`data: ${JSON.stringify({ type: "error", error: e.message || "Anthropic API error" })}\n\n`);
+          break;
+        }
 
         totalInputTokens += finalMsg.usage.input_tokens;
         totalOutputTokens += finalMsg.usage.output_tokens;
