@@ -9,7 +9,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Send, Loader2, AlertTriangle, Copy, Check, Brain, User, RotateCcw,
   FileCode, FileDown, ChevronDown, Paperclip, X as XIcon, Upload, Image as ImageIcon,
-  StopCircle,
+  StopCircle, Mic, MicOff
 } from "lucide-react";
 import { marked } from "marked";
 import StarterHub, { type StarterConfig } from "./StarterHub";
@@ -446,6 +446,55 @@ export default function ChatView({
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Voice Input State
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleVoiceRecording = useCallback(() => {
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event: any) => {
+      let currentTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        currentTranscript += event.results[i][0].transcript;
+      }
+      // If we want to append, we'd need to store the prefix, but for simplicity we can just set it
+      // or append if the user was already typing.
+      setInput(prev => {
+        const prefix = prev && !prev.endsWith(' ') ? prev + ' ' : prev;
+        return prefix + currentTranscript;
+      });
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isListening]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -755,6 +804,26 @@ export default function ChatView({
             >
               <Upload style={{ width: 14, height: 14 }} />
             </button>
+            
+            {/* Voice Input Button */}
+            <button
+              onClick={toggleVoiceRecording}
+              title={isListening ? "Stop listening" : "Start voice input"}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                background: isListening ? "rgba(239, 68, 68, 0.15)" : "rgba(255,255,255,0.04)", 
+                border: `1px solid ${isListening ? "rgba(239, 68, 68, 0.4)" : "rgba(255,255,255,0.08)"}`,
+                color: isListening ? "#ef4444" : "rgba(255,255,255,0.3)", 
+                cursor: "pointer",
+                transition: "all 0.2s",
+                animation: isListening ? "pulse-dot 1.5s infinite ease-in-out" : "none",
+              }}
+              onMouseEnter={e => { if (!isListening) { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; e.currentTarget.style.color = "#06b6d4"; } }}
+              onMouseLeave={e => { if (!isListening) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; } }}
+            >
+              {isListening ? <MicOff style={{ width: 14, height: 14 }} /> : <Mic style={{ width: 14, height: 14 }} />}
+            </button>
 
             <div style={{ flex: 1, position: "relative" }}>
               <textarea
@@ -762,7 +831,9 @@ export default function ChatView({
                 value={input}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
-                placeholder={activeFileName
+                placeholder={
+                  isListening ? "Listening..." :
+                  activeFileName
                   ? `Ask about ${activeFileName.split("/").pop()}...`
                   : `Ask ${agentName} anything...`
                 }
