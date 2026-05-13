@@ -120,8 +120,17 @@ D:\axiom-studio\
 
 ## 4. WHAT NEEDS TO BE BUILT
 
-### PRIORITY 1: Starter Hub / Project Wizard
-Build a launch screen that replaces the current blank chat state. This is the biggest UX improvement needed.
+### ✅ COMPLETED: Starter Hub / Project Wizard
+Built and integrated into ChatView, IDELayout, and AgentPanel. 6 starters with system prompts, checklist generation, and agent auto-selection. **NOT YET wired into MobileLayout** — needs the same props passed through.
+
+### ✅ COMPLETED: Enhanced Thinking Indicator
+ThinkingIndicator component with elapsed timer, animated brain icon, orbiting dot, contextual status (THINKING/EXECUTING/WRITING), wave bars, tool activity log, and progress sweep. Replaces old 3-dot indicator in IDELayout and AgentPanel. **NOT YET wired into MobileLayout**.
+
+### ✅ COMPLETED: Progress Tracker
+ProgressTracker component with animated checklist, collapsible state, progress bar. Integrated into ChatView above messages when a starter is active.
+
+### PRIORITY 1: Wire StarterHub + ThinkingIndicator into MobileLayout
+The MobileLayout (`client/src/components/mobile/MobileLayout.tsx`) ChatView at line 461 still needs the new props: `onSelectStarter`, `activeStarter`, `progressChecklist`, `onClearStarter`. Same pattern as IDELayout.
 
 ### PRIORITY 2: Live Preview Pane
 Split-panel code ↔ preview with swipeable toggle on mobile.
@@ -132,16 +141,13 @@ Microphone button for natural language → Lume code.
 ### PRIORITY 4: Project Persistence
 Projects save state across sessions so users can resume.
 
-### PRIORITY 5: Progress Tracker UI
-Visual checklist that each starter generates, visible alongside chat.
-
-### PRIORITY 6: Deploy Pipeline
+### PRIORITY 5: Deploy Pipeline
 One-tap export/deploy from within the IDE.
 
-### PRIORITY 7: DOI Registry Completion
+### PRIORITY 6: DOI Registry Completion
 Finish the master DOI list and ORCID bulk upload.
 
-### PRIORITY 8: Website DOI Updates
+### PRIORITY 7: Website DOI Updates
 Add DOIs to paper listings on all three canon websites.
 
 ---
