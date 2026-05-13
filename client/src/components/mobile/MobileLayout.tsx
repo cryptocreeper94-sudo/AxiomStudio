@@ -4,6 +4,7 @@ import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X, LogOut, Cred
 import MonacoEditor from "../MonacoEditor";
 import { OpenFile } from "../EditorArea";
 import ChatView from "../ChatView";
+import PreviewPane from "../PreviewPane";
 import { type StarterConfig } from "../StarterHub";
 import { type ChecklistItem } from "../ProgressTracker";
 import FileExplorer from "../FileExplorer";
@@ -445,14 +446,8 @@ export default function MobileLayout({
         )}
 
         {activeTab === "preview" && (
-          <div className="h-full w-full flex flex-col bg-white">
-            <div className="h-12 bg-gray-100 flex items-center px-4 gap-3 border-b border-gray-300 text-black">
-              <span className="text-xs truncate flex-1 font-mono">http://localhost:3000</span>
-              <button className="text-blue-500 text-xs font-semibold uppercase">Refresh</button>
-            </div>
-            <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
-              Preview will render here.
-            </div>
+          <div className="h-full w-full flex flex-col bg-white overflow-hidden pb-[4.5rem]">
+            <PreviewPane token={token} entryPoint="index.html" />
           </div>
         )}
 

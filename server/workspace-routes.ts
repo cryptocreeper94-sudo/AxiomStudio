@@ -17,13 +17,15 @@ const router = Router();
 
 // Auth middleware - strict JWT validation
 async function requireAuth(req: any, res: any, next: any) {
+  let token = req.query.token as string;
   const auth = req.headers.authorization;
-  if (!auth?.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Unauthorized: Missing token" });
-    return;
+  if (!token) {
+    if (!auth?.startsWith("Bearer ")) {
+      res.status(401).json({ error: "Unauthorized: Missing token" });
+      return;
+    }
+    token = auth.split(" ")[1];
   }
-  
-  const token = auth.split(" ")[1];
   
   // Step 1: Verify JWT
   let decoded: any;
@@ -248,6 +250,46 @@ router.delete("/file", requireAuth, async (req: any, res) => {
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/workspace/serve/* — Serve raw file content for iframe previews
+router.get("/serve/*", requireAuth, async (req: any, res: any) => {
+  const rawPath = req.params[0] || "index.html";
+  const reqPath = normalizePath(rawPath);
+  if (!isSafePath(reqPath) || reqPath === "") {
+    res.status(400).send("Invalid path");
+    return;
+  }
+  
+  try {
+    const records = await db.select()
+      .from(workspaceFiles)
+      .where(and(
+        eq(workspaceFiles.userId, req.uid),
+        eq(workspaceFiles.filePath, reqPath)
+      ))
+      .limit(1);
+
+    if (records.length === 0) {
+      res.status(404).send(`File not found: ${reqPath}`);
+      return;
+    }
+
+    const content = records[0].content || "";
+    
+    // Determine content type
+    let contentType = "text/plain";
+    if (reqPath.endsWith(".html")) contentType = "text/html";
+    else if (reqPath.endsWith(".css")) contentType = "text/css";
+    else if (reqPath.endsWith(".js") || reqPath.endsWith(".mjs")) contentType = "application/javascript";
+    else if (reqPath.endsWith(".json")) contentType = "application/json";
+    else if (reqPath.endsWith(".svg")) contentType = "image/svg+xml";
+
+    res.setHeader("Content-Type", contentType);
+    res.send(content);
+  } catch (err: any) {
+    res.status(500).send(err.message);
   }
 });
 

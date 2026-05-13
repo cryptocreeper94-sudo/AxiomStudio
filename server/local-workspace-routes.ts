@@ -139,4 +139,32 @@ router.delete("/file", (req: any, res) => {
   }
 });
 
+// GET /api/workspace/serve/* — Serve raw file content for iframe previews
+router.get("/serve/*", (req: any, res: any) => {
+  const rawPath = req.params[0] || "index.html";
+  const full = resolvePath(rawPath);
+  
+  if (!existsSync(full)) {
+    res.status(404).send(`File not found: ${rawPath}`);
+    return;
+  }
+
+  try {
+    const content = readFileSync(full, "utf-8");
+    
+    // Determine content type
+    let contentType = "text/plain";
+    if (full.endsWith(".html")) contentType = "text/html";
+    else if (full.endsWith(".css")) contentType = "text/css";
+    else if (full.endsWith(".js") || full.endsWith(".mjs")) contentType = "application/javascript";
+    else if (full.endsWith(".json")) contentType = "application/json";
+    else if (full.endsWith(".svg")) contentType = "image/svg+xml";
+
+    res.setHeader("Content-Type", contentType);
+    res.send(content);
+  } catch (err: any) {
+    res.status(500).send(err.message);
+  }
+});
+
 export default router;
