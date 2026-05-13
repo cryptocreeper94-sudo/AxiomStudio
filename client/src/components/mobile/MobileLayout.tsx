@@ -4,6 +4,8 @@ import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X, LogOut, Cred
 import MonacoEditor from "../MonacoEditor";
 import { OpenFile } from "../EditorArea";
 import ChatView from "../ChatView";
+import { type StarterConfig } from "../StarterHub";
+import { type ChecklistItem } from "../ProgressTracker";
 import FileExplorer from "../FileExplorer";
 import { Message } from "../IDELayout";
 import TerminalPanel from "../TerminalPanel";
@@ -37,6 +39,7 @@ interface MobileLayoutProps {
   creditData: any;
   onLogout: () => void;
   onOpenCredits: () => void;
+  onSetAgentId?: (id: string) => void;
 }
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"];
@@ -71,6 +74,7 @@ export default function MobileLayout({
   creditData,
   onLogout,
   onOpenCredits,
+  onSetAgentId,
 }: MobileLayoutProps) {
   const [activeTab, setActiveTab] = useState<"files" | "editor" | "preview" | "console" | "ai">("editor");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -78,6 +82,8 @@ export default function MobileLayout({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [, setLocation] = useLocation();
+  const [activeStarter, setActiveStarter] = useState<StarterConfig | null>(null);
+  const [progressChecklist, setProgressChecklist] = useState<ChecklistItem[]>([]);
 
   const TABS = [
     { id: "files", icon: Folder, label: "Files" },
@@ -469,6 +475,23 @@ export default function MobileLayout({
               activeAgentId={activeAgentId}
               agents={agents}
               onFileUpload={() => fileInputRef.current?.click()}
+              activeStarter={activeStarter}
+              progressChecklist={progressChecklist}
+              onSelectStarter={(starter) => {
+                setActiveStarter(starter);
+                setProgressChecklist(starter.checklist.map((label, i) => ({
+                  label,
+                  status: i === 0 ? "active" as const : "pending" as const,
+                })));
+                if (starter.agent !== "auto" && onSetAgentId) {
+                  onSetAgentId(starter.agent);
+                }
+                handleSendWithUploads(`I want to ${starter.title.toLowerCase()}. ${starter.description}`);
+              }}
+              onClearStarter={() => {
+                setActiveStarter(null);
+                setProgressChecklist([]);
+              }}
             />
           </div>
         )}
