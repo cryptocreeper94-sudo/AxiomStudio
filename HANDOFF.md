@@ -135,8 +135,8 @@ Wired `onSelectStarter`, `activeStarter`, `progressChecklist`, and `onClearStart
 ### ✅ COMPLETED: Live Preview Pane
 Implemented `PreviewPane` component with split-panel in desktop (`IDELayout`) and swipeable tab in mobile (`MobileLayout`). Added backend file serving routes (`/api/workspace/serve/*`) to both cloud and local backends to render the project directly in a sandboxed iframe.
 
-### PRIORITY 3: Voice Input for Lume
-Microphone button for natural language → Lume code.
+### ✅ COMPLETED: Voice Input for Lume
+Integrated Web Speech API into `ChatView.tsx` with a pulsing microphone button, enabling voice-to-text directly in the chat input.
 
 ### PRIORITY 4: Project Persistence
 Projects save state across sessions so users can resume.
