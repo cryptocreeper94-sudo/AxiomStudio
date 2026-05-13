@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Send, Loader2, AlertTriangle, Copy, Check, Brain, User, RotateCcw,
-  FileCode, FileDown, ChevronDown, Paperclip, X as XIcon,
+  FileCode, FileDown, ChevronDown, Paperclip, X as XIcon, Upload, Image as ImageIcon,
 } from "lucide-react";
 import { marked } from "marked";
 
@@ -33,17 +33,22 @@ interface Props {
   messages: Message[];
   streamingContent: string;
   isStreaming: boolean;
-  agentName: string;
-  agentColor: string;
+  agentName?: string;
+  agentColor?: string;
   agentModel?: string;
-  routeInfo: { model: string; agent: string; score: number; reason: string } | null;
+  routeInfo?: { model: string; agent: string; score: number; reason: string } | null;
   onSend: (message: string, contextFiles?: string[]) => void;
-  onRetry: () => void;
+  onRetry?: () => void;
+  onStop?: () => void;
   onApplyCode?: (code: string, filename: string, language: string) => void;
   activeFileName?: string;
   openFiles?: FileContextItem[];
   workspaceFiles?: FileContextItem[];
   toolActivity?: Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>;
+  contextFiles?: string[];
+  activeAgentId?: string;
+  agents?: any[];
+  onFileUpload?: () => void;
 }
 
 // ── Code Block with Apply Button ──
@@ -421,14 +426,17 @@ function FileContextBar({ files, selected, onToggle, onClear }: {
 // ── Main Chat View ──
 
 export default function ChatView({
-  messages, streamingContent, isStreaming, agentName, agentColor, agentModel,
-  routeInfo, onSend, onRetry, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
-  toolActivity = [],
+  messages, streamingContent, isStreaming, agentName = "Axiom", agentColor = "#06b6d4", agentModel,
+  routeInfo, onSend, onRetry, onStop, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
+  toolActivity = [], onFileUpload,
 }: Props) {
   const [input, setInput] = useState("");
   const [contextFiles, setContextFiles] = useState<string[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; content: string; isImage: boolean; size: number }>>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -453,9 +461,49 @@ export default function ChatView({
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
-    onSend(trimmed, contextFiles.length > 0 ? contextFiles : undefined);
+
+    // Enrich message with uploaded files
+    let finalMsg = trimmed;
+    if (uploadedFiles.length > 0) {
+      const fileParts = uploadedFiles.map(f => {
+        if (f.isImage) return `[Attached image: ${f.name} (${(f.size / 1024).toFixed(1)} KB)]`;
+        return `### Attached File: ${f.name}\n\`\`\`\n${f.content.slice(0, 50000)}\n\`\`\``;
+      });
+      finalMsg = `**Attached Files:**\n\n${fileParts.join("\n\n")}\n\n---\n\n${trimmed}`;
+      setUploadedFiles([]);
+    }
+
+    onSend(finalMsg, contextFiles.length > 0 ? contextFiles : undefined);
     setInput("");
     if (inputRef.current) inputRef.current.style.height = "auto";
+  };
+
+  /* ── File handling ── */
+  const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"];
+
+  const processFiles = (files: FileList | File[]) => {
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      const isImg = IMAGE_EXTS.some(ext => file.name.toLowerCase().endsWith(ext));
+      if (isImg) {
+        reader.onload = () => setUploadedFiles(prev => [...prev, { name: file.name, content: reader.result as string, isImage: true, size: file.size }]);
+        reader.readAsDataURL(file);
+      } else {
+        reader.onload = () => setUploadedFiles(prev => [...prev, { name: file.name, content: reader.result as string, isImage: false, size: file.size }]);
+        reader.readAsText(file);
+      }
+    });
+  };
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) processFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files.length > 0) processFiles(e.dataTransfer.files);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -645,12 +693,65 @@ export default function ChatView({
       </div>
 
       {/* Input Area */}
-      <div style={{
-        borderTop: "1px solid rgba(255,255,255,0.08)",
-        padding: "12px 12px 8px",
-        background: "linear-gradient(to top, rgba(6,8,14,1), rgba(8,12,20,0.95))",
-      }}>
+      <div
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.08)",
+          padding: "12px 12px 8px",
+          background: "linear-gradient(to top, rgba(6,8,14,1), rgba(8,12,20,0.95))",
+          position: "relative",
+        }}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {dragOver && (
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(6,182,212,0.08)",
+            border: "2px dashed rgba(6,182,212,0.3)", borderRadius: 12,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#06b6d4", fontSize: 13, fontWeight: 600, zIndex: 10,
+            pointerEvents: "none",
+          }}>
+            Drop files here
+          </div>
+        )}
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.txt,.js,.ts,.tsx,.jsx,.py,.css,.html,.json,.md,.csv,.yml,.yaml,.xml,.sql,.sh,.lume,.toml,.env"
+          onChange={handleFilePick}
+          style={{ display: "none" }}
+        />
+
         <div style={{ maxWidth: "56rem", margin: "0 auto" }}>
+          {/* Uploaded file badges */}
+          {uploadedFiles.length > 0 && (
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", fontWeight: 600 }}>ATTACHED:</span>
+              {uploadedFiles.map((f, i) => (
+                <span key={i} style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "3px 8px", borderRadius: 6, fontSize: 10,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  background: f.isImage ? "rgba(168,85,247,0.08)" : "rgba(34,197,94,0.08)",
+                  border: `1px solid ${f.isImage ? "rgba(168,85,247,0.15)" : "rgba(34,197,94,0.15)"}`,
+                  color: f.isImage ? "#c084fc" : "#4ade80",
+                  maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
+                  {f.isImage ? <ImageIcon style={{ width: 10, height: 10, flexShrink: 0 }} /> : <FileCode style={{ width: 10, height: 10, flexShrink: 0 }} />}
+                  {f.name}
+                  <button onClick={() => setUploadedFiles(prev => prev.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", padding: 0, display: "flex", opacity: 0.6 }}>
+                    <XIcon style={{ width: 10, height: 10 }} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* File context bar */}
           <div style={{ position: "relative", marginBottom: contextFiles.length > 0 || availableFiles.length > 0 ? "6px" : "0" }}>
             <FileContextBar
@@ -662,6 +763,23 @@ export default function ChatView({
           </div>
 
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+            {/* File upload button */}
+            <button
+              onClick={() => onFileUpload ? onFileUpload() : fileInputRef.current?.click()}
+              title="Attach files from your device"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.3)", cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; e.currentTarget.style.color = "#06b6d4"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
+            >
+              <Upload style={{ width: 14, height: 14 }} />
+            </button>
+
             <div style={{ flex: 1, position: "relative" }}>
               <textarea
                 ref={inputRef}
@@ -693,20 +811,20 @@ export default function ChatView({
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || isStreaming}
+                disabled={(!input.trim() && uploadedFiles.length === 0) || isStreaming}
                 style={{
                   position: "absolute", right: 6, bottom: 6,
                   padding: 7, borderRadius: 8,
-                  background: (!input.trim() || isStreaming) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
-                  border: "none", color: "#fff", cursor: (!input.trim() || isStreaming) ? "not-allowed" : "pointer",
-                  opacity: (!input.trim() || isStreaming) ? 0.3 : 1,
+                  background: ((!input.trim() && uploadedFiles.length === 0) || isStreaming) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
+                  border: "none", color: "#fff", cursor: ((!input.trim() && uploadedFiles.length === 0) || isStreaming) ? "not-allowed" : "pointer",
+                  opacity: ((!input.trim() && uploadedFiles.length === 0) || isStreaming) ? 0.3 : 1,
                   transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
                 {isStreaming ? <Loader2 style={{ width: 15, height: 15, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 15, height: 15 }} />}
               </button>
             </div>
-            {messages.length > 0 && !isStreaming && (
+            {onRetry && messages.length > 0 && !isStreaming && (
               <button
                 onClick={onRetry}
                 title="Retry last"
@@ -722,7 +840,7 @@ export default function ChatView({
             )}
           </div>
           <p style={{ fontSize: 8, color: "rgba(255,255,255,0.12)", textAlign: "center", marginTop: 6 }}>
-            Shift+Enter for new line · Auto-routes to optimal model
+            Shift+Enter for new line · Drop files to attach · Auto-routes to optimal model
           </p>
         </div>
       </div>
