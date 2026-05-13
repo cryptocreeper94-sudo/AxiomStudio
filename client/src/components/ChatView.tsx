@@ -460,7 +460,7 @@ export default function ChatView({
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || isStreaming) return;
+    if (!trimmed) return;
 
     // Enrich message with uploaded files
     let finalMsg = trimmed;
@@ -807,17 +807,17 @@ export default function ChatView({
                 }}
                 onFocus={(e) => e.target.style.borderColor = "rgba(6,182,212,0.4)"}
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
-                disabled={isStreaming}
+                disabled={false}
               />
               <button
                 onClick={handleSend}
-                disabled={(!input.trim() && uploadedFiles.length === 0) || isStreaming}
+                disabled={(!input.trim() && uploadedFiles.length === 0)}
                 style={{
                   position: "absolute", right: 6, bottom: 6,
                   padding: 7, borderRadius: 8,
-                  background: ((!input.trim() && uploadedFiles.length === 0) || isStreaming) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
-                  border: "none", color: "#fff", cursor: ((!input.trim() && uploadedFiles.length === 0) || isStreaming) ? "not-allowed" : "pointer",
-                  opacity: ((!input.trim() && uploadedFiles.length === 0) || isStreaming) ? 0.3 : 1,
+                  background: (!input.trim() && uploadedFiles.length === 0) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
+                  border: "none", color: "#fff", cursor: (!input.trim() && uploadedFiles.length === 0) ? "not-allowed" : "pointer",
+                  opacity: (!input.trim() && uploadedFiles.length === 0) ? 0.3 : 1,
                   transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
