@@ -86,6 +86,7 @@ export async function* streamAnthropic(
         finalMsg = await stream.finalMessage();
       } catch (e: any) {
         console.warn("[Anthropic] finalMessage() failed:", e.message);
+        yield { type: "error", error: e.message || "Anthropic API error" };
         yield { type: "done" };
         return;
       }

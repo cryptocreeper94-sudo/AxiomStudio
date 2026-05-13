@@ -760,26 +760,33 @@ export function registerAgentRoutes(app: Express): void {
       signal: controller.signal,
     });
 
-    for await (const chunk of stream) {
-      if (chunk.type === "text" && chunk.content) {
-        fullResponse += chunk.content;
-        res.write(`data: ${JSON.stringify({ type: "text", content: chunk.content })}\n\n`);
-      } else if (chunk.type === "usage") {
-        inputTokens = chunk.inputTokens || 0;
-        outputTokens = chunk.outputTokens || 0;
-        res.write(`data: ${JSON.stringify({ type: "usage", inputTokens, outputTokens })}\n\n`);
-      } else if (chunk.type === "tool_call") {
-        console.log(`[Chat] 🔧 Tool call: ${chunk.tool}(${JSON.stringify(chunk.args)})`);
-        res.write(`data: ${JSON.stringify({ type: "tool_call", tool: chunk.tool, args: chunk.args })}\n\n`);
-      } else if (chunk.type === "tool_result") {
-        console.log(`[Chat] ✓ Tool result: ${chunk.tool} → ${String(chunk.result).slice(0, 80)}`);
-        res.write(`data: ${JSON.stringify({ type: "tool_result", tool: chunk.tool, result: chunk.result, isError: chunk.isError })}\n\n`);
-      } else if (chunk.type === "error") {
-        res.write(`data: ${JSON.stringify({ type: "error", error: chunk.error })}\n\n`);
-      } else if (chunk.type === "done") {
-        console.log(`[Chat] Stream done. fullResponse length=${fullResponse.length}`);
-        res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+    try {
+      for await (const chunk of stream) {
+        if (chunk.type === "text" && chunk.content) {
+          fullResponse += chunk.content;
+          res.write(`data: ${JSON.stringify({ type: "text", content: chunk.content })}\n\n`);
+        } else if (chunk.type === "usage") {
+          inputTokens = chunk.inputTokens || 0;
+          outputTokens = chunk.outputTokens || 0;
+          res.write(`data: ${JSON.stringify({ type: "usage", inputTokens, outputTokens })}\n\n`);
+        } else if (chunk.type === "tool_call") {
+          console.log(`[Chat] 🔧 Tool call: ${chunk.tool}(${JSON.stringify(chunk.args)})`);
+          res.write(`data: ${JSON.stringify({ type: "tool_call", tool: chunk.tool, args: chunk.args })}\n\n`);
+        } else if (chunk.type === "tool_result") {
+          console.log(`[Chat] ✓ Tool result: ${chunk.tool} → ${String(chunk.result).slice(0, 80)}`);
+          res.write(`data: ${JSON.stringify({ type: "tool_result", tool: chunk.tool, result: chunk.result, isError: chunk.isError })}\n\n`);
+        } else if (chunk.type === "error") {
+          res.write(`data: ${JSON.stringify({ type: "error", error: chunk.error })}\n\n`);
+        } else if (chunk.type === "done") {
+          console.log(`[Chat] Stream done. fullResponse length=${fullResponse.length}`);
+          res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+        }
       }
+    } catch (streamErr: any) {
+      console.error(`[Chat] Provider stream failed:`, streamErr);
+      res.write(`data: ${JSON.stringify({ type: "error", error: streamErr.message || "Provider stream crashed" })}\n\n`);
+      res.end();
+      return;
     }
 
     // Save assistant message
