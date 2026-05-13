@@ -252,7 +252,15 @@ app.delete("/api/agent/conversations/:id", (req, res) => {
   res.json({ success: true });
 });
 app.patch("/api/agent/conversations/:id", (req, res) => {
-  localDb.updateConversation(req.params.id, LOCAL_USER.id, req.body);
+  const updates = { ...req.body };
+  if (updates.activeStarter !== undefined) {
+    updates.active_starter = updates.activeStarter ? JSON.stringify(updates.activeStarter) : null;
+    delete updates.activeStarter;
+  }
+  if (updates.checklist !== undefined) {
+    updates.checklist = updates.checklist ? JSON.stringify(updates.checklist) : null;
+  }
+  localDb.updateConversation(req.params.id, LOCAL_USER.id, updates);
   res.json({ success: true });
 });
 
@@ -368,7 +376,7 @@ app.post("/api/agent/chat", async (req, res) => {
         for (const tool of toolBlocks) {
           const args = tool.input as Record<string, any>;
           res.write(`data: ${JSON.stringify({ type: "tool_call", tool: tool.name, args })}\n\n`);
-          const result = await executeLocalTool(tool.name, args);
+          const result = await executeLocalTool(tool.name, args, conversationId);
           res.write(`data: ${JSON.stringify({ type: "tool_result", tool: tool.name, result: result.slice(0, 2000) })}\n\n`);
           toolResults.push({ type: "tool_result", tool_use_id: tool.id, content: result });
         }
@@ -434,7 +442,7 @@ app.post("/api/agent/chat", async (req, res) => {
         for (const [idx, tc] of Object.entries(toolCallsMap)) {
           const args = (() => { try { return JSON.parse(tc.arguments); } catch { return {}; } })();
           res.write(`data: ${JSON.stringify({ type: "tool_call", tool: tc.name, args })}\n\n`);
-          const result = await executeLocalTool(tc.name, args);
+          const result = await executeLocalTool(tc.name, args, conversationId);
           res.write(`data: ${JSON.stringify({ type: "tool_result", tool: tc.name, result: result.slice(0, 2000) })}\n\n`);
           convoMessages.push({ role: "tool", content: result, tool_call_id: `call_${idx}`, name: tc.name });
         }

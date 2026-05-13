@@ -18,6 +18,7 @@ export interface FSNode {
 
 interface Props {
   token: string;
+  activeConvoId: string | null;
   onOpenFile: (path: string, name: string) => void;
 }
 
@@ -69,7 +70,7 @@ function TreeNode({ node, depth, onOpenFile }: { node: FSNode; depth: number; on
   );
 }
 
-export default function FileExplorer({ token, onOpenFile }: Props) {
+export default function FileExplorer({ token, activeConvoId, onOpenFile }: Props) {
   const [tree, setTree] = useState<FSNode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +80,10 @@ export default function FileExplorer({ token, onOpenFile }: Props) {
     setError(null);
     try {
       const res = await fetch("/api/workspace/tree", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "x-convo-id": activeConvoId || "default"
+        },
       });
       if (!res.ok) {
         const ct = res.headers.get("content-type") || "";
@@ -105,7 +109,7 @@ export default function FileExplorer({ token, onOpenFile }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, activeConvoId]);
 
   useEffect(() => { loadTree(); }, [loadTree]);
 

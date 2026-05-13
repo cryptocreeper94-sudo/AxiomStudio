@@ -50,6 +50,16 @@ export async function deleteConversation(token: string, id: string) {
   });
 }
 
+export async function updateConversation(token: string, id: string, updates: Record<string, any>) {
+  const res = await fetch(`${BASE}/conversations/${id}`, {
+    method: "PATCH",
+    headers: headers(token),
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error(`updateConversation failed: ${res.status}`);
+  return res.json();
+}
+
 export async function fetchCredits(token: string) {
   const res = await fetch(`${BASE}/credits`, { headers: headers(token) });
   if (!res.ok) throw new Error(`fetchCredits failed: ${res.status}`);

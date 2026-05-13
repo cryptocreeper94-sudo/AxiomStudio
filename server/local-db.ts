@@ -32,6 +32,8 @@ sqlite.exec(`
     total_tokens INTEGER DEFAULT 0,
     total_cost REAL DEFAULT 0,
     pinned INTEGER DEFAULT 0,
+    active_starter TEXT,
+    checklist TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -70,6 +72,14 @@ sqlite.exec(`
 `);
 
 console.log(`[Local DB] SQLite initialized: ${DB_PATH}`);
+
+// Handle SQLite migrations for existing DBs
+try {
+  sqlite.exec(`ALTER TABLE agent_conversations ADD COLUMN active_starter TEXT;`);
+} catch (e) { /* Column might already exist */ }
+try {
+  sqlite.exec(`ALTER TABLE agent_conversations ADD COLUMN checklist TEXT;`);
+} catch (e) { /* Column might already exist */ }
 
 // ─── Query helpers that match the Drizzle-like interface ─────────────
 
