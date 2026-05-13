@@ -7,6 +7,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileCode, Package, Menu } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatView from "../components/ChatView";
+import { type StarterConfig } from "../components/StarterHub";
+import { type ChecklistItem } from "../components/ProgressTracker";
 import ErrorForwarder from "../components/ErrorForwarder";
 import ArtifactViewer from "../components/ArtifactViewer";
 import SnippetDock from "../components/SnippetDock";
@@ -48,6 +50,8 @@ export default function AgentPanel() {
   const [showSmsOptIn, setShowSmsOptIn] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeStarter, setActiveStarter] = useState<StarterConfig | null>(null);
+  const [progressChecklist, setProgressChecklist] = useState<ChecklistItem[]>([]);
 
   // Auto-track page view on mount
   useEffect(() => {
@@ -364,6 +368,24 @@ export default function AgentPanel() {
               routeInfo={routeInfo}
               onSend={handleSend}
               onRetry={handleRetry}
+              activeStarter={activeStarter}
+              progressChecklist={progressChecklist}
+              onSelectStarter={(starter) => {
+                setActiveStarter(starter);
+                setProgressChecklist(starter.checklist.map((label, i) => ({
+                  label,
+                  status: i === 0 ? "active" as const : "pending" as const,
+                })));
+                if (starter.agent !== "auto") {
+                  const agentMatch = agents.find((a: any) => a.id === starter.agent);
+                  if (agentMatch) setActiveAgentId(starter.agent);
+                }
+                handleSend(`I want to ${starter.title.toLowerCase()}. ${starter.description}`);
+              }}
+              onClearStarter={() => {
+                setActiveStarter(null);
+                setProgressChecklist([]);
+              }}
             />
             <ArtifactViewer
               messages={messages}

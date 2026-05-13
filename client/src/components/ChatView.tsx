@@ -9,8 +9,12 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Send, Loader2, AlertTriangle, Copy, Check, Brain, User, RotateCcw,
   FileCode, FileDown, ChevronDown, Paperclip, X as XIcon, Upload, Image as ImageIcon,
+  StopCircle,
 } from "lucide-react";
 import { marked } from "marked";
+import StarterHub, { type StarterConfig } from "./StarterHub";
+import ThinkingIndicator from "./ThinkingIndicator";
+import ProgressTracker, { type ChecklistItem } from "./ProgressTracker";
 
 interface Message {
   id: string;
@@ -49,6 +53,10 @@ interface Props {
   activeAgentId?: string;
   agents?: any[];
   onFileUpload?: () => void;
+  onSelectStarter?: (starter: StarterConfig) => void;
+  activeStarter?: StarterConfig | null;
+  progressChecklist?: ChecklistItem[];
+  onClearStarter?: () => void;
 }
 
 // ── Code Block with Apply Button ──
@@ -428,8 +436,9 @@ function FileContextBar({ files, selected, onToggle, onClear }: {
 export default function ChatView({
   messages, streamingContent, isStreaming, agentName = "Axiom", agentColor = "#06b6d4", agentModel,
   routeInfo, onSend, onRetry, onStop, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
-  toolActivity = [], onFileUpload,
+  toolActivity = [], onFileUpload, onSelectStarter, activeStarter, progressChecklist, onClearStarter,
 }: Props) {
+  const [trackerCollapsed, setTrackerCollapsed] = useState(false);
   const [input, setInput] = useState("");
   const [contextFiles, setContextFiles] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -538,47 +547,25 @@ export default function ChatView({
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {messages.length === 0 && !isStreaming ? (
-          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ textAlign: "center", padding: "24px 16px" }}>
-              <div style={{
-                width: 48, height: 48, margin: "0 auto 12px", borderRadius: 14,
-                background: "linear-gradient(135deg, #06b6d4, #a855f7)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 8px 32px rgba(6,182,212,0.15)",
-              }}>
-                <Brain style={{ width: 24, height: 24, color: "#fff" }} />
-              </div>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: "#e2e8f0", marginBottom: 4 }}>{agentName}</h2>
-              {agentModel && (
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                  padding: "2px 10px", borderRadius: 6, marginBottom: 8,
-                  background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.1)",
-                  fontSize: 9, fontFamily: "'JetBrains Mono', monospace",
-                  color: "rgba(6,182,212,0.6)", fontWeight: 600,
-                }}>
-                  {agentModel}
-                </div>
-              )}
-              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", maxWidth: 280, margin: "0 auto", lineHeight: 1.5 }}>
-                Architecture, debugging, code generation, Lume programming, or just thinking through a problem.
-              </p>
-              {activeFileName && (
-                <div style={{
-                  marginTop: 12, display: "inline-flex", alignItems: "center", gap: "6px",
-                  padding: "4px 12px", borderRadius: "6px",
-                  background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.1)",
-                  color: "rgba(6,182,212,0.5)", fontSize: "10px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}>
-                  <FileCode style={{ width: 11, height: 11 }} />
-                  {activeFileName.split("/").pop()}
-                </div>
-              )}
-            </div>
-          </div>
+          <StarterHub
+            onSelectStarter={(starter) => onSelectStarter?.(starter)}
+            agentName={agentName}
+          />
         ) : (
           <div>
+            {/* Progress Tracker — shown when a starter is active */}
+            {activeStarter && progressChecklist && (
+              <div style={{ padding: "8px 14px" }}>
+                <ProgressTracker
+                  starterTitle={activeStarter.title}
+                  starterColor={activeStarter.color}
+                  checklist={progressChecklist}
+                  onClose={() => onClearStarter?.()}
+                  collapsed={trackerCollapsed}
+                  onToggleCollapse={() => setTrackerCollapsed(!trackerCollapsed)}
+                />
+              </div>
+            )}
             {messages.map((msg) => (
               <MessageBubble
                 key={msg.id}
@@ -668,25 +655,14 @@ export default function ChatView({
                 </div>
               </div>
             )}
-            {isStreaming && !streamingContent && (
-              <div style={{ display: "flex", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,0.015)" }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "rgba(6,182,212,0.12)", color: "#22d3ee",
-                }}>
-                  <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ display: "flex", gap: 3 }}>
-                    <div className="pulse-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#22d3ee", animationDelay: "0ms" }} />
-                    <div className="pulse-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#22d3ee", animationDelay: "300ms" }} />
-                    <div className="pulse-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "#22d3ee", animationDelay: "600ms" }} />
-                  </div>
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{agentName} is thinking...</span>
-                </div>
-              </div>
-            )}
+            {/* Enhanced Thinking Indicator */}
+            <ThinkingIndicator
+              agentName={agentName}
+              agentColor={agentColor}
+              toolActivity={toolActivity}
+              streamingContent={streamingContent}
+              isStreaming={isStreaming}
+            />
             <div ref={bottomRef} />
           </div>
         )}
