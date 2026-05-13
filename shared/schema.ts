@@ -9,7 +9,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, decimal, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, decimal, serial, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -73,6 +73,8 @@ export const agentConversations = pgTable("agent_conversations", {
   totalTokens: integer("total_tokens").default(0),
   totalCost: decimal("total_cost", { precision: 10, scale: 4 }).default("0"),
   pinned: boolean("pinned").default(false),
+  activeStarter: jsonb("active_starter"),
+  checklist: jsonb("checklist"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

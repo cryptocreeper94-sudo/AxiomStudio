@@ -186,13 +186,38 @@ export default function IDELayout() {
     }
   }, [activeConvoId, token]);
 
+  // Load starter state from conversation
+  useEffect(() => {
+    if (activeConvoId) {
+      const convo = conversations.find((c: any) => c.id === activeConvoId);
+      if (convo) {
+        if (convo.activeStarter) setActiveStarter(convo.activeStarter);
+        else setActiveStarter(null);
+        if (convo.checklist) setProgressChecklist(convo.checklist);
+        else setProgressChecklist([]);
+      }
+    }
+  }, [activeConvoId, conversations]);
+
+  // Save starter state helpers
+  const saveStarterState = useCallback((starter: StarterConfig | null, checklist: ChecklistItem[]) => {
+    if (!token || !activeConvoId) return;
+    api.updateConversation(token, activeConvoId, {
+      activeStarter: starter,
+      checklist: checklist
+    }).catch(console.error);
+  }, [token, activeConvoId]);
+
   // ── File operations ──
   const handleOpenFile = useCallback(async (path: string, name: string) => {
     const existing = openFiles.find(f => f.path === path);
     if (existing) { setActiveFilePath(path); return; }
     try {
       const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(path)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "x-convo-id": activeConvoId || "default"
+        },
       });
       if (!res.ok) throw new Error("Failed to load file");
       const data = await res.json();
@@ -222,7 +247,11 @@ export default function IDELayout() {
     try {
       await fetch("/api/workspace/file", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { 
+          "Content-Type": "application/json", 
+          Authorization: `Bearer ${token}`,
+          "x-convo-id": activeConvoId || "default"
+        },
         body: JSON.stringify({ path, content: file.content }),
       });
       setOpenFiles(prev => prev.map(f => f.path === path ? { ...f, originalContent: f.content } : f));
@@ -596,7 +625,7 @@ export default function IDELayout() {
       {sidePanel && (
         <>
           <div className="ax-side-panel" style={{ width: sidePanelWidth, minWidth: 180, maxWidth: 500 }}>
-            {sidePanel === "files" && <FileExplorer token={token} onOpenFile={handleOpenFile} />}
+            {sidePanel === "files" && <FileExplorer token={token} activeConvoId={activeConvoId} onOpenFile={handleOpenFile} />}
             {sidePanel === "search" && (
               <div className="ax-panel-placeholder">
                 <div className="ax-fe-header"><span className="ax-fe-title">SEARCH</span></div>
@@ -637,7 +666,7 @@ export default function IDELayout() {
           )}
           {previewVisible && (
             <div style={{ flex: 0.5, minWidth: 300, display: "flex", flexDirection: "column" }}>
-              <PreviewPane token={token} entryPoint="index.html" />
+              <PreviewPane token={token} activeConvoId={activeConvoId} entryPoint="index.html" />
             </div>
           )}
         </div>

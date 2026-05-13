@@ -16,11 +16,18 @@ import { join, relative, resolve, extname } from "path";
 
 const execAsync = promisify(exec);
 
-// Workspace root — set via WORKSPACE_ROOT env or defaults to D:\
-const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT || "D:\\";
+import { homedir } from "os";
 
-export function getWorkspaceRoot(): string {
-  return WORKSPACE_ROOT;
+// Workspace root base — set via WORKSPACE_ROOT env or defaults to ~/.axiom-studio/projects
+const WORKSPACE_BASE = process.env.WORKSPACE_ROOT || join(homedir(), ".axiom-studio", "projects");
+
+export function getWorkspaceRoot(convoId?: string): string {
+  const safeId = typeof convoId === 'string' && convoId.trim() ? convoId.trim().replace(/[^a-zA-Z0-9_-]/g, '') : 'default';
+  const projectRoot = join(WORKSPACE_BASE, safeId);
+  if (!existsSync(projectRoot)) {
+    mkdirSync(projectRoot, { recursive: true });
+  }
+  return projectRoot;
 }
 
 // ─── Tool Definitions (Anthropic format) ──────────────────────────────
@@ -213,18 +220,19 @@ export const LOCAL_OPENAI_TOOLS: any[] = LOCAL_ANTHROPIC_TOOLS.map((t) => ({
 
 // ─── Path Resolution ───────────────────────────────────────────────────
 
-function resolvePath(p: string): string {
-  if (!p || p === "." || p === "") return WORKSPACE_ROOT;
+function resolvePath(p: string, convoId?: string): string {
+  const root = getWorkspaceRoot(convoId);
+  if (!p || p === "." || p === "") return root;
   // If it's already absolute, use it directly
   if (p.match(/^[A-Za-z]:[/\\]/) || p.startsWith("/")) return resolve(p);
   // Otherwise resolve relative to workspace root
-  return resolve(WORKSPACE_ROOT, p);
+  return resolve(root, p);
 }
 
 // Safety check — prevent escaping above workspace root
-function isSafe(resolvedPath: string): boolean {
+function isSafe(resolvedPath: string, convoId?: string): boolean {
   const norm = resolve(resolvedPath).toLowerCase();
-  const root = resolve(WORKSPACE_ROOT).toLowerCase();
+  const root = resolve(getWorkspaceRoot(convoId)).toLowerCase();
   // Allow absolute paths anywhere on the machine (owner mode)
   return true;
 }
@@ -233,28 +241,29 @@ function isSafe(resolvedPath: string): boolean {
 
 export async function executeLocalTool(
   name: string,
-  args: Record<string, any>
+  args: Record<string, any>,
+  convoId?: string
 ): Promise<string> {
   try {
     switch (name) {
       case "read_file":
-        return localReadFile(args.path);
+        return localReadFile(args.path, convoId);
       case "write_file":
-        return localWriteFile(args.path, args.content);
+        return localWriteFile(args.path, args.content, convoId);
       case "list_directory":
-        return localListDir(args.path ?? "");
+        return localListDir(args.path ?? "", convoId);
       case "search_files":
-        return await localSearchFiles(args.query, args.path_prefix ?? "");
+        return await localSearchFiles(args.query, args.path_prefix ?? "", convoId);
       case "run_command":
-        return await localRunCommand(args.command, args.cwd);
+        return await localRunCommand(args.command, args.cwd, convoId);
       case "generate_image":
-        return await localGenerateImage(args.prompt, args.save_path, args.size);
+        return await localGenerateImage(args.prompt, args.save_path, args.size, convoId);
       case "web_search":
         return await localWebSearch(args.query);
       case "browse_url":
         return await localBrowseUrl(args.url);
       case "browser_action":
-        return await localBrowserAction(args.action, args);
+        return await localBrowserAction(args.action, args, convoId);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -265,9 +274,9 @@ export async function executeLocalTool(
 
 // ─── read_file ─────────────────────────────────────────────────────────
 
-function localReadFile(filePath: string): string {
+function localReadFile(filePath: string, convoId?: string): string {
   if (!filePath) return "Error: path is required";
-  const full = resolvePath(filePath);
+  const full = resolvePath(filePath, convoId);
 
   if (!existsSync(full)) {
     return `Error: File not found: "${full}". Use list_directory to browse.`;
@@ -286,10 +295,10 @@ function localReadFile(filePath: string): string {
 
 // ─── write_file ────────────────────────────────────────────────────────
 
-function localWriteFile(filePath: string, content: string): string {
+function localWriteFile(filePath: string, content: string, convoId?: string): string {
   if (!filePath) return "Error: path is required";
   if (content == null) return "Error: content is required";
-  const full = resolvePath(filePath);
+  const full = resolvePath(filePath, convoId);
 
   // Ensure parent directories exist
   const dir = full.substring(0, full.lastIndexOf(/[/\\]/.test(full) ? (full.includes("/") ? "/" : "\\") : "/"));
@@ -311,8 +320,8 @@ function localWriteFile(filePath: string, content: string): string {
 
 // ─── list_directory ────────────────────────────────────────────────────
 
-function localListDir(dirPath: string): string {
-  const full = resolvePath(dirPath);
+function localListDir(dirPath: string, convoId?: string): string {
+  const full = resolvePath(dirPath, convoId);
 
   if (!existsSync(full)) {
     return `Error: Directory not found: "${full}"`;
@@ -347,9 +356,9 @@ function localListDir(dirPath: string): string {
 
 // ─── search_files ──────────────────────────────────────────────────────
 
-async function localSearchFiles(query: string, pathPrefix: string): Promise<string> {
+async function localSearchFiles(query: string, pathPrefix: string, convoId?: string): Promise<string> {
   if (!query) return "Error: query is required";
-  const searchDir = resolvePath(pathPrefix);
+  const searchDir = resolvePath(pathPrefix, convoId);
 
   if (!existsSync(searchDir)) {
     return `Error: Directory not found: "${searchDir}"`;
@@ -381,7 +390,7 @@ async function localSearchFiles(query: string, pathPrefix: string): Promise<stri
 
 // ─── run_command ───────────────────────────────────────────────────────
 
-async function localRunCommand(command: string, cwd?: string): Promise<string> {
+async function localRunCommand(command: string, cwd?: string, convoId?: string): Promise<string> {
   if (!command) return "Error: command is required";
 
   // Block truly dangerous commands
@@ -390,7 +399,7 @@ async function localRunCommand(command: string, cwd?: string): Promise<string> {
     return `Error: Command blocked for safety: "${command}"`;
   }
 
-  const workDir = cwd ? resolvePath(cwd) : WORKSPACE_ROOT;
+  const workDir = cwd ? resolvePath(cwd, convoId) : getWorkspaceRoot(convoId);
 
   try {
     const { stdout, stderr } = await execAsync(command, {
@@ -410,7 +419,7 @@ async function localRunCommand(command: string, cwd?: string): Promise<string> {
 
 // ─── generate_image ────────────────────────────────────────────────────
 
-async function localGenerateImage(prompt: string, savePath?: string, size?: string): Promise<string> {
+async function localGenerateImage(prompt: string, savePath?: string, size?: string, convoId?: string): Promise<string> {
   if (!prompt) return "Error: prompt is required";
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return "Error: OPENAI_API_KEY not set. Image generation requires an OpenAI API key.";
@@ -449,7 +458,7 @@ async function localGenerateImage(prompt: string, savePath?: string, size?: stri
       try {
         const imgRes = await fetch(imageUrl);
         const buffer = Buffer.from(await imgRes.arrayBuffer());
-        const fullPath = resolvePath(savePath);
+        const fullPath = resolvePath(savePath, convoId);
         const parentDir = resolve(fullPath, "..");
         if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
         writeFileSync(fullPath, buffer);
@@ -590,7 +599,7 @@ async function getBrowser() {
   return { browser: browserInstance, page: browserPage };
 }
 
-async function localBrowserAction(action: string, args: Record<string, any>): Promise<string> {
+async function localBrowserAction(action: string, args: Record<string, any>, convoId?: string): Promise<string> {
   if (!action) return "Error: action is required";
 
   try {
@@ -624,7 +633,7 @@ async function localBrowserAction(action: string, args: Record<string, any>): Pr
       }
       case "screenshot": {
         const savePath = args.save_path || "screenshot.png";
-        const fullPath = resolvePath(savePath);
+        const fullPath = resolvePath(savePath, convoId);
         const parentDir = resolve(fullPath, "..");
         if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
         await page.screenshot({ path: fullPath, fullPage: false });

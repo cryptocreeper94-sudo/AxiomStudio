@@ -591,6 +591,32 @@ export function registerAgentRoutes(app: Express): void {
     }
   );
 
+  // ── Update conversation ────────────────────────────────────────────
+  app.patch(
+    "/api/agent/conversations/:id",
+    async (req: Request, res: Response) => {
+      const userId = requireAuth(req, res);
+      if (!userId) return;
+
+      const updates: any = {};
+      if (req.body.activeStarter !== undefined) updates.activeStarter = req.body.activeStarter;
+      if (req.body.checklist !== undefined) updates.checklist = req.body.checklist;
+      
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = new Date();
+        await db
+          .update(agentConversations)
+          .set(updates)
+          .where(and(
+            eq(agentConversations.id, req.params.id),
+            eq(agentConversations.userId, userId)
+          ));
+      }
+
+      res.json({ success: true });
+    }
+  );
+
   // ── Chat (SSE streaming) ───────────────────────────────────────────
   app.post("/api/agent/chat", async (req: Request, res: Response) => {
     const userId = requireAuth(req, res);

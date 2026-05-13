@@ -18,8 +18,8 @@ const router = Router();
 
 // No auth needed in local mode — you ARE the owner
 
-function resolvePath(p: string): string {
-  const root = getWorkspaceRoot();
+function resolvePath(req: any, p: string): string {
+  const root = getWorkspaceRoot(req.headers['x-convo-id'] || req.query.convoId || req.body?.convoId);
   if (!p || p === "." || p === "") return root;
   if (p.match(/^[A-Za-z]:[/\\]/) || p.startsWith("/")) return resolve(p);
   return resolve(root, p);
@@ -27,8 +27,8 @@ function resolvePath(p: string): string {
 
 // GET /api/workspace/tree — Directory tree from real filesystem
 router.get("/tree", (req: any, res) => {
-  const rootPath = (req.query.path as string) || getWorkspaceRoot();
-  const resolvedRoot = resolvePath(rootPath);
+  const rootPath = (req.query.path as string) || getWorkspaceRoot(req.headers['x-convo-id'] || req.query.convoId || req.body?.convoId);
+  const resolvedRoot = resolvePath(req, rootPath);
 
   try {
     const root: any = { name: resolvedRoot.split(/[/\\]/).pop() || "workspace", path: ".", type: "directory", children: [] };
@@ -78,7 +78,7 @@ router.get("/file", (req: any, res) => {
   const reqPath = req.query.path as string;
   if (!reqPath) { res.status(400).json({ error: "path required" }); return; }
 
-  const full = resolvePath(reqPath);
+  const full = resolvePath(req, reqPath);
   if (!existsSync(full)) { res.status(404).json({ error: `File not found: ${reqPath}` }); return; }
 
   try {
@@ -95,7 +95,7 @@ router.put("/file", (req: any, res) => {
   const content = req.body.content ?? "";
   if (!reqPath) { res.status(400).json({ error: "path required" }); return; }
 
-  const full = resolvePath(reqPath);
+  const full = resolvePath(req, reqPath);
 
   try {
     const parentDir = resolve(full, "..");
@@ -112,7 +112,7 @@ router.post("/mkdir", (req: any, res) => {
   const dirPath = req.body.path;
   if (!dirPath) { res.status(400).json({ error: "path required" }); return; }
 
-  const full = resolvePath(dirPath);
+  const full = resolvePath(req, dirPath);
 
   try {
     if (!existsSync(full)) mkdirSync(full, { recursive: true });
@@ -127,7 +127,7 @@ router.delete("/file", (req: any, res) => {
   const reqPath = req.query.path as string;
   if (!reqPath) { res.status(400).json({ error: "path required" }); return; }
 
-  const full = resolvePath(reqPath);
+  const full = resolvePath(req, reqPath);
 
   try {
     if (existsSync(full)) {
@@ -142,7 +142,7 @@ router.delete("/file", (req: any, res) => {
 // GET /api/workspace/serve/* — Serve raw file content for iframe previews
 router.get("/serve/*", (req: any, res: any) => {
   const rawPath = req.params[0] || "index.html";
-  const full = resolvePath(rawPath);
+  const full = resolvePath(req, rawPath);
   
   if (!existsSync(full)) {
     res.status(404).send(`File not found: ${rawPath}`);

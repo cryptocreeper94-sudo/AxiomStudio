@@ -9,10 +9,11 @@ import { RefreshCw, ExternalLink, Globe, FileCode } from "lucide-react";
 
 interface Props {
   token: string | null;
+  activeConvoId?: string | null;
   entryPoint?: string;
 }
 
-export default function PreviewPane({ token, entryPoint = "index.html" }: Props) {
+export default function PreviewPane({ token, activeConvoId, entryPoint = "index.html" }: Props) {
   const [path, setPath] = useState(entryPoint);
   const [key, setKey] = useState(0); // Used to force iframe reload
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -36,8 +37,8 @@ export default function PreviewPane({ token, entryPoint = "index.html" }: Props)
     }
   };
 
-  // Construct iframe URL with auth token
-  const iframeUrl = `/api/workspace/serve/${path.replace(/^\/+/, "")}?token=${token || ""}`;
+  // Construct iframe URL with auth token and convo ID
+  const iframeUrl = `/api/workspace/serve/${path.replace(/^\/+/, "")}?token=${token || ""}&convoId=${activeConvoId || "default"}`;
 
   return (
     <div style={{

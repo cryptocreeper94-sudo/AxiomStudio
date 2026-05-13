@@ -409,7 +409,7 @@ export default function MobileLayout({
       <main className="flex-1 overflow-hidden relative">
         {activeTab === "files" && (
           <div className="h-full w-full bg-[#0a0a0a] overflow-hidden">
-             <FileExplorer token={token} onOpenFile={(path, name) => { onOpenFile(path, name); setActiveTab("editor"); }} />
+             <FileExplorer token={token} activeConvoId={activeConvoId} onOpenFile={(path, name) => { onOpenFile(path, name); setActiveTab("editor"); }} />
           </div>
         )}
 
@@ -447,7 +447,7 @@ export default function MobileLayout({
 
         {activeTab === "preview" && (
           <div className="h-full w-full flex flex-col bg-white overflow-hidden pb-[4.5rem]">
-            <PreviewPane token={token} entryPoint="index.html" />
+            <PreviewPane token={token} activeConvoId={activeConvoId} entryPoint="index.html" />
           </div>
         )}
 
