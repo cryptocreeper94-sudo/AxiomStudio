@@ -10,6 +10,8 @@ import FileExplorer from "./FileExplorer";
 import EditorArea, { type OpenFile } from "./EditorArea";
 import TerminalPanel from "./TerminalPanel";
 import ChatView from "./ChatView";
+import { type StarterConfig } from "./StarterHub";
+import { type ChecklistItem } from "./ProgressTracker";
 import LoginScreen from "./LoginScreen";
 import CreditStore from "./CreditStore";
 import SettingsView from "./SettingsView";
@@ -54,6 +56,10 @@ export default function IDELayout() {
   const [toolActivity, setToolActivity] = useState<Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>>([]);
   const abortRef = useRef<AbortController | null>(null);
   const pendingArtifactPathRef = useRef<string | null>(null);
+
+  // ── Starter state ──
+  const [activeStarter, setActiveStarter] = useState<StarterConfig | null>(null);
+  const [progressChecklist, setProgressChecklist] = useState<ChecklistItem[]>([]);
 
   // ── Bottom panel state ──
   const [bottomPanelHeight, setBottomPanelHeight] = useState(220);
@@ -765,6 +771,26 @@ export default function IDELayout() {
             activeFileName={activeFilePath || undefined}
             openFiles={openFiles.map(f => ({ path: f.path, name: f.name }))}
             toolActivity={toolActivity}
+            activeStarter={activeStarter}
+            progressChecklist={progressChecklist}
+            onSelectStarter={(starter) => {
+              setActiveStarter(starter);
+              setProgressChecklist(starter.checklist.map((label, i) => ({
+                label,
+                status: i === 0 ? "active" as const : "pending" as const,
+              })));
+              // Auto-select the recommended agent
+              if (starter.agent !== "auto") {
+                const agentMatch = agents.find((a: any) => a.id === starter.agent);
+                if (agentMatch) setActiveAgentId(starter.agent);
+              }
+              // Send the initial starter prompt
+              handleSendMessage(`I want to ${starter.title.toLowerCase()}. ${starter.description}`);
+            }}
+            onClearStarter={() => {
+              setActiveStarter(null);
+              setProgressChecklist([]);
+            }}
           />
         </div>
         </>
