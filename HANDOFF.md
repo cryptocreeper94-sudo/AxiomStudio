@@ -132,8 +132,8 @@ ProgressTracker component with animated checklist, collapsible state, progress b
 ### ✅ COMPLETED: Wire StarterHub + ThinkingIndicator into MobileLayout
 Wired `onSelectStarter`, `activeStarter`, `progressChecklist`, and `onClearStarter` into MobileLayout.
 
-### PRIORITY 2: Live Preview Pane
-Split-panel code ↔ preview with swipeable toggle on mobile.
+### ✅ COMPLETED: Live Preview Pane
+Implemented `PreviewPane` component with split-panel in desktop (`IDELayout`) and swipeable tab in mobile (`MobileLayout`). Added backend file serving routes (`/api/workspace/serve/*`) to both cloud and local backends to render the project directly in a sandboxed iframe.
 
 ### PRIORITY 3: Voice Input for Lume
 Microphone button for natural language → Lume code.

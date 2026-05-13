@@ -5,11 +5,13 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff } from "lucide-react";
 import ActivityBar, { type SidePanel } from "./ActivityBar";
 import FileExplorer from "./FileExplorer";
 import EditorArea, { type OpenFile } from "./EditorArea";
 import TerminalPanel from "./TerminalPanel";
 import ChatView from "./ChatView";
+import PreviewPane from "./PreviewPane";
 import { type StarterConfig } from "./StarterHub";
 import { type ChecklistItem } from "./ProgressTracker";
 import LoginScreen from "./LoginScreen";
@@ -37,6 +39,7 @@ export default function IDELayout() {
   // IDE state
   const [sidePanel, setSidePanel] = useState<SidePanel>("files");
   const [terminalVisible, setTerminalVisible] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -553,6 +556,20 @@ export default function IDELayout() {
         </div>
 
         <div className="ax-cs-right">
+          <button
+            onClick={() => setPreviewVisible(!previewVisible)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: previewVisible ? "rgba(6, 182, 212, 0.15)" : "rgba(255, 255, 255, 0.05)",
+              border: `1px solid ${previewVisible ? "rgba(6, 182, 212, 0.3)" : "rgba(255, 255, 255, 0.1)"}`,
+              color: previewVisible ? "#06b6d4" : "rgba(255, 255, 255, 0.6)",
+              padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+              cursor: "pointer", marginRight: 12, transition: "all 0.2s"
+            }}
+          >
+            {previewVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+            {previewVisible ? "Close Preview" : "Live Preview"}
+          </button>
           <ProfileBadge
             user={user}
             token={token}
@@ -601,15 +618,28 @@ export default function IDELayout() {
 
       {/* Main Area (Editor + Bottom Panel) */}
       <div className="ax-main-area">
-        <div className="ax-editor-wrap">
-          <EditorArea
-            files={openFiles}
-            activeFilePath={activeFilePath}
-            onSelectFile={setActiveFilePath}
-            onCloseFile={handleCloseFile}
-            onContentChange={handleContentChange}
-            onSave={handleSaveFile}
-          />
+        <div className="ax-editor-wrap" style={{ display: "flex", flexDirection: "row", flex: 1, overflow: "hidden" }}>
+          <div style={{ flex: previewVisible ? 0.5 : 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+            <EditorArea
+              files={openFiles}
+              activeFilePath={activeFilePath}
+              onSelectFile={setActiveFilePath}
+              onCloseFile={handleCloseFile}
+              onContentChange={handleContentChange}
+              onSave={handleSaveFile}
+            />
+          </div>
+          {previewVisible && (
+            <div style={{
+              width: 2, background: "rgba(255,255,255,0.05)", cursor: "col-resize",
+              borderLeft: "1px solid #000", borderRight: "1px solid rgba(255,255,255,0.05)"
+            }} />
+          )}
+          {previewVisible && (
+            <div style={{ flex: 0.5, minWidth: 300, display: "flex", flexDirection: "column" }}>
+              <PreviewPane token={token} entryPoint="index.html" />
+            </div>
+          )}
         </div>
 
         {/* Bottom Panel (Terminal + Problems + Output) */}
