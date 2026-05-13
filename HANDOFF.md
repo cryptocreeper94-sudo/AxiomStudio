@@ -129,8 +129,8 @@ ThinkingIndicator component with elapsed timer, animated brain icon, orbiting do
 ### ✅ COMPLETED: Progress Tracker
 ProgressTracker component with animated checklist, collapsible state, progress bar. Integrated into ChatView above messages when a starter is active.
 
-### PRIORITY 1: Wire StarterHub + ThinkingIndicator into MobileLayout
-The MobileLayout (`client/src/components/mobile/MobileLayout.tsx`) ChatView at line 461 still needs the new props: `onSelectStarter`, `activeStarter`, `progressChecklist`, `onClearStarter`. Same pattern as IDELayout.
+### ✅ COMPLETED: Wire StarterHub + ThinkingIndicator into MobileLayout
+Wired `onSelectStarter`, `activeStarter`, `progressChecklist`, and `onClearStarter` into MobileLayout.
 
 ### PRIORITY 2: Live Preview Pane
 Split-panel code ↔ preview with swipeable toggle on mobile.
