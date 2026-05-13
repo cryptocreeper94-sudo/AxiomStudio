@@ -2,6 +2,7 @@ import { Route, Switch, Redirect } from "wouter";
 import IDELayout from "./components/IDELayout";
 import AgentPanel from "./pages/AgentPanel";
 import LandingPage from "./pages/LandingPage";
+import ProfileDashboard from "./pages/ProfileDashboard";
 import "./ide.css";
 
 export default function App() {
@@ -9,6 +10,7 @@ export default function App() {
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/ide" component={IDELayout} />
+      <Route path="/profile" component={ProfileDashboard} />
       <Route path="/chat" component={AgentPanel} />
       <Route path="/agent" component={AgentPanel} />
       <Route>
@@ -17,3 +19,4 @@ export default function App() {
     </Switch>
   );
 }
+

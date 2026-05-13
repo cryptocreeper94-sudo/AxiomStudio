@@ -51,6 +51,7 @@ export default function IDELayout() {
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [toolActivity, setToolActivity] = useState<Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>>([]);
+  const abortRef = useRef<AbortController | null>(null);
 
   // ── Bottom panel state ──
   const [bottomPanelHeight, setBottomPanelHeight] = useState(220);
@@ -113,6 +114,11 @@ export default function IDELayout() {
 
   // Stop agent (cancel streaming)
   const handleStopAgent = useCallback(() => {
+    // Abort the in-flight fetch so the server stops streaming
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
     setIsStreaming(false);
     setStreamingContent("");
   }, []);
@@ -289,12 +295,17 @@ export default function IDELayout() {
     setMessages(prev => [...prev, userMsg]);
     setStreamingContent("");
     setToolActivity([]); // reset tool trace for new message
+    let fullContent = "";
 
     try {
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ conversationId: convoId, agentId: activeAgentId, message: enrichedContent }),
+        signal: controller.signal,
       });
 
       // Handle non-stream error responses (402, 400, 500, etc.)
@@ -317,7 +328,6 @@ export default function IDELayout() {
       if (!res.body) throw new Error("No response body");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let fullContent = "";
       let sseBuffer = "";
       while (true) {
         const { done, value } = await reader.read();
@@ -331,7 +341,7 @@ export default function IDELayout() {
           if (payload === "[DONE]") continue;
           try {
             const parsed = JSON.parse(payload);
-            if (parsed.type === "text" && parsed.content) { fullContent += parsed.content; setStreamingContent(fullContent); }
+            if (parsed.type === "text" && (parsed.content || parsed.text)) { const t = parsed.content || parsed.text; fullContent += t; setStreamingContent(fullContent); }
             if (parsed.type === "token" && parsed.token) { fullContent += parsed.token; setStreamingContent(fullContent); }
             if (parsed.type === "route") setRouteInfo(parsed);
             if (parsed.type === "tool_call") {
@@ -355,14 +365,27 @@ export default function IDELayout() {
       setMessages(prev => [...prev, assistantMsg]);
       queryClient.invalidateQueries({ queryKey: ["credits"] });
     } catch (err) {
-      console.error("Chat error:", err);
-      const errResponse: Message = {
-        id: `err-${Date.now()}`, role: "assistant",
-        content: `⚠️ Connection error: ${(err as Error).message}`,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errResponse]);
+      // Don't show error for intentional user aborts
+      if ((err as Error).name === "AbortError") {
+        // User cancelled — commit whatever we have so far
+        if (fullContent.trim()) {
+          const assistantMsg: Message = {
+            id: `resp-${Date.now()}`, role: "assistant", content: fullContent + "\n\n*(Generation stopped)*",
+            model: routeInfo?.model, createdAt: new Date().toISOString(),
+          };
+          setMessages(prev => [...prev, assistantMsg]);
+        }
+      } else {
+        console.error("Chat error:", err);
+        const errResponse: Message = {
+          id: `err-${Date.now()}`, role: "assistant",
+          content: `⚠️ Connection error: ${(err as Error).message}`,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, errResponse]);
+      }
     } finally {
+      abortRef.current = null;
       setIsStreaming(false);
       setStreamingContent("");
     }
@@ -441,6 +464,7 @@ export default function IDELayout() {
         conversations={conversations}
         openFiles={openFiles}
         activeFilePath={activeFilePath}
+        onOpenFile={handleOpenFile}
         onFileSelect={setActiveFilePath}
         onContentChange={handleContentChange}
         activeConvoId={activeConvoId}

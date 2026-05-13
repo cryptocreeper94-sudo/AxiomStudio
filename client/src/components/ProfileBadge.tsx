@@ -5,6 +5,7 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { User, Crown, Settings, LogOut, Shield, Fingerprint, Key, Wallet, Eye, EyeOff, X, Check, ChevronRight, Zap } from "lucide-react";
 
 interface ProfileWidget {
@@ -30,6 +31,7 @@ const WIDGET_STORAGE_KEY = "axiom_profile_widgets";
 export default function ProfileBadge({ user, token, onLogout, onOpenCredits, biometricsAvailable, biometricsEnrolled, onEnrollBiometrics }: Props) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"overview" | "configure" | "security">("overview");
+  const [, setLocation] = useLocation();
   const [sub, setSub] = useState<any>(null);
   const [credits, setCredits] = useState<number | null>(null);
 
@@ -187,6 +189,9 @@ export default function ProfileBadge({ user, token, onLogout, onOpenCredits, bio
 
                   {/* Quick actions */}
                   <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <button onClick={() => { setOpen(false); setLocation("/profile"); }} style={{ width: "100%", padding: "10px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s", fontFamily: "inherit" }}>
+                      <User size={13} /> View Full Profile
+                    </button>
                     {onOpenCredits && (
                       <button onClick={() => { onOpenCredits(); setOpen(false); }} style={{ width: "100%", padding: "10px", borderRadius: 10, background: "linear-gradient(135deg, #06b6d4, #a855f7)", border: "none", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                         <Zap size={13} /> Buy Credits

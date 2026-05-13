@@ -195,8 +195,31 @@ app.get("/api/agent/credits/balance", async (_req, res) => {
 });
 app.get("/api/agent/credits/transactions", (_req, res) => res.json([]));
 
-// ── Agent definitions ──
-app.get("/api/agent/agents", (_req, res) => {
+// ── Credits (matches cloud endpoint path used by client api.ts) ──
+app.get("/api/agent/credits", async (_req, res) => {
+  if (IS_OWNER_MODE) {
+    res.json({ credits: 999999, totalPurchased: 0, totalUsed: 0, agentCosts: {} });
+  } else if (cloudToken) {
+    const check = await checkCredits(cloudToken, "opus");
+    res.json({ credits: check.balance, totalPurchased: 0, totalUsed: 0, agentCosts: {} });
+  } else {
+    res.json({ credits: 0, totalPurchased: 0, totalUsed: 0, agentCosts: {} });
+  }
+});
+
+// ── Subscription stub (used by ProfileDashboard) ──
+app.get("/api/agent/subscription", (_req, res) => {
+  res.json({
+    model: "payg",
+    credits: IS_OWNER_MODE ? 999999 : 0,
+    tierName: IS_OWNER_MODE ? "Owner" : "Local",
+    tier: IS_OWNER_MODE ? "enterprise" : "free",
+    agentCosts: {},
+  });
+});
+
+// ── Agent definitions (both paths: client uses /models, legacy uses /agents) ──
+const handleAgentsRequest = (_req: any, res: any) => {
   for (const seed of AGENT_SEEDS) {
     localDb.upsertAgent({
       id: seed.id, name: seed.name, description: seed.description,
@@ -207,7 +230,9 @@ app.get("/api/agent/agents", (_req, res) => {
     });
   }
   res.json(AGENT_SEEDS.map(s => ({ ...s, isActive: true })));
-});
+};
+app.get("/api/agent/agents", handleAgentsRequest);
+app.get("/api/agent/models", handleAgentsRequest);
 
 // ── Conversations ──
 app.get("/api/agent/conversations", (_req, res) => {
@@ -313,7 +338,7 @@ app.post("/api/agent/chat", async (req, res) => {
         for await (const event of stream) {
           if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
             fullResponse += event.delta.text;
-            res.write(`data: ${JSON.stringify({ type: "text", text: event.delta.text })}\n\n`);
+            res.write(`data: ${JSON.stringify({ type: "text", content: event.delta.text })}\n\n`);
           }
         }
 
@@ -372,7 +397,7 @@ app.post("/api/agent/chat", async (req, res) => {
           if (delta?.content) {
             chunkText += delta.content;
             fullResponse += delta.content;
-            res.write(`data: ${JSON.stringify({ type: "text", text: delta.content })}\n\n`);
+            res.write(`data: ${JSON.stringify({ type: "text", content: delta.content })}\n\n`);
           }
           if (delta?.tool_calls) {
             for (const tc of delta.tool_calls) {

@@ -195,8 +195,8 @@ export default function LandingPage() {
           <a href="#demo">Demo</a>
           <a href="#features">Features</a>
           <a href="#agents">Agents</a>
+          <a href="#compare">Compare</a>
           <a href="#blog">Blog</a>
-          {!isMobile && <a href="#install">Download</a>}
           <a href="/ide" className="nav-cta">Open Cloud IDE</a>
         </div>
         <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
@@ -210,8 +210,8 @@ export default function LandingPage() {
           <div className="mobile-menu-panel" onClick={(e) => e.stopPropagation()}>
             <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
             <a href="#agents" onClick={() => setMenuOpen(false)}>Agents</a>
+            <a href="#compare" onClick={() => setMenuOpen(false)}>Compare</a>
             <a href="#blog" onClick={() => setMenuOpen(false)}>Blog</a>
-            {!isMobile && <a href="#install" onClick={() => setMenuOpen(false)}>Download App</a>}
             <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio" target="_blank" rel="noopener" onClick={() => setMenuOpen(false)}>GitHub</a>
             <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)", margin: "8px 0" }} />
             <a href="/ide" className="mobile-menu-cta" onClick={() => setMenuOpen(false)}>Open IDE →</a>
@@ -477,7 +477,116 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Install (desktop only) ── */}
+      {/* ── Competitor Comparison ── */}
+      <section className="landing-section" id="compare">
+        <span className="section-label">Why Switch</span>
+        <h2 className="section-title">How Axiom Studio Stacks Up</h2>
+        <p className="section-sub">
+          We built Axiom Studio because every AI coding tool forced a compromise.
+          Single model. Cloud only. No real terminal. No agent choice.
+          Here's how we compare to the big four.
+        </p>
+
+        {/* Feature comparison table */}
+        <div className="compare-table-wrap">
+          <table className="compare-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th className="compare-highlight">
+                  <div className="compare-logo-badge axiom">
+                    <Brain className="w-4 h-4" />
+                  </div>
+                  Axiom Studio
+                </th>
+                <th>Cursor</th>
+                <th>Replit</th>
+                <th>GitHub Copilot</th>
+                <th>Windsurf</th>
+              </tr>
+            </thead>
+            <tbody>
+              {([
+                ["AI Models", "5 agents (Opus, Sonnet, GPT-4.1, GPT-4o-mini, Lume)", "Claude + GPT", "1 model", "GPT-4o / Claude", "1 model"],
+                ["Auto-Routing", "✦ Smart auto-select", "—", "—", "—", "—"],
+                ["Free Credits", "✦ 50 free on signup", "Limited trial", "Limited", "30-day trial", "Limited trial"],
+                ["Pricing", "Pay-per-use from $0.01/credit", "$20/mo minimum", "$25/mo+", "$10–$39/mo", "$15/mo"],
+                ["Cloud IDE", "✓ Full IDE", "✗ Desktop only", "✓", "✗ Extension only", "✗ Desktop only"],
+                ["Local Mode", "✓ Full filesystem", "✓", "✗", "✓ (via editor)", "✓"],
+                ["Real Terminal", "✓ Native shell", "✓", "Cloud sandbox", "Via editor", "✓"],
+                ["Native Git", "✓ Push/pull/branch", "✓", "Limited", "✓", "✓"],
+                ["Image Gen", "✓ DALL-E 3 built-in", "✗", "✗", "✗", "✗"],
+                ["Mobile IDE", "✓ Full support", "✗", "✓ Partial", "✗", "✗"],
+                ["File Upload", "✓ Drag & drop", "✓", "✓", "✗", "✓"],
+                ["Governance", "✦ Lume-V certified", "—", "—", "—", "—"],
+              ] as [string, string, string, string, string, string][]).map(([label, axiom, cursor, replit, copilot, windsurf], i) => (
+                <tr key={i}>
+                  <td className="compare-label">{label}</td>
+                  <td className="compare-highlight-cell">{axiom.startsWith("✦") ? <span className="compare-star">{axiom}</span> : axiom.startsWith("✓") ? <span className="compare-yes">{axiom}</span> : axiom}</td>
+                  <td>{cursor.startsWith("✓") ? <span className="compare-yes">{cursor}</span> : cursor.startsWith("✗") ? <span className="compare-no">{cursor}</span> : cursor}</td>
+                  <td>{replit.startsWith("✓") ? <span className="compare-yes">{replit}</span> : replit.startsWith("✗") ? <span className="compare-no">{replit}</span> : replit}</td>
+                  <td>{copilot.startsWith("✓") ? <span className="compare-yes">{copilot}</span> : copilot.startsWith("✗") ? <span className="compare-no">{copilot}</span> : copilot}</td>
+                  <td>{windsurf.startsWith("✓") ? <span className="compare-yes">{windsurf}</span> : windsurf.startsWith("✗") ? <span className="compare-no">{windsurf}</span> : windsurf}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Switcher pitch cards */}
+        <div className="switcher-grid">
+          <div className="switcher-card">
+            <div className="switcher-from">Coming from <strong>Cursor</strong>?</div>
+            <p>You love AI-first coding but you're locked to desktop and paying $20/mo for one model. Axiom gives you <strong>5 agents with auto-routing</strong>, cloud + local hybrid, and pay-per-use pricing — start free with 50 credits.</p>
+            <a href="/ide" className="switcher-cta">Try Free →</a>
+          </div>
+          <div className="switcher-card">
+            <div className="switcher-from">Coming from <strong>Replit</strong>?</div>
+            <p>You love cloud coding but hit the sandbox ceiling — no real terminal, no git push, one AI model. Axiom gives you a <strong>real shell, native git, 5 AI agents</strong>, and the same browser-based convenience. Plus a full mobile IDE.</p>
+            <a href="/ide" className="switcher-cta">Try Free →</a>
+          </div>
+          <div className="switcher-card">
+            <div className="switcher-from">Coming from <strong>GitHub Copilot</strong>?</div>
+            <p>Copilot is great for autocomplete, but it's not an IDE — it's an extension. Axiom is a <strong>full coding environment</strong> with file explorer, terminal, multi-agent chat, image generation, and auto-routing. No VS Code required.</p>
+            <a href="/ide" className="switcher-cta">Try Free →</a>
+          </div>
+          <div className="switcher-card">
+            <div className="switcher-from">Coming from <strong>Windsurf</strong>?</div>
+            <p>Windsurf is desktop-only with one model. Axiom gives you <strong>cloud + local hybrid</strong> — code from any device, same account, same credits. Plus 5 agents auto-routed to the right model for every task. More power, less cost.</p>
+            <a href="/ide" className="switcher-cta">Try Free →</a>
+          </div>
+        </div>
+
+        {/* Bottom value prop */}
+        <div className="compare-bottom-cta">
+          <div className="compare-value-props">
+            <div className="compare-value-item">
+              <Zap className="w-5 h-5" style={{ color: "#06b6d4" }} />
+              <div>
+                <strong>50 free credits</strong>
+                <span>No credit card required</span>
+              </div>
+            </div>
+            <div className="compare-value-item">
+              <Bot className="w-5 h-5" style={{ color: "#a855f7" }} />
+              <div>
+                <strong>5 AI agents</strong>
+                <span>Auto-routed per task</span>
+              </div>
+            </div>
+            <div className="compare-value-item">
+              <Monitor className="w-5 h-5" style={{ color: "#22c55e" }} />
+              <div>
+                <strong>Cloud + Local</strong>
+                <span>Same account everywhere</span>
+              </div>
+            </div>
+          </div>
+          <a href="/ide" className="cta-primary" style={{ marginTop: "2rem", display: "inline-flex" }}>
+            Start Building Free <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
       {!isMobile && (
         <section className="landing-section" id="install">
           <span className="section-label">Get Started</span>
@@ -505,7 +614,7 @@ export default function LandingPage() {
                 <h3>Desktop App</h3>
               </div>
               <p>Full filesystem access. Native terminal and git. Fast Electron desktop application for Windows.</p>
-              <a href="#" onClick={(e) => { e.preventDefault(); alert('Executable building in progress. Run "npm run electron:dev" for now!'); }} className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #a855f7, #6366f1)", border: "none" }}>
+              <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases/latest" target="_blank" rel="noopener noreferrer" className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #a855f7, #6366f1)", border: "none" }}>
                 Download for Windows (.exe)
               </a>
             </div>

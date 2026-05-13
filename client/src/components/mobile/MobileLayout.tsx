@@ -1,11 +1,20 @@
-import React, { useState } from "react";
-import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X, LogOut, CreditCard, Settings, User, ChevronRight } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { useLocation } from "wouter";
+import { Folder, Code2, Terminal, Bot, Play, Menu, MoreVertical, X, LogOut, CreditCard, Settings, User, ChevronRight, Shield, Upload, Image as ImageIcon } from "lucide-react";
 import MonacoEditor from "../MonacoEditor";
 import { OpenFile } from "../EditorArea";
 import ChatView from "../ChatView";
 import FileExplorer from "../FileExplorer";
 import { Message } from "../IDELayout";
 import TerminalPanel from "../TerminalPanel";
+
+interface UploadedFile {
+  name: string;
+  type: string;
+  content: string;  // text content or base64
+  isImage: boolean;
+  size: number;
+}
 
 interface MobileLayoutProps {
   token: string;
@@ -15,6 +24,7 @@ interface MobileLayoutProps {
   openFiles: OpenFile[];
   activeFilePath: string | null;
   onOpenFile: (path: string, name: string) => void;
+  onFileSelect?: (path: string) => void;
   onContentChange: (path: string, content: string) => void;
   activeConvoId: string | null;
   activeAgentId: string;
@@ -29,6 +39,17 @@ interface MobileLayoutProps {
   onOpenCredits: () => void;
 }
 
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"];
+const TEXT_EXTENSIONS = [".js", ".ts", ".tsx", ".jsx", ".py", ".css", ".html", ".json", ".md", ".txt", ".csv", ".yml", ".yaml", ".xml", ".sql", ".sh", ".bash", ".toml", ".env", ".lume"];
+
+function isImageFile(name: string): boolean {
+  return IMAGE_EXTENSIONS.some(ext => name.toLowerCase().endsWith(ext));
+}
+
+function isTextFile(name: string): boolean {
+  return TEXT_EXTENSIONS.some(ext => name.toLowerCase().endsWith(ext));
+}
+
 export default function MobileLayout({
   token,
   user,
@@ -37,6 +58,7 @@ export default function MobileLayout({
   openFiles,
   activeFilePath,
   onOpenFile,
+  onFileSelect,
   onContentChange,
   activeConvoId,
   activeAgentId,
@@ -53,6 +75,9 @@ export default function MobileLayout({
   const [activeTab, setActiveTab] = useState<"files" | "editor" | "preview" | "console" | "ai">("editor");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [, setLocation] = useLocation();
 
   const TABS = [
     { id: "files", icon: Folder, label: "Files" },
@@ -64,8 +89,76 @@ export default function MobileLayout({
 
   const activeFile = openFiles.find(f => f.path === activeFilePath);
 
+  /* ── File Upload Handling ── */
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+
+      if (isImageFile(file.name)) {
+        reader.onload = () => {
+          setUploadedFiles(prev => [...prev, {
+            name: file.name,
+            type: file.type,
+            content: reader.result as string, // base64 data URL
+            isImage: true,
+            size: file.size,
+          }]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        reader.onload = () => {
+          setUploadedFiles(prev => [...prev, {
+            name: file.name,
+            type: file.type,
+            content: reader.result as string,
+            isImage: false,
+            size: file.size,
+          }]);
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Reset input so same file can be selected again
+    e.target.value = "";
+  };
+
+  const removeUploadedFile = (idx: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSendWithUploads = (msg: string, contextFiles?: string[]) => {
+    if (uploadedFiles.length > 0) {
+      // Prepend uploaded file contents to the message
+      const fileContextParts = uploadedFiles.map(f => {
+        if (f.isImage) {
+          return `[Attached image: ${f.name} (${(f.size / 1024).toFixed(1)} KB)]`;
+        }
+        return `### Attached File: ${f.name}\n\`\`\`\n${f.content.slice(0, 50000)}\n\`\`\``;
+      });
+      const enriched = `**Attached Files:**\n\n${fileContextParts.join("\n\n")}\n\n---\n\n${msg}`;
+      onSendMessage(enriched, contextFiles);
+      setUploadedFiles([]);
+    } else {
+      onSendMessage(msg, contextFiles);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-white overflow-hidden">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,.pdf,.txt,.js,.ts,.tsx,.jsx,.py,.css,.html,.json,.md,.csv,.yml,.yaml,.xml,.sql,.sh,.lume,.toml,.env"
+        onChange={handleFileSelect}
+        style={{ display: "none" }}
+      />
+
       {/* ── Slide-out Drawer (Hamburger Menu) ── */}
       {drawerOpen && (
         <>
@@ -95,6 +188,7 @@ export default function MobileLayout({
                   background: "linear-gradient(135deg, #06b6d4, #a855f7)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 16, fontWeight: 800, color: "white",
+                  boxShadow: "0 0 0 2px rgba(6,8,16,1), 0 0 0 3px rgba(6,182,212,0.2)",
                 }}>
                   {(user?.displayName || user?.email || "U")[0].toUpperCase()}
                 </div>
@@ -108,6 +202,24 @@ export default function MobileLayout({
               }}>
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Ecosystem Badge */}
+            <div style={{
+              padding: "10px 20px",
+              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: 6,
+                background: "rgba(20,184,166,0.12)", display: "flex",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                <Shield className="w-3 h-3" style={{ color: "#14b8a6" }} />
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(20,184,166,0.6)", letterSpacing: "0.05em" }}>
+                DARKWAVE ECOSYSTEM · TRUST LAYER SSO
+              </span>
             </div>
 
             {/* Account Info */}
@@ -126,9 +238,9 @@ export default function MobileLayout({
             {/* Navigation Items */}
             <div style={{ flex: 1, padding: "8px 12px", overflowY: "auto" }}>
               {[
-                { icon: <User className="w-4 h-4" />, label: "Account", action: () => {} },
+                { icon: <User className="w-4 h-4" />, label: "Profile & Settings", action: () => { setDrawerOpen(false); setLocation("/profile"); } },
                 { icon: <CreditCard className="w-4 h-4" />, label: "Buy Credits", action: () => { onOpenCredits(); setDrawerOpen(false); } },
-                { icon: <Settings className="w-4 h-4" />, label: "Settings", action: () => {} },
+                { icon: <Settings className="w-4 h-4" />, label: "IDE Settings", action: () => { setDrawerOpen(false); setLocation("/profile"); } },
               ].map((item, i) => (
                 <button
                   key={i}
@@ -138,7 +250,7 @@ export default function MobileLayout({
                     padding: "12px 12px", borderRadius: 10, background: "none",
                     border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer",
                     fontSize: 14, fontWeight: 500, transition: "background 0.15s",
-                    textAlign: "left",
+                    textAlign: "left", fontFamily: "inherit",
                   }}
                 >
                   {item.icon}
@@ -161,7 +273,7 @@ export default function MobileLayout({
                     width: "100%", display: "flex", alignItems: "center", gap: 10,
                     padding: "10px 12px", borderRadius: 8, background: "none",
                     border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer",
-                    fontSize: 13, textAlign: "left",
+                    fontSize: 13, textAlign: "left", fontFamily: "inherit",
                   }}
                 >
                   <Bot className="w-3.5 h-3.5" style={{ color: "#06b6d4", flexShrink: 0 }} />
@@ -180,7 +292,7 @@ export default function MobileLayout({
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   padding: "12px", borderRadius: 10, background: "rgba(244,63,94,0.06)",
                   border: "1px solid rgba(244,63,94,0.12)", color: "#fb7185",
-                  cursor: "pointer", fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit",
                 }}
               >
                 <LogOut className="w-4 h-4" />
@@ -202,8 +314,9 @@ export default function MobileLayout({
             boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
           }}>
             {[
+              { icon: <User className="w-4 h-4" />, label: "Profile", action: () => { setMenuOpen(false); setLocation("/profile"); } },
               { icon: <CreditCard className="w-4 h-4" />, label: "Buy Credits", action: () => { onOpenCredits(); setMenuOpen(false); } },
-              { icon: <Settings className="w-4 h-4" />, label: "Settings", action: () => setMenuOpen(false) },
+              { icon: <Settings className="w-4 h-4" />, label: "Settings", action: () => { setMenuOpen(false); setLocation("/profile"); } },
               { icon: <LogOut className="w-4 h-4" style={{ color: "#fb7185" }} />, label: "Sign Out", action: onLogout, danger: true },
             ].map((item, i) => (
               <button
@@ -214,7 +327,7 @@ export default function MobileLayout({
                   padding: "10px 12px", borderRadius: 8, background: "none",
                   border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500,
                   color: (item as any).danger ? "#fb7185" : "rgba(255,255,255,0.7)",
-                  textAlign: "left", transition: "background 0.15s",
+                  textAlign: "left", transition: "background 0.15s", fontFamily: "inherit",
                 }}
               >
                 {item.icon}
@@ -245,6 +358,14 @@ export default function MobileLayout({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* File upload button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-8 h-8 rounded-full bg-white/5 text-white/50 flex items-center justify-center active:bg-white/10"
+            title="Attach files"
+          >
+            <Upload className="w-4 h-4" />
+          </button>
           <button className="w-8 h-8 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center active:bg-green-500/30">
             <Play className="w-4 h-4 fill-current" />
           </button>
@@ -256,6 +377,26 @@ export default function MobileLayout({
           </button>
         </div>
       </header>
+
+      {/* Uploaded Files Banner */}
+      {uploadedFiles.length > 0 && (
+        <div style={{
+          padding: "6px 16px", display: "flex", gap: 6, flexWrap: "wrap",
+          alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(34,197,94,0.03)",
+        }}>
+          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>ATTACHED:</span>
+          {uploadedFiles.map((f, i) => (
+            <span key={i} className={`attached-file-badge ${f.isImage ? "image" : ""}`}>
+              {f.isImage ? <ImageIcon style={{ width: 10, height: 10 }} /> : <Code2 style={{ width: 10, height: 10 }} />}
+              {f.name}
+              <button onClick={() => removeUploadedFile(i)}>
+                <X style={{ width: 10, height: 10 }} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden relative">
@@ -321,12 +462,13 @@ export default function MobileLayout({
               messages={messages}
               isStreaming={isStreaming}
               streamingContent={streamingContent}
-              onSend={(msg) => onSendMessage(msg, activeFilePath ? [activeFilePath] : [])}
+              onSend={(msg) => handleSendWithUploads(msg, activeFilePath ? [activeFilePath] : [])}
               onStop={onStopAgent}
               onApplyCode={onApplyCode}
               contextFiles={activeFilePath ? [activeFilePath] : []}
               activeAgentId={activeAgentId}
               agents={agents}
+              onFileUpload={() => fileInputRef.current?.click()}
             />
           </div>
         )}

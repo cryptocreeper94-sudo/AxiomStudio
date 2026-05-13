@@ -35,7 +35,7 @@ export interface ProviderConfig {
   userRole: string;
 }
 
-const MAX_TOOL_ITERATIONS = 10;
+const MAX_TOOL_ITERATIONS = 100;
 
 // ─── Anthropic Provider ────────────────────────────────────────────────
 

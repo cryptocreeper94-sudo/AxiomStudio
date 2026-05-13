@@ -1,4 +1,4 @@
-﻿// Lume-V Governance Wrapper — Axiom Studio
+// Lume-V Governance Wrapper — Axiom Studio
 // Trust Layer Deployment Standard v1.0
 // Generated: 2026-04-30
 // DarkWave Studios LLC — Copyright 2026
@@ -11,14 +11,14 @@
 @cert: issued
 @registry: trust-layer-ecosystem
 @appId: axiom-studio
-@domain: studio.axiom42.com
+@domain: axiomstudio.dev
 
 use { monitor, heal, optimize } from "lume:runtime"
 use { issueCert, validateEnvelope } from "lume:trust-layer"
 
 define APP_NAME = "Axiom Studio"
 define APP_ID   = "axiom-studio"
-define APP_URL  = "https://studio.axiom42.com"
+define APP_URL  = "https://axiomstudio.dev"
 
 monitor:
     check appHealth() every 30s
