@@ -33,6 +33,7 @@ export interface ProviderConfig {
   systemPrompt: string;
   userId: string;
   userRole: string;
+  signal?: AbortSignal;
 }
 
 const MAX_TOOL_ITERATIONS = 100;
@@ -68,7 +69,7 @@ export async function* streamAnthropic(
         messages: convoMessages,
         tools: ANTHROPIC_TOOLS,
         tool_choice: { type: "auto" },
-      });
+      }, { signal: config.signal });
 
       // Stream text tokens live to the client
       for await (const event of stream) {
@@ -189,7 +190,7 @@ export async function* streamOpenAI(
         tool_choice: "auto",
         stream: true,
         stream_options: { include_usage: true },
-      });
+      }, { signal: config.signal });
 
       let fullText = "";
       let toolCallsMap: Record<string, { name: string; arguments: string }> = {};

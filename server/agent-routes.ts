@@ -733,6 +733,10 @@ export function registerAgentRoutes(app: Express): void {
       })}\n\n`);
     }
 
+    // Abort handling
+    const controller = new AbortController();
+    req.on("close", () => controller.abort());
+
     // Stream response
     let fullResponse = "";
     let inputTokens = 0;
@@ -753,6 +757,7 @@ export function registerAgentRoutes(app: Express): void {
       systemPrompt: agent.systemPrompt,
       userId,
       userRole,
+      signal: controller.signal,
     });
 
     for await (const chunk of stream) {

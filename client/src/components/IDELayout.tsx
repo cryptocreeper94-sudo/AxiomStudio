@@ -48,6 +48,7 @@ export default function IDELayout() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [messageQueue, setMessageQueue] = useState<{content: string, contextFilePaths?: string[]}[]>([]);
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [toolActivity, setToolActivity] = useState<Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>>([]);
@@ -231,7 +232,11 @@ export default function IDELayout() {
   }, [token, activeAgentId, agents, queryClient]);
 
   const handleSendMessage = useCallback(async (content: string, contextFilePaths?: string[]) => {
-    if (!token || !content.trim() || isStreaming) return;
+    if (!token || !content.trim()) return;
+    if (isStreaming) {
+      setMessageQueue(prev => [...prev, { content, contextFilePaths }]);
+      return;
+    }
     setIsStreaming(true); // Lock immediately to prevent double-clicks
     
     // Check credits before doing anything (skip for auto-route and free agents)
@@ -390,6 +395,15 @@ export default function IDELayout() {
       setStreamingContent("");
     }
   }, [token, activeConvoId, activeAgentId, isStreaming, agents, queryClient, routeInfo, openFiles, creditData]);
+
+  // Auto-process message queue
+  useEffect(() => {
+    if (!isStreaming && messageQueue.length > 0) {
+      const nextMsg = messageQueue[0];
+      setMessageQueue(q => q.slice(1));
+      handleSendMessage(nextMsg.content, nextMsg.contextFilePaths);
+    }
+  }, [isStreaming, messageQueue, handleSendMessage]);
 
   // ── Apply code from agent to editor ──
   const handleApplyCode = useCallback((code: string, filename: string, _language: string) => {

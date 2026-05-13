@@ -312,6 +312,9 @@ app.post("/api/agent/chat", async (req, res) => {
   res.flushHeaders();
 
   try {
+    const controller = new AbortController();
+    req.on("close", () => controller.abort());
+
     let fullResponse = "";
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
@@ -333,7 +336,7 @@ app.post("/api/agent/chat", async (req, res) => {
           messages: convoMessages,
           tools: LOCAL_ANTHROPIC_TOOLS,
           tool_choice: { type: "auto" },
-        });
+        }, { signal: controller.signal });
 
         for await (const event of stream) {
           if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
@@ -384,7 +387,7 @@ app.post("/api/agent/chat", async (req, res) => {
           tool_choice: "auto",
           stream: true,
           stream_options: { include_usage: true },
-        });
+        }, { signal: controller.signal });
 
         let chunkText = "";
         let toolCallsMap: Record<string, { name: string; arguments: string }> = {};
