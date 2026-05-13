@@ -4,8 +4,9 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 import { useState, useCallback } from "react";
-import { X, Circle } from "lucide-react";
+import { X, Circle, FileText, Code2 } from "lucide-react";
 import MonacoEditor, { getLang } from "./MonacoEditor";
+import MarkdownViewer from "./MarkdownViewer";
 
 export interface OpenFile {
   path: string;
@@ -39,6 +40,11 @@ function fileIcon(name: string): string {
 
 export default function EditorArea({ files, activeFilePath, onSelectFile, onCloseFile, onContentChange, onSave }: Props) {
   const activeFile = files.find(f => f.path === activeFilePath);
+  const [viewMode, setViewMode] = useState<"code" | "preview">("preview");
+
+  // Force code view if not markdown
+  const isMarkdown = activeFile?.path.endsWith(".md");
+  const currentView = isMarkdown ? viewMode : "code";
 
   if (files.length === 0) {
     return (
@@ -89,21 +95,51 @@ export default function EditorArea({ files, activeFilePath, onSelectFile, onClos
         })}
       </div>
 
-      {/* Breadcrumb */}
+      {/* Breadcrumb & Tools */}
       {activeFile && (
-        <div className="ax-breadcrumb">
-          {activeFile.path.split("/").map((part, i, arr) => (
-            <span key={i}>
-              <span style={{ color: i === arr.length - 1 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)" }}>{part}</span>
-              {i < arr.length - 1 && <span style={{ color: "rgba(255,255,255,0.15)", margin: "0 4px" }}>/</span>}
-            </span>
-          ))}
+        <div className="ax-breadcrumb" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '1rem' }}>
+          <div>
+            {activeFile.path.split("/").map((part, i, arr) => (
+              <span key={i}>
+                <span style={{ color: i === arr.length - 1 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)" }}>{part}</span>
+                {i < arr.length - 1 && <span style={{ color: "rgba(255,255,255,0.15)", margin: "0 4px" }}>/</span>}
+              </span>
+            ))}
+          </div>
+
+          {isMarkdown && (
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '2px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <button 
+                onClick={() => setViewMode("preview")}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 500, borderRadius: '4px', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                  background: currentView === "preview" ? 'rgba(6,182,212,0.15)' : 'transparent',
+                  color: currentView === "preview" ? '#06b6d4' : 'rgba(255,255,255,0.5)'
+                }}
+              >
+                <FileText size={12} /> Preview
+              </button>
+              <button 
+                onClick={() => setViewMode("code")}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 500, borderRadius: '4px', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                  background: currentView === "code" ? 'rgba(168,85,247,0.15)' : 'transparent',
+                  color: currentView === "code" ? '#a855f7' : 'rgba(255,255,255,0.5)'
+                }}
+              >
+                <Code2 size={12} /> Code
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Editor */}
       <div className="ax-editor-content">
-        {activeFile && (
+        {activeFile && currentView === "preview" && (
+          <MarkdownViewer content={activeFile.content} />
+        )}
+        {activeFile && currentView === "code" && (
           <MonacoEditor
             value={activeFile.content}
             language={activeFile.language}
