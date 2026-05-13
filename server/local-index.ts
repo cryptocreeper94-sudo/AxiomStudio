@@ -324,7 +324,7 @@ app.post("/api/agent/chat", async (req, res) => {
         content: m.content,
       }));
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 100; i++) {
         const stream = anthropic.messages.stream({
           model: agent.model,
           max_tokens: agent.maxTokens,
@@ -343,7 +343,7 @@ app.post("/api/agent/chat", async (req, res) => {
         }
 
         let finalMsg: Anthropic.Message;
-        try { finalMsg = await stream.finalMessage(); } catch { break; }
+        finalMsg = await stream.finalMessage();
 
         totalInputTokens += finalMsg.usage.input_tokens;
         totalOutputTokens += finalMsg.usage.output_tokens;
@@ -374,7 +374,7 @@ app.post("/api/agent/chat", async (req, res) => {
         ...chatMessages,
       ];
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 100; i++) {
         const stream = await openai.chat.completions.create({
           model: agent.model,
           messages: convoMessages,
