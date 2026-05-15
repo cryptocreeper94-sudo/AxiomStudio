@@ -58,8 +58,17 @@ function setTokenWithExpiry(token: string) {
 }
 
 export function useAuth(): AuthState {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved && !isTokenExpired() ? saved : null;
+  });
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const savedUser = localStorage.getItem(USER_KEY);
+    if (savedUser) {
+      try { return JSON.parse(savedUser); } catch {}
+    }
+    return null;
+  });
   const [biometricsAvailable, setBiometricsAvailable] = useState(false);
   const [biometricsEnrolled, setBiometricsEnrolled] = useState(false);
 
