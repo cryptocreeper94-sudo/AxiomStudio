@@ -45,7 +45,7 @@ function createWindow() {
 
   // The local-index.ts server defaults to port 5100
   const port = process.env.PORT || '5100';
-  const url = `http://localhost:${port}/ide`;
+  const url = `http://localhost:${port}/profile`;
 
   // Show the window immediately so the user sees something
   mainWindow.show();
