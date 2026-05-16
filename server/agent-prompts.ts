@@ -170,8 +170,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "sonnet",
     name: "Axiom Quick",
-    description: "Claude Sonnet 4 — Fast completions, refactoring, explanations. 5x cheaper than Opus.",
-    model: "claude-sonnet-4-5",
+    description: "Claude Sonnet 4.6 — Fast completions, refactoring, explanations. 5x cheaper than Opus.",
+    model: "claude-sonnet-4-6",
     provider: "anthropic",
     maxTokens: 8192,
     temperature: "0.5",
