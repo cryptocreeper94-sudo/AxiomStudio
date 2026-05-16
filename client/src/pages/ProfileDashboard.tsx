@@ -78,7 +78,7 @@ export default function ProfileDashboard() {
   });
 
   if (!token || !user) {
-    setLocation("/ide");
+    setLocation("/");
     return null;
   }
 

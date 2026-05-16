@@ -6,15 +6,17 @@ import ProfileDashboard from "./pages/ProfileDashboard";
 import "./ide.css";
 
 export default function App() {
+  const isElectron = navigator.userAgent.toLowerCase().includes("electron");
+
   return (
     <Switch>
-      <Route path="/" component={LandingPage} />
+      <Route path="/" component={isElectron ? IDELayout : LandingPage} />
       <Route path="/ide" component={IDELayout} />
       <Route path="/profile" component={ProfileDashboard} />
       <Route path="/chat" component={AgentPanel} />
       <Route path="/agent" component={AgentPanel} />
       <Route>
-        <Redirect to="/" />
+        <Redirect to={isElectron ? "/ide" : "/"} />
       </Route>
     </Switch>
   );
