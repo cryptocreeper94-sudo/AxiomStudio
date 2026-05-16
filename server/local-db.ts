@@ -80,6 +80,12 @@ try {
 try {
   sqlite.exec(`ALTER TABLE agent_conversations ADD COLUMN checklist TEXT;`);
 } catch (e) { /* Column might already exist */ }
+try {
+  sqlite.exec(`ALTER TABLE agent_conversations ADD COLUMN workspace_path TEXT;`);
+} catch (e) { /* Column might already exist */ }
+try {
+  sqlite.exec(`ALTER TABLE agent_conversations ADD COLUMN last_open_file TEXT;`);
+} catch (e) { /* Column might already exist */ }
 
 // ─── Query helpers that match the Drizzle-like interface ─────────────
 
