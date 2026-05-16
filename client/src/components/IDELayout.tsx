@@ -5,7 +5,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff } from "lucide-react";
+import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff, Download } from "lucide-react";
 import ActivityBar, { type SidePanel } from "./ActivityBar";
 import FileExplorer from "./FileExplorer";
 import EditorArea, { type OpenFile } from "./EditorArea";
@@ -175,6 +175,10 @@ export default function IDELayout() {
   // Re-fetching on stream end caused a race condition that wiped conversations.
   useEffect(() => {
     if (activeConvoId && token) {
+      // Clear open files when switching conversations for isolation
+      setOpenFiles([]);
+      setActiveFilePath(null);
+
       api.fetchMessages(token, activeConvoId).then((fetched) => {
         setMessages(prev => {
           // Don't wipe optimistic messages if server hasn't caught up yet
@@ -185,6 +189,25 @@ export default function IDELayout() {
       }).catch(console.error);
     }
   }, [activeConvoId, token]);
+
+  // Restore last open file from conversation metadata
+  useEffect(() => {
+    if (activeConvoId && conversations.length > 0) {
+      const convo = conversations.find((c: any) => c.id === activeConvoId);
+      if (convo?.last_open_file) {
+        const fileName = convo.last_open_file.split(/[\\/]/).pop() || convo.last_open_file;
+        // Small delay to let the file explorer load the tree first
+        setTimeout(() => handleOpenFile(convo.last_open_file, fileName), 300);
+      }
+    }
+  }, [activeConvoId, conversations]);
+
+  // Save last open file when it changes
+  useEffect(() => {
+    if (token && activeConvoId && activeFilePath) {
+      api.updateConversation(token, activeConvoId, { lastOpenFile: activeFilePath }).catch(() => {});
+    }
+  }, [activeFilePath, token, activeConvoId]);
 
   // Load starter state from conversation
   useEffect(() => {
@@ -198,6 +221,7 @@ export default function IDELayout() {
       }
     }
   }, [activeConvoId, conversations]);
+
 
   // Save starter state helpers
   const saveStarterState = useCallback((starter: StarterConfig | null, checklist: ChecklistItem[]) => {
@@ -598,6 +622,40 @@ export default function IDELayout() {
           >
             {previewVisible ? <EyeOff size={14} /> : <Eye size={14} />}
             {previewVisible ? "Close Preview" : "Live Preview"}
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/workspace/export", {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "x-convo-id": activeConvoId || "default",
+                  },
+                });
+                if (!res.ok) throw new Error("Export failed");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `axiom-project-${Date.now()}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch (err) {
+                console.error("Export error:", err);
+              }
+            }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              color: "rgba(255, 255, 255, 0.6)",
+              padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+              cursor: "pointer", marginRight: 6, transition: "all 0.2s",
+            }}
+            title="Export project as ZIP"
+          >
+            <Download size={14} />
+            Export
           </button>
           <ProfileBadge
             user={user}

@@ -24,6 +24,7 @@ import { readFileSync } from "fs";
 import { localDb } from "./local-db.js";
 import { LOCAL_ANTHROPIC_TOOLS, LOCAL_OPENAI_TOOLS, executeLocalTool, getWorkspaceRoot } from "./local-tools.js";
 import localWorkspaceRoutes from "./local-workspace-routes.js";
+import exportRoutes from "./export-routes.js";
 import { AGENT_PROMPTS, AGENT_SEEDS } from "./agent-prompts.js";
 import { setupTerminalWebSocket } from "./pty.js";
 import {
@@ -260,6 +261,14 @@ app.patch("/api/agent/conversations/:id", (req, res) => {
   if (updates.checklist !== undefined) {
     updates.checklist = updates.checklist ? JSON.stringify(updates.checklist) : null;
   }
+  if (updates.lastOpenFile !== undefined) {
+    updates.last_open_file = updates.lastOpenFile || null;
+    delete updates.lastOpenFile;
+  }
+  if (updates.workspacePath !== undefined) {
+    updates.workspace_path = updates.workspacePath || null;
+    delete updates.workspacePath;
+  }
   localDb.updateConversation(req.params.id, LOCAL_USER.id, updates);
   res.json({ success: true });
 });
@@ -476,6 +485,7 @@ app.post("/api/agent/chat", async (req, res) => {
 
 // ── Workspace routes (real filesystem) ──
 app.use("/api/workspace", localWorkspaceRoutes);
+app.use("/api/workspace", exportRoutes);
 
 // ── Health ──
 app.get("/api/health", (_req, res) => {
