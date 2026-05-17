@@ -154,6 +154,29 @@ export const ANTHROPIC_TOOLS: any[] = [
       required: ["repo_name", "message"],
     },
   },
+  {
+    name: "search_web",
+    description: "Search the web for information. Returns relevant results with titles, URLs, and snippets. Use this when you need up-to-date information, documentation, or to research APIs and libraries.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search query string" },
+        num_results: { type: "number", description: "Number of results to return (default 5, max 10)" }
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "delete_file",
+    description: "Delete a file or directory from the workspace. Use with caution.",
+    input_schema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "File path relative to workspace root" }
+      },
+      required: ["path"],
+    },
+  },
 ];
 
 // OpenAI function-calling format (wraps Anthropic defs)
@@ -198,6 +221,10 @@ export async function executeTool(
         return await toolGenerateImage(args.prompt, args.size);
       case "push_to_depot":
         return await toolPushToDepot(args.repo_name, args.message, userId);
+      case "search_web":
+        return await toolSearchWeb(args.query, args.num_results);
+      case "delete_file":
+        return await toolDeleteFile(args.path, userId);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -670,4 +697,83 @@ async function toolPushToDepot(repoName: string, message: string, userId: string
   } catch (err: any) {
     return `Error pushing to Depot: ${err.message}`;
   }
+}
+
+// ─── search_web ────────────────────────────────────────────────────────
+
+async function toolSearchWeb(query: string, numResults?: number): Promise<string> {
+  if (!query) return "Error: query is required";
+  const count = Math.min(Math.max(numResults || 5, 1), 10);
+
+  try {
+    // Use DuckDuckGo HTML search (no API key required)
+    const encoded = encodeURIComponent(query);
+    const res = await fetch(`https://html.duckduckgo.com/html/?q=${encoded}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+
+    if (!res.ok) throw new Error(`Search returned ${res.status}`);
+    const html = await res.text();
+
+    // Parse results from DuckDuckGo HTML
+    const results: { title: string; url: string; snippet: string }[] = [];
+    const resultBlocks = html.split('class="result__body"');
+
+    for (let i = 1; i < resultBlocks.length && results.length < count; i++) {
+      const block = resultBlocks[i];
+
+      // Extract title
+      const titleMatch = block.match(/class="result__a"[^>]*>([^<]+)</);
+      const title = titleMatch ? titleMatch[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim() : "";
+
+      // Extract URL
+      const urlMatch = block.match(/href="([^"]*uddg=([^&"]*))/);
+      let url = "";
+      if (urlMatch && urlMatch[2]) {
+        try { url = decodeURIComponent(urlMatch[2]); } catch { url = urlMatch[2]; }
+      }
+
+      // Extract snippet
+      const snippetMatch = block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+      let snippet = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#x27;/g, "'").replace(/&quot;/g, '"').trim() : "";
+
+      if (title && (url || snippet)) {
+        results.push({ title, url, snippet: snippet.substring(0, 200) });
+      }
+    }
+
+    if (results.length === 0) {
+      return `No search results found for "${query}". Try rephrasing your query.`;
+    }
+
+    const output: string[] = [`Web search results for "${query}":\n`];
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      output.push(`${i + 1}. **${r.title}**`);
+      if (r.url) output.push(`   URL: ${r.url}`);
+      if (r.snippet) output.push(`   ${r.snippet}`);
+      output.push("");
+    }
+
+    return output.join("\n");
+  } catch (err: any) {
+    return `Error searching web: ${err.message}`;
+  }
+}
+
+// ─── delete_file ───────────────────────────────────────────────────────
+
+async function toolDeleteFile(filePath: string, userId: string): Promise<string> {
+  if (!filePath) return "Error: path is required";
+  const normalized = normalizePath(filePath);
+
+  // Delete the file and any children (if directory)
+  const pattern = `${normalized}/%`;
+  const result = await db.execute(
+    sql`DELETE FROM workspace_files WHERE user_id = ${userId} AND (file_path = ${normalized} OR file_path LIKE ${pattern})`
+  );
+
+  return `Deleted "${normalized}" from workspace.`;
 }

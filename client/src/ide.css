@@ -815,3 +815,65 @@
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ══════════════════════════════════════ */
+/* CONVERSATION HISTORY                   */
+/* ══════════════════════════════════════ */
+.ax-history-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ax-hist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+.ax-hist-item:hover {
+  background: rgba(255,255,255,0.03);
+}
+.ax-hist-actions {
+  opacity: 0;
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+  transition: opacity 0.15s;
+}
+.ax-hist-item:hover .ax-hist-actions {
+  opacity: 1;
+}
+.ax-hist-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 120px;
+  padding: 4px;
+  background: #14161e;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  z-index: 100;
+}
+.ax-hist-menu button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  transition: background 0.1s;
+  text-align: left;
+}
+.ax-hist-menu button:hover {
+  background: rgba(255,255,255,0.06);
+}
+
