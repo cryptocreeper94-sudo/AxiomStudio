@@ -5,6 +5,7 @@
 [![npm](https://img.shields.io/npm/v/axiom-studio?color=06b6d4&label=npm)](https://npmjs.com/package/axiom-studio)
 [![License](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
 
 Multi-agent AI coding environment with full filesystem access. Use in the cloud or install locally — same agents, same power.
 
@@ -15,7 +16,10 @@ Multi-agent AI coding environment with full filesystem access. Use in the cloud 
 ### Cloud (instant, any device)
 Go to **[axiomstudio.dev](https://axiomstudio.dev)** — sign in and start coding.
 
-### Local (full power)
+### Desktop (full power)
+Download **Axiom Studio Setup 2.1.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
+
+### Local CLI (developers)
 ```bash
 npx axiom-studio
 ```
@@ -28,9 +32,18 @@ Requires Node.js 18+. Browser opens automatically. Full filesystem access, real 
 | Feature | Description |
 |---------|-------------|
 | **Multi-Agent AI** | Claude Opus, Sonnet, GPT-4o, o3-mini — switch models mid-conversation |
+| **Smart Auto-Router** | Automatically selects the best model based on task complexity and cost |
 | **Full IDE** | Monaco editor, file explorer, syntax highlighting for 50+ languages |
+| **Dashboard Home** | Credit counter, quick-start templates, recent conversations — no blank IDE dumps |
+| **Live Preview** | Split-view workspace serving for real-time HTML/JS preview alongside code |
+| **Library Panel** | Categorized file browser with search, download, share, copy, and context menus |
+| **Web Search** | Agents search the web in real-time for current information |
+| **Voice Input** | Web Speech API integration for hands-free chat |
 | **Real Terminal** | Not a sandbox — run git, npm, python, anything |
 | **Native Git** | Push, pull, branch directly from the IDE |
+| **Agentic Artifacts** | Agents produce structured artifacts and execute multi-step plans |
+| **ZIP Export** | Export any project as a ZIP archive from the toolbar |
+| **Project Persistence** | Database-backed workspace isolation with session resume |
 | **Local Mode** | Full filesystem access via `npx axiom-studio` |
 | **Cloud Mode** | Browser-based, works on mobile, tablet, desktop |
 | **Credit System** | Pay-per-use, no subscriptions. Same credits work cloud and local |
@@ -46,6 +59,8 @@ Requires Node.js 18+. Browser opens automatically. Full filesystem access, real 
 | GPT-4o | `gpt-4o` | 2 / message |
 | o3-mini | `o3-mini` | 1 / message |
 
+Model strings are auto-validated on server restart. Stale DB entries are corrected automatically — no manual migration required.
+
 ## Architecture
 
 ```
@@ -54,6 +69,7 @@ Cloud (axiomstudio.dev)          Local (npx axiom-studio)
 ├── Firebase auth                ├── Auto-login (owner)
 ├── Stripe billing               ├── Credit-check proxy
 ├── Cloud terminal               ├── Local PowerShell/bash
+├── Dashboard home               ├── Dashboard home
 └── Works on mobile              └── Desktop only
 ```
 
@@ -98,5 +114,6 @@ This software is proprietary to DarkWave Studios LLC.
 - U.S. Pat. App. No. 64/047,467 — Axiom: Deterministic Zero-Assumption AI System
 - U.S. Pat. App. No. 64/047,496 — Lume-X: Deterministic Multi-Agent Cognition Substrate
 - U.S. Pat. App. No. 64/047,536 — Synthetic Organisms: Deterministic Self-Governing Cyber-Physical Constructs
+- U.S. Pat. App. No. 64/056,378 — Meridian: Deterministic Wireless Energy Routing Architecture
 
 © 2026 DarkWave Studios LLC. All rights reserved.
