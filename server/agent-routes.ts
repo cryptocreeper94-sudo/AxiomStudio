@@ -138,7 +138,17 @@ async function seedAgents(): Promise<void> {
         color: seed.color,
         isActive: true,
       });
-      console.log(`[Agent] Seeded agent: ${seed.name}`);
+      console.log(`[Agent] Seeded agent: ${seed.name} (${seed.model})`);
+    } else if (existing.model !== seed.model) {
+      // CRITICAL: Update model string if it changed — prevents stale model IDs
+      await db.update(agentDefinitions)
+        .set({
+          model: seed.model,
+          description: seed.description,
+          systemPrompt: AGENT_PROMPTS[seed.id] || existing.systemPrompt,
+        })
+        .where(eq(agentDefinitions.id, seed.id));
+      console.log(`[Agent] Updated ${seed.name} model: ${existing.model} → ${seed.model}`);
     }
   }
 }
@@ -541,7 +551,7 @@ export function registerAgentRoutes(app: Express): void {
           userId,
           title: title || "New conversation",
           agentId: agentId || "opus",
-          model: model || "claude-3-opus-20240229",
+          model: model || "claude-opus-4-20250115",
         })
         .returning();
 

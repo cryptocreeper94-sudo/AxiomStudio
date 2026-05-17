@@ -158,8 +158,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "opus",
     name: "Axiom",
-    description: "Claude Opus 4.7 — Full-stack coding, architecture, debugging. The most capable agent.",
-    model: "claude-opus-4-7",
+    description: "Claude Opus 4 — Full-stack coding, architecture, debugging. The most capable agent.",
+    model: "claude-opus-4-20250115",
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.7",
@@ -170,8 +170,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "sonnet",
     name: "Axiom Quick",
-    description: "Claude Sonnet 4.6 — Fast completions, refactoring, explanations. 5x cheaper than Opus.",
-    model: "claude-sonnet-4-6",
+    description: "Claude Sonnet 4 — Fast completions, refactoring, explanations. 5x cheaper than Opus.",
+    model: "claude-sonnet-4-20250514",
     provider: "anthropic",
     maxTokens: 8192,
     temperature: "0.5",
@@ -182,8 +182,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "gpt4",
     name: "Axiom GPT",
-    description: "GPT-4.1 — General purpose, documentation, planning. Alternative perspective.",
-    model: "gpt-4.1",
+    description: "GPT-4o — General purpose, documentation, planning. Alternative perspective.",
+    model: "gpt-4o",
     provider: "openai",
     maxTokens: 8192,
     temperature: "0.7",
@@ -194,8 +194,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "lume",
     name: "Lume Agent",
-    description: "Claude Opus 4.7 — Lume language specialist. LDIR, Trust Layer, Canon² expert.",
-    model: "claude-opus-4-7",
+    description: "Claude Opus 4 — Lume language specialist. LDIR, Trust Layer, Canon² expert.",
+    model: "claude-opus-4-20250115",
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.5",
