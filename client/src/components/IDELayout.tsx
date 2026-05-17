@@ -5,7 +5,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff, Download } from "lucide-react";
+import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff, Download, Zap, Plus } from "lucide-react";
 import ActivityBar, { type SidePanel } from "./ActivityBar";
 import FileExplorer from "./FileExplorer";
 import EditorArea, { type OpenFile } from "./EditorArea";
@@ -20,6 +20,7 @@ import SettingsView from "./SettingsView";
 import ProfileBadge from "./ProfileBadge";
 import LibraryPanel from "./LibraryPanel";
 import ConversationHistory from "./ConversationHistory";
+import DashboardHome from "./DashboardHome";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -46,6 +47,7 @@ export default function IDELayout() {
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showCreditStore, setShowCreditStore] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true);
 
   // Chat state (preserved from AgentPanel)
   const [activeConvoId, setActiveConvoId] = useState<string | null>(() => {
@@ -542,6 +544,24 @@ export default function IDELayout() {
     />
   );
 
+  // Dashboard home — shown before entering the IDE
+  if (showDashboard) {
+    return (
+      <DashboardHome
+        user={user}
+        token={token}
+        credits={creditData?.credits ?? 0}
+        conversations={conversations}
+        agents={agents}
+        onEnterIDE={() => setShowDashboard(false)}
+        onNewChat={() => { handleNewChat(); setShowDashboard(false); }}
+        onSelectConvo={(id) => { setActiveConvoId(id); setShowDashboard(false); }}
+        onOpenCredits={() => setShowCreditStore(true)}
+        onLogout={logout}
+      />
+    );
+  }
+
 
 
   if (isMobile) {
@@ -576,7 +596,7 @@ export default function IDELayout() {
       {/* ── Cockpit Status Bar ── */}
       <header className="ax-cockpit-status">
         <div className="ax-cs-left">
-          <div className="ax-cs-brand">
+          <div className="ax-cs-brand" onClick={() => setShowDashboard(true)} style={{ cursor: "pointer" }} title="Home">
             <div style={{
               width: 26, height: 26, borderRadius: 7,
               background: "linear-gradient(135deg, #06b6d4, #a855f7)",
@@ -608,6 +628,19 @@ export default function IDELayout() {
             <span className="ax-cs-val">{creditData?.credits ?? "—"}</span>
             <span className="ax-cs-label">Credits</span>
           </div>
+          <div className="ax-cs-divider" />
+          <button
+            onClick={() => setShowCreditStore(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 4,
+              padding: "3px 8px", borderRadius: 12,
+              background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.15)",
+              color: "#06b6d4", fontSize: 9, fontWeight: 700,
+              cursor: "pointer", transition: "all 0.2s",
+            }}
+          >
+            <Plus size={10} /> Buy
+          </button>
         </div>
 
         <div className="ax-cs-right">
