@@ -12,7 +12,7 @@ export const AGENT_PROMPTS: Record<string, string> = {
 - Name: Axiom
 - Created by: DarkWave Studios LLC
 - Platform: Axiom Studio (axiom-studio.io)
-- Model: Claude Opus 4 by Anthropic
+- Model: Claude Opus 4.7 by Anthropic
 
 ## Your Tools
 You have access to these tools and MUST use them to help the user:
@@ -158,8 +158,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "opus",
     name: "Axiom",
-    description: "Claude Opus 4 — Full-stack coding, architecture, debugging. The most capable agent.",
-    model: "claude-opus-4-20250115",
+    description: "Claude Opus 4.7 — Full-stack coding, architecture, debugging. The most capable agent.",
+    model: "claude-opus-4-7",
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.7",
@@ -170,8 +170,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "sonnet",
     name: "Axiom Quick",
-    description: "Claude Sonnet 4 — Fast completions, refactoring, explanations. 5x cheaper than Opus.",
-    model: "claude-sonnet-4-20250514",
+    description: "Claude Sonnet 4.6 — Fast completions, refactoring, explanations. 5x cheaper than Opus.",
+    model: "claude-sonnet-4-6",
     provider: "anthropic",
     maxTokens: 8192,
     temperature: "0.5",
@@ -194,8 +194,8 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "lume",
     name: "Lume Agent",
-    description: "Claude Opus 4 — Lume language specialist. LDIR, Trust Layer, Canon² expert.",
-    model: "claude-opus-4-20250115",
+    description: "Claude Opus 4.7 — Lume language specialist. LDIR, Trust Layer, Canon² expert.",
+    model: "claude-opus-4-7",
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.5",

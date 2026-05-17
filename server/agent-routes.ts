@@ -551,7 +551,7 @@ export function registerAgentRoutes(app: Express): void {
           userId,
           title: title || "New conversation",
           agentId: agentId || "opus",
-          model: model || "claude-opus-4-20250115",
+          model: model || "claude-opus-4-7",
         })
         .returning();
 
