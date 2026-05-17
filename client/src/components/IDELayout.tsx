@@ -19,6 +19,7 @@ import CreditStore from "./CreditStore";
 import SettingsView from "./SettingsView";
 import ProfileBadge from "./ProfileBadge";
 import LibraryPanel from "./LibraryPanel";
+import ConversationHistory from "./ConversationHistory";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -699,6 +700,20 @@ export default function IDELayout() {
             )}
             {sidePanel === "settings" && <SettingsView credits={creditData?.credits ?? 0} onOpenCredits={() => setShowCreditStore(true)} />}
             {sidePanel === "library" && <LibraryPanel token={token} activeConvoId={activeConvoId} onOpenFile={handleOpenFile} />}
+            {sidePanel === "history" && (
+              <ConversationHistory
+                conversations={conversations}
+                activeConvoId={activeConvoId}
+                onSelectConvo={setActiveConvoId}
+                onNewChat={handleNewChat}
+                onDeleteConvo={handleDeleteConvo}
+                onRenameConvo={(id, title) => {
+                  if (token) api.updateConversation(token, id, { title }).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+                  }).catch(console.error);
+                }}
+              />
+            )}
           </div>
           {/* Drag handle for side panel */}
           <div className="ax-resize-handle" onMouseDown={startDrag("side")} />
