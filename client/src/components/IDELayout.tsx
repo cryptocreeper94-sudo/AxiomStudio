@@ -18,6 +18,7 @@ import LoginScreen from "./LoginScreen";
 import CreditStore from "./CreditStore";
 import SettingsView from "./SettingsView";
 import ProfileBadge from "./ProfileBadge";
+import LibraryPanel from "./LibraryPanel";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import { useAuth } from "../hooks/useAuth";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -697,6 +698,7 @@ export default function IDELayout() {
               </div>
             )}
             {sidePanel === "settings" && <SettingsView credits={creditData?.credits ?? 0} onOpenCredits={() => setShowCreditStore(true)} />}
+            {sidePanel === "library" && <LibraryPanel token={token} activeConvoId={activeConvoId} onOpenFile={handleOpenFile} />}
           </div>
           {/* Drag handle for side panel */}
           <div className="ax-resize-handle" onMouseDown={startDrag("side")} />
