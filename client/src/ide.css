@@ -534,3 +534,284 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ══════════════════════════════════════ */
+/* LIBRARY PANEL                          */
+/* ══════════════════════════════════════ */
+.ax-library-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Search bar */
+.ax-lib-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 10px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.2s;
+}
+.ax-lib-search:focus-within {
+  border-color: rgba(168,85,247,0.3);
+}
+.ax-lib-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+}
+.ax-lib-search-input::placeholder {
+  color: rgba(255,255,255,0.2);
+}
+
+/* Stats line */
+.ax-lib-stats {
+  padding: 0 12px 6px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* View toggle buttons */
+.ax-lib-view-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.2);
+  transition: all 0.15s;
+}
+.ax-lib-view-btn:hover { color: rgba(255,255,255,0.5); }
+.ax-lib-view-btn.active {
+  color: #a855f7;
+  background: rgba(168,85,247,0.1);
+}
+
+/* Scrollable content */
+.ax-lib-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.06) transparent;
+}
+
+/* Category sections */
+.ax-lib-category {
+  margin-bottom: 2px;
+}
+.ax-lib-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.1s;
+}
+.ax-lib-cat-header:hover {
+  background: rgba(255,255,255,0.03);
+}
+.ax-lib-cat-label {
+  flex: 1;
+  text-align: left;
+}
+.ax-lib-cat-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.04);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* File rows */
+.ax-lib-cat-files {
+  padding-left: 4px;
+}
+.ax-lib-file-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 32px;
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+.ax-lib-file-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+.ax-lib-filename {
+  flex: 1;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ax-lib-file-row:hover .ax-lib-filename {
+  color: rgba(255,255,255,0.85);
+}
+.ax-lib-action-dot {
+  opacity: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.ax-lib-file-row:hover .ax-lib-action-dot {
+  opacity: 1;
+}
+.ax-lib-action-dot:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7);
+}
+
+/* Tree view items */
+.ax-lib-file,
+.ax-lib-dir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 3px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  text-align: left;
+  transition: background 0.1s;
+}
+.ax-lib-file:hover,
+.ax-lib-dir:hover {
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
+}
+
+/* Context menu */
+.ax-lib-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 998;
+}
+.ax-lib-context-menu {
+  z-index: 999;
+  min-width: 180px;
+  padding: 4px;
+  background: #14161e;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  backdrop-filter: blur(20px);
+}
+.ax-lib-ctx-header {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  margin-bottom: 4px;
+}
+.ax-lib-context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  transition: all 0.1s;
+  text-align: left;
+}
+.ax-lib-context-menu button:hover {
+  background: rgba(168,85,247,0.08);
+  color: rgba(255,255,255,0.9);
+}
+.ax-lib-ctx-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.04);
+  margin: 4px 6px;
+}
+.ax-lib-ctx-danger {
+  color: #ef4444 !important;
+}
+.ax-lib-ctx-danger:hover {
+  background: rgba(239,68,68,0.08) !important;
+}
+
+/* Empty state */
+.ax-lib-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(255,255,255,0.15);
+  font-size: 12px;
+  gap: 4px;
+}
+
+/* Toast */
+.ax-lib-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  background: rgba(168,85,247,0.15);
+  border: 1px solid rgba(168,85,247,0.25);
+  color: #c084fc;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1000;
+  animation: ax-toast-in 0.2s ease-out;
+  backdrop-filter: blur(12px);
+}
+@keyframes ax-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
