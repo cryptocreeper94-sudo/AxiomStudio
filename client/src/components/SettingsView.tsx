@@ -212,9 +212,10 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                     </div>
                     <select style={s.select} value={settings.ai.defaultAgent} onChange={e => { handleAiChange("defaultAgent", e.target.value); showSaved(); }}>
                       <option value="auto">Auto-Route (Recommended)</option>
-                      <option value="claude-opus-4-7">Claude Opus 4.7 (Best)</option>
-                      <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (Fast)</option>
-                      <option value="gpt-4.1">GPT-4.1</option>
+                      <option value="opus">Claude Opus 4.7 (Best)</option>
+                      <option value="sonnet">Claude Sonnet 4.6 (Fast)</option>
+                      <option value="gpt4">GPT-4o</option>
+                      <option value="mini">GPT-4o Mini (Free)</option>
                     </select>
                   </div>
 
@@ -285,7 +286,7 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                         <span style={{ color: "#a855f7", fontWeight: 600 }}>27 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet 4)</span>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet 4.6)</span>
                         <span style={{ color: "#06b6d4", fontWeight: 600 }}>5 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>

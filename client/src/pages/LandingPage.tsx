@@ -53,7 +53,7 @@ const FEATURES = [
 
 const AGENTS = [
   { name: "Opus", model: "claude-opus-4-7", img: "/agents/opus.png", border: "rgba(30, 58, 138, 0.4)", cost: "3 credits" },
-  { name: "Sonnet", model: "claude-sonnet-4-20250514", img: "/agents/sonnet.png", border: "rgba(6, 182, 212, 0.3)", cost: "1 credit" },
+  { name: "Sonnet", model: "claude-sonnet-4-6", img: "/agents/sonnet.png", border: "rgba(6, 182, 212, 0.3)", cost: "1 credit" },
   { name: "GPT-4o", model: "gpt-4o", img: "/agents/gpt4o.png", border: "rgba(34, 197, 94, 0.3)", cost: "2 credits" },
   { name: "o3-mini", model: "o3-mini", img: "/agents/o3mini.png", border: "rgba(180, 60, 30, 0.3)", cost: "1 credit" },
 ];

@@ -117,7 +117,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "axiom-studio",
-    version: "2.0.0",
+    version: "2.1.0",
     timestamp: new Date().toISOString(),
   });
 });
@@ -151,7 +151,7 @@ async function startServer() {
   const PORT = parseInt(process.env.PORT || "5100");
   const server = app.listen(PORT, () => {
     console.log(`\n  ╔══════════════════════════════════════╗`);
-    console.log(`  ║     AXIOM STUDIO IDE — v2.0.0        ║`);
+    console.log(`  ║     AXIOM STUDIO IDE — v2.1.0        ║`);
     console.log(`  ║     DarkWave Studios LLC              ║`);
     console.log(`  ║     http://localhost:${PORT}             ║`);
     console.log(`  ╚══════════════════════════════════════╝\n`);

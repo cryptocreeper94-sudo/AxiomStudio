@@ -491,7 +491,7 @@ app.use("/api/workspace", exportRoutes);
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok", mode: IS_OWNER_MODE ? "OWNER" : "TENANT",
-    service: "axiom-studio-local", version: "2.0.0-local",
+    service: "axiom-studio-local", version: "2.1.0-local",
     workspaceRoot: getWorkspaceRoot(), timestamp: new Date().toISOString(),
   });
 });

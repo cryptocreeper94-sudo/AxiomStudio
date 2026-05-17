@@ -19,7 +19,7 @@ async function migrate() {
         user_id VARCHAR NOT NULL,
         title TEXT NOT NULL DEFAULT 'New conversation',
         agent_id TEXT NOT NULL DEFAULT 'opus',
-        model TEXT NOT NULL DEFAULT 'claude-3-opus-20240229',
+        model TEXT NOT NULL DEFAULT 'claude-opus-4-7',
         context_files TEXT[],
         total_tokens INTEGER DEFAULT 0,
         total_cost DECIMAL(10,4) DEFAULT 0,

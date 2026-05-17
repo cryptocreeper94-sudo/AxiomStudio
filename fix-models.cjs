@@ -2,8 +2,9 @@ const pg = require('pg');
 require('dotenv').config({ path: '.env' });
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 client.connect().then(async () => {
-  // Upgrade Opus to 4.7
+  // Upgrade all Anthropic models to current API IDs (May 2026)
   await client.query("UPDATE agent_definitions SET model = 'claude-opus-4-7' WHERE id IN ('opus', 'lume')");
+  await client.query("UPDATE agent_definitions SET model = 'claude-sonnet-4-6' WHERE id = 'sonnet'");
   // Verify all models
   const r = await client.query('SELECT id, name, model FROM agent_definitions ORDER BY id');
   console.log('\nAgent models:');

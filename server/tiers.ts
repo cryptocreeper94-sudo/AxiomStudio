@@ -9,7 +9,7 @@
 // Based on actual API costs: Sonnet ~$0.018/msg, Opus ~$0.090/msg, GPT-4.1 ~$0.025/msg
 export const AGENT_COSTS: Record<string, { credits: number; label: string }> = {
   opus:   { credits: 27, label: "Axiom (Opus 4.7)" },
-  sonnet: { credits: 5,  label: "Axiom Quick (Sonnet 4)" },
+  sonnet: { credits: 5,  label: "Axiom Quick (Sonnet 4.6)" },
   gpt4:   { credits: 8,  label: "Axiom GPT (GPT-4.1)" },
   lume:   { credits: 27, label: "Lume Agent (Opus 4.7)" },
   mini:   { credits: 0,  label: "Axiom Free (Mini)" },
