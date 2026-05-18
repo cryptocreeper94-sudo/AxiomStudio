@@ -343,6 +343,21 @@ export function registerAgentRoutes(app: Express): void {
       let user = userResult.rows[0] || null;
 
       if (!user) {
+        // Check registration cap before creating new user
+        // Set MAX_USERS in Render env vars. Default 100 (Render Starter).
+        // Bump to 500+ when upgrading to Render Standard.
+        const maxUsers = parseInt(process.env.MAX_USERS || "100");
+        const countResult = await pool.query(`SELECT COUNT(*) as count FROM chat_users`);
+        const currentCount = parseInt(countResult.rows[0]?.count || "0");
+        if (currentCount >= maxUsers) {
+          res.status(403).json({
+            success: false,
+            registrationClosed: true,
+            error: `Registration is currently full (${maxUsers} users). Request early access at axiomstudio.dev`,
+          });
+          return;
+        }
+
         // Auto-create user from Firebase profile
         const { allowed, entry } = await checkWhitelist(email, "axiom-studio");
         
