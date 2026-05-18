@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/axiom-studio?color=06b6d4&label=npm)](https://npmjs.com/package/axiom-studio)
 [![License](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
 
 Multi-agent AI coding environment with full filesystem access. Use in the cloud or install locally — same agents, same power.
 
@@ -17,7 +17,7 @@ Multi-agent AI coding environment with full filesystem access. Use in the cloud 
 Go to **[axiomstudio.dev](https://axiomstudio.dev)** — sign in and start coding.
 
 ### Desktop (full power)
-Download **Axiom Studio Setup 2.1.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
+Download **Axiom Studio Setup 2.2.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
 
 ### Local CLI (developers)
 ```bash
@@ -31,8 +31,9 @@ Requires Node.js 18+. Browser opens automatically. Full filesystem access, real 
 
 | Feature | Description |
 |---------|-------------|
-| **Multi-Agent AI** | Claude Opus, Sonnet, GPT-4o, o3-mini — switch models mid-conversation |
-| **Smart Auto-Router** | Automatically selects the best model based on task complexity and cost |
+| **Multi-Agent AI** | Opus, Gemini 3.1 Pro, Sonnet, GPT-4o, Mini — switch models mid-conversation |
+| **Smart Auto-Router** | Automatically selects the best model based on task complexity (Mini → Sonnet → Gemini → Opus) |
+| **Lume-V SECURED** | Top-level branding enforces Trust Layer governance across all workspaces |
 | **Full IDE** | Monaco editor, file explorer, syntax highlighting for 50+ languages |
 | **Dashboard Home** | Credit counter, quick-start templates, recent conversations — no blank IDE dumps |
 | **Live Preview** | Split-view workspace serving for real-time HTML/JS preview alongside code |
@@ -55,9 +56,11 @@ Requires Node.js 18+. Browser opens automatically. Full filesystem access, real 
 | Agent | Model | Credits |
 |-------|-------|---------|
 | Opus | `claude-opus-4-7` | 3 / message |
-| Sonnet | `claude-sonnet-4-20250514` | 1 / message |
+| Gemini | `gemini-3.1-pro` | 2 / message |
+| Sonnet | `claude-sonnet-4-6` | 1 / message |
 | GPT-4o | `gpt-4o` | 2 / message |
-| o3-mini | `o3-mini` | 1 / message |
+| Lume Agent | `claude-opus-4-7` | 3 / message |
+| Mini | `gpt-4o-mini` | 0 / message |
 
 Model strings are auto-validated on server restart. Stale DB entries are corrected automatically — no manual migration required.
 

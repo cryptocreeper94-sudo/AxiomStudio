@@ -90,6 +90,7 @@ async function initAuth(): Promise<boolean> {
         cachedKeys = keys;
         if (keys.anthropic) process.env.ANTHROPIC_API_KEY = keys.anthropic;
         if (keys.openai) process.env.OPENAI_API_KEY = keys.openai;
+        if (keys.gemini) process.env.GEMINI_API_KEY = keys.gemini;
         console.log("  ✓ API keys loaded from cloud");
       }
       return true;
@@ -110,6 +111,7 @@ async function initAuth(): Promise<boolean> {
     cachedKeys = keys;
     if (keys.anthropic) process.env.ANTHROPIC_API_KEY = keys.anthropic;
     if (keys.openai) process.env.OPENAI_API_KEY = keys.openai;
+    if (keys.gemini) process.env.GEMINI_API_KEY = keys.gemini;
     console.log("  ✓ API keys loaded from cloud");
   }
 
@@ -128,6 +130,7 @@ async function ensureKeys(): Promise<boolean> {
   cachedKeys = keys;
   if (keys.anthropic) process.env.ANTHROPIC_API_KEY = keys.anthropic;
   if (keys.openai) process.env.OPENAI_API_KEY = keys.openai;
+  if (keys.gemini) process.env.GEMINI_API_KEY = keys.gemini;
   return true;
 }
 

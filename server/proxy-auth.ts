@@ -81,6 +81,7 @@ export async function validateToken(token: string): Promise<{
 export async function fetchApiKeys(token: string): Promise<{
   anthropic: string | null;
   openai: string | null;
+  gemini: string | null;
   expires: number;
 } | null> {
   try {
