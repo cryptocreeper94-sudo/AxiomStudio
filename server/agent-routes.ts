@@ -933,6 +933,7 @@ export function registerAgentRoutes(app: Express): void {
     res.json({
       anthropic: process.env.ANTHROPIC_API_KEY || null,
       openai: process.env.OPENAI_API_KEY || null,
+      gemini: process.env.GEMINI_API_KEY || null,
       expires: Date.now() + 3600000, // Keys valid for 1 hour, re-fetch after
     });
   });
