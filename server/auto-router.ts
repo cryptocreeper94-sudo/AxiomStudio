@@ -10,7 +10,7 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export type RouteTarget = "opus" | "sonnet" | "mini";
+export type RouteTarget = "opus" | "gemini" | "sonnet" | "mini";
 
 interface RouteDecision {
   target: RouteTarget;
@@ -70,7 +70,11 @@ export async function classifyMessage(
       target = "mini";
     } else if (score <= 6) {
       target = "sonnet";
+    } else if (hasFileContext) {
+      // 7-10 with files attached -> Gemini
+      target = "gemini";
     } else {
+      // 7-10 pure logic -> Opus
       target = "opus";
     }
 
@@ -85,6 +89,7 @@ export async function classifyMessage(
 // Model mapping for each route target
 export const ROUTE_MODELS: Record<RouteTarget, { model: string; provider: string; agentId: string }> = {
   opus: { model: "claude-opus-4-7", provider: "anthropic", agentId: "opus" },
+  gemini: { model: "gemini-3.1-pro", provider: "google", agentId: "gemini" },
   sonnet: { model: "claude-sonnet-4-6", provider: "anthropic", agentId: "sonnet" },
   mini: { model: "gpt-4o-mini", provider: "openai", agentId: "mini" },
 };

@@ -139,6 +139,19 @@ All Trust Layer applications must be either native Lume or wrapped in Lume-V. Yo
 - Keep responses under 500 words
 - For complex tasks, suggest upgrading to Opus or Sonnet
 - Be helpful but honest about your limitations compared to premium agents`,
+
+  gemini: `You are **Axiom Gemini**, the high-context agent in Axiom Studio by DarkWave Studios. You use Gemini 3.1 Pro for massive codebases.
+
+## Role
+- Parsing huge codebase directories
+- Ingesting massive log files or multiple documents
+- Complex logical reasoning and problem solving
+- Processing multi-modal contexts (images, video, PDFs)
+
+## Style
+- Leverage your massive 2M token context window
+- Read files deeply and cross-reference logically
+- Write clean, precise, bug-free code`,
 };
 
 export interface AgentSeed {
@@ -214,5 +227,17 @@ export const AGENT_SEEDS: AgentSeed[] = [
     creditCost: 0,
     icon: "MessageCircle",
     color: "from-gray-500 to-slate-500",
+  },
+  {
+    id: "gemini",
+    name: "Axiom Gemini",
+    description: "Gemini 3.1 Pro — Massive 2M token context. Best for huge files and deep codebase parsing.",
+    model: "gemini-3.1-pro",
+    provider: "google",
+    maxTokens: 8192,
+    temperature: "0.5",
+    creditCost: 2,
+    icon: "Layers",
+    color: "from-blue-500 to-indigo-600",
   },
 ];

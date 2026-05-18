@@ -21,6 +21,7 @@ import jwt from "jsonwebtoken";
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { readFileSync } from "fs";
+import { classifyMessage, ROUTE_MODELS } from "./auto-router.js";
 import { localDb } from "./local-db.js";
 import { LOCAL_ANTHROPIC_TOOLS, LOCAL_OPENAI_TOOLS, executeLocalTool, getWorkspaceRoot } from "./local-tools.js";
 import localWorkspaceRoutes from "./local-workspace-routes.js";
@@ -281,7 +282,16 @@ app.post("/api/agent/chat", async (req, res) => {
     return;
   }
 
-  const agent = AGENT_SEEDS.find(s => s.id === agentId) || AGENT_SEEDS[0];
+  let agent = AGENT_SEEDS.find(s => s.id === agentId);
+  let routeDecision: any = null;
+
+  if (agentId === "auto") {
+    const hasFiles = !!contextFiles?.length || message.includes("### File:");
+    routeDecision = await classifyMessage(message, false, hasFiles, 0);
+    const targetModel = ROUTE_MODELS[routeDecision.target as keyof typeof ROUTE_MODELS];
+    agent = AGENT_SEEDS.find(s => s.id === targetModel.agentId);
+  }
+  if (!agent) agent = AGENT_SEEDS[0];
 
   // Credit check for tenant mode
   if (!IS_OWNER_MODE && cloudToken) {
@@ -327,6 +337,10 @@ app.post("/api/agent/chat", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
+
+  if (routeDecision) {
+    res.write(`data: ${JSON.stringify({ type: "route", ...routeDecision })}\n\n`);
+  }
 
   try {
     const controller = new AbortController();
@@ -394,7 +408,11 @@ app.post("/api/agent/chat", async (req, res) => {
       }
     } else {
       // ── OpenAI agentic loop with local tools ──
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const isGoogle = agent.provider === "google";
+      const openai = new OpenAI({ 
+        apiKey: isGoogle ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY,
+        baseURL: isGoogle ? "https://generativelanguage.googleapis.com/v1beta/openai/" : undefined
+      });
       let convoMessages: any[] = [
         { role: "system", content: systemPrompt },
         ...chatMessages,

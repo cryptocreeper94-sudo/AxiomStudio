@@ -166,7 +166,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function* streamOpenAI(
   messages: ChatMessage[],
-  config: ProviderConfig
+  config: ProviderConfig,
+  client: OpenAI = openai
 ): AsyncGenerator<StreamChunk> {
   try {
     type OAIMessage = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; name?: string };
@@ -182,7 +183,7 @@ export async function* streamOpenAI(
 
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
       // Stream for text output
-      const stream = await openai.chat.completions.create({
+      const stream = await client.chat.completions.create({
         model: config.model,
         messages: convoMessages as any,
         max_tokens: config.maxTokens,
@@ -294,5 +295,12 @@ export function getProviderStream(
   config: ProviderConfig
 ): AsyncGenerator<StreamChunk> {
   if (provider === "anthropic") return streamAnthropic(messages, config);
+  if (provider === "google") {
+    const googleAI = new OpenAI({ 
+      apiKey: process.env.GEMINI_API_KEY, 
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" 
+    });
+    return streamOpenAI(messages, config, googleAI);
+  }
   return streamOpenAI(messages, config);
 }
