@@ -34,7 +34,7 @@
     "check": "tsc --noEmit",
     "db:push": "drizzle-kit push",
     "electron:dev": "npm run build && electron .",
-    "electron:build": "npm run build && electron-builder build --win --mac"
+    "electron:build": "npm run build && electron-builder build --win"
   },
   "build": {
     "appId": "dev.axiomstudio.app",
