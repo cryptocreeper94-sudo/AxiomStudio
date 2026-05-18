@@ -53,7 +53,8 @@ export default function IDELayout() {
   const [activeConvoId, setActiveConvoId] = useState<string | null>(() => {
     try { return localStorage.getItem('axiom_active_convo') || null; } catch { return null; }
   });
-  const [activeAgentId, setActiveAgentId] = useState("auto");
+  const [activeAgentId, setActiveAgentId] = useState("opus");
+  const [isAutoMode, setIsAutoMode] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -307,8 +308,9 @@ export default function IDELayout() {
     setIsStreaming(true); // Lock immediately to prevent double-clicks
     
     // Check credits before doing anything (skip for auto-route and free agents)
-    const agentCost = creditData?.agentCosts?.[activeAgentId];
-    const cost = activeAgentId === "auto" ? 0 : (agentCost?.credits ?? 0);
+    const effectiveAgentId = isAutoMode ? "auto" : activeAgentId;
+    const agentCost = creditData?.agentCosts?.[effectiveAgentId];
+    const cost = effectiveAgentId === "auto" ? 0 : (agentCost?.credits ?? 0);
     const currentBalance = creditData?.credits ?? 0;
     if (cost > 0 && currentBalance < cost) {
       setMessages(prev => [...prev, {
@@ -376,7 +378,7 @@ export default function IDELayout() {
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ conversationId: convoId, agentId: activeAgentId, message: enrichedContent }),
+        body: JSON.stringify({ conversationId: convoId, agentId: effectiveAgentId, message: enrichedContent }),
         signal: controller.signal,
       });
 
@@ -608,6 +610,16 @@ export default function IDELayout() {
               background: "linear-gradient(135deg, #06b6d4, #a855f7)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             }}>AXIOM STUDIO</span>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 4,
+            padding: "2px 8px", borderRadius: 4,
+            background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)",
+            color: "#22c55e", fontSize: 9, fontWeight: 800, letterSpacing: "0.05em",
+            boxShadow: "0 0 10px rgba(34,197,94,0.1)"
+          }}>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e" }} />
+            LUME-V SECURED
           </div>
           <span className="ax-cs-time" id="ax-cs-time"></span>
         </div>
@@ -884,26 +896,58 @@ export default function IDELayout() {
             </button>
           </div>
 
-          {/* Agent selector */}
-          <div className="ax-chat-agents">
-            {agents.map((a: any) => {
-              const modelShort = a.model?.includes("opus") ? "Opus 4"
-                : a.model?.includes("sonnet") ? "Sonnet 4"
-                : a.model?.includes("4.1") ? "GPT-4.1"
-                : a.model?.includes("4o-mini") ? "4o Mini"
-                : a.model || "";
-              return (
-                <button
-                  key={a.id}
-                  className={`ax-agent-btn ${activeAgentId === a.id ? "ax-agent-btn--active" : ""}`}
-                  onClick={() => setActiveAgentId(a.id)}
-                  title={`${a.name} — ${a.model} (${a.provider})`}
-                >
-                  <span style={{ fontWeight: 700 }}>{a.name?.replace("Agent ", "") || a.id}</span>
-                  <span style={{ fontSize: 8, opacity: 0.5, marginLeft: 3 }}>{modelShort}</span>
-                </button>
-              );
-            })}
+          {/* Auto/Manual Toggle & Agent Selector */}
+          <div className="ax-chat-agents" style={{ display: "flex", flexDirection: "column", gap: 12, padding: "12px 16px" }}>
+            <div style={{ display: "flex", background: "rgba(0,0,0,0.3)", borderRadius: 8, padding: 4 }}>
+              <button 
+                onClick={() => setIsAutoMode(true)}
+                style={{ flex: 1, padding: "6px", borderRadius: 6, fontSize: 11, fontWeight: 700, 
+                         background: isAutoMode ? "rgba(6,182,212,0.2)" : "transparent",
+                         color: isAutoMode ? "#06b6d4" : "rgba(255,255,255,0.4)" }}>
+                AUTO
+              </button>
+              <button 
+                onClick={() => setIsAutoMode(false)}
+                style={{ flex: 1, padding: "6px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                         background: !isAutoMode ? "rgba(168,85,247,0.2)" : "transparent",
+                         color: !isAutoMode ? "#a855f7" : "rgba(255,255,255,0.4)" }}>
+                MANUAL
+              </button>
+            </div>
+
+            {isAutoMode ? (
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", lineHeight: 1.4, padding: "4px 8px" }}>
+                <strong>Auto Mode:</strong> Axiom will intelligently route your message to the most cost-effective and capable model (Mini → Sonnet → Gemini → Opus) based on complexity and attached files.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {agents.map((a: any) => {
+                  const isActive = activeAgentId === a.id;
+                  return (
+                    <div
+                      key={a.id}
+                      onClick={() => setActiveAgentId(a.id)}
+                      style={{
+                        padding: 10, borderRadius: 8, cursor: "pointer",
+                        background: isActive ? "rgba(168,85,247,0.15)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${isActive ? "rgba(168,85,247,0.4)" : "rgba(255,255,255,0.05)"}`,
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? "#a855f7" : "#fff" }}>
+                          {a.name?.replace("Agent ", "") || a.id}
+                        </span>
+                        <span style={{ fontSize: 9, opacity: 0.5, color: "#fff" }}>{a.model}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", lineHeight: 1.3 }}>
+                        {a.description}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Conversation list (compact) */}

@@ -540,17 +540,28 @@ export default function ChatView({
 
   /* ── File handling ── */
   const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"];
+  const BINARY_EXTS = [".pdf", ".zip", ".tar", ".gz", ".rar", ".7z", ".mp4", ".webm", ".ogg", ".mov", ".mp3", ".wav", ".m4a", ".docx", ".xlsx", ".pptx"];
 
   const processFiles = (files: FileList | File[]) => {
     Array.from(files).forEach(file => {
       const reader = new FileReader();
-      const isImg = IMAGE_EXTS.some(ext => file.name.toLowerCase().endsWith(ext));
+      const lowerName = file.name.toLowerCase();
+      const isImg = IMAGE_EXTS.some(ext => lowerName.endsWith(ext)) || file.type.startsWith('image/');
+      const isBinary = BINARY_EXTS.some(ext => lowerName.endsWith(ext)) || file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type === 'application/pdf';
+      
       if (isImg) {
         reader.onload = () => setUploadedFiles(prev => [...prev, { name: file.name, content: reader.result as string, isImage: true, size: file.size }]);
         reader.readAsDataURL(file);
+      } else if (isBinary) {
+        setUploadedFiles(prev => [...prev, { name: file.name, content: `[Media/Binary File Attached: ${file.name} - ${(file.size / 1024).toFixed(1)} KB]`, isImage: false, size: file.size }]);
       } else {
         reader.onload = () => setUploadedFiles(prev => [...prev, { name: file.name, content: reader.result as string, isImage: false, size: file.size }]);
-        reader.readAsText(file);
+        try {
+          reader.readAsText(file);
+        } catch {
+          // Fallback if read fails
+          setUploadedFiles(prev => [...prev, { name: file.name, content: `[File Attached: ${file.name}]`, isImage: false, size: file.size }]);
+        }
       }
     });
   };
@@ -749,7 +760,7 @@ export default function ChatView({
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*,.pdf,.txt,.js,.ts,.tsx,.jsx,.py,.css,.html,.json,.md,.csv,.yml,.yaml,.xml,.sql,.sh,.lume,.toml,.env"
+          accept="image/*,video/*,audio/*,.pdf,.txt,.js,.ts,.tsx,.jsx,.py,.css,.html,.json,.md,.csv,.yml,.yaml,.xml,.sql,.sh,.lume,.toml,.env,.docx,.xlsx,.pptx,.zip"
           onChange={handleFilePick}
           style={{ display: "none" }}
         />
@@ -789,14 +800,14 @@ export default function ChatView({
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {/* File upload button */}
             <button
               onClick={() => onFileUpload ? onFileUpload() : fileInputRef.current?.click()}
               title="Attach files from your device"
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                width: 30, height: 30, borderRadius: 6, flexShrink: 0,
                 background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
                 color: "rgba(255,255,255,0.3)", cursor: "pointer",
                 transition: "all 0.2s",
@@ -804,7 +815,7 @@ export default function ChatView({
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; e.currentTarget.style.color = "#06b6d4"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
             >
-              <Upload style={{ width: 14, height: 14 }} />
+              <Upload style={{ width: 13, height: 13 }} />
             </button>
             
             {/* Voice Input Button */}
@@ -813,7 +824,7 @@ export default function ChatView({
               title={isListening ? "Stop listening" : "Start voice input"}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                width: 30, height: 30, borderRadius: 6, flexShrink: 0,
                 background: isListening ? "rgba(239, 68, 68, 0.15)" : "rgba(255,255,255,0.04)", 
                 border: `1px solid ${isListening ? "rgba(239, 68, 68, 0.4)" : "rgba(255,255,255,0.08)"}`,
                 color: isListening ? "#ef4444" : "rgba(255,255,255,0.3)", 
@@ -824,7 +835,7 @@ export default function ChatView({
               onMouseEnter={e => { if (!isListening) { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; e.currentTarget.style.color = "#06b6d4"; } }}
               onMouseLeave={e => { if (!isListening) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; } }}
             >
-              {isListening ? <MicOff style={{ width: 14, height: 14 }} /> : <Mic style={{ width: 14, height: 14 }} />}
+              {isListening ? <MicOff style={{ width: 13, height: 13 }} /> : <Mic style={{ width: 13, height: 13 }} />}
             </button>
 
             <div style={{ flex: 1, position: "relative" }}>
@@ -843,10 +854,10 @@ export default function ChatView({
                 style={{
                   width: "100%",
                   resize: "none",
-                  borderRadius: 12,
-                  padding: "10px 44px 10px 14px",
-                  fontSize: 13,
-                  lineHeight: 1.5,
+                  borderRadius: 10,
+                  padding: "8px 36px 8px 12px",
+                  fontSize: 12,
+                  lineHeight: 1.4,
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.12)",
                   color: "#e2e8f0",
@@ -862,15 +873,15 @@ export default function ChatView({
                 onClick={handleSend}
                 disabled={(!input.trim() && uploadedFiles.length === 0)}
                 style={{
-                  position: "absolute", right: 6, bottom: 6,
-                  padding: 7, borderRadius: 8,
+                  position: "absolute", right: 4, bottom: 4,
+                  padding: 5, borderRadius: 6,
                   background: (!input.trim() && uploadedFiles.length === 0) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
                   border: "none", color: "#fff", cursor: (!input.trim() && uploadedFiles.length === 0) ? "not-allowed" : "pointer",
                   opacity: (!input.trim() && uploadedFiles.length === 0) ? 0.3 : 1,
                   transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                {isStreaming ? <Loader2 style={{ width: 15, height: 15, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 15, height: 15 }} />}
+                {isStreaming ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 14, height: 14 }} />}
               </button>
             </div>
             {onRetry && messages.length > 0 && !isStreaming && (
@@ -878,13 +889,13 @@ export default function ChatView({
                 onClick={onRetry}
                 title="Retry last"
                 style={{
-                  padding: 9, borderRadius: 10,
+                  padding: 7, borderRadius: 6, width: 30, height: 30,
                   background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
                   color: "rgba(255,255,255,0.3)", cursor: "pointer",
-                  transition: "all 0.2s", display: "flex",
+                  transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                <RotateCcw style={{ width: 14, height: 14 }} />
+                <RotateCcw style={{ width: 13, height: 13 }} />
               </button>
             )}
           </div>
