@@ -11,7 +11,7 @@ const ecosystemLinks = [
   { name: "Trust Layer", href: "https://dwtl.io" },
   { name: "Axiom42 API", href: "https://axiom42.com" },
   { name: "Signal Chat", href: "https://darkwavestudios.io/chat" },
-  { name: "TrustGen 3D", href: "https://trustgen.tlid.io" },
+  { name: "TrustGen 3D", href: "https://trustgen.design" },
   { name: "TrustVault", href: "https://trustvault.studio" },
   { name: "LumeLine", href: "https://lumeline.app" },
   { name: "Lume Language", href: "https://lume-lang.org" },
