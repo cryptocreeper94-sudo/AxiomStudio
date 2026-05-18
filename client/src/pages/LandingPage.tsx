@@ -738,6 +738,15 @@ export default function LandingPage() {
           <a href="#blog">Blog</a>
         </p>
         <p style={{ marginBottom: 8 }}>
+          <a href="https://darkwavestudios.io" target="_blank" rel="noopener">DarkWave Studios</a>
+          {" · "}
+          <a href="https://trustvault.dev" target="_blank" rel="noopener">TrustVault</a>
+          {" · "}
+          <a href="https://trustgen.dev" target="_blank" rel="noopener">TrustGen 3D</a>
+          {" · "}
+          <a href="https://trustshield.tech" target="_blank" rel="noopener">TrustShield</a>
+        </p>
+        <p style={{ marginBottom: 8 }}>
           <a href="https://darkwavestudios.io/terms">Terms of Service</a>
           {" · "}
           <a href="https://darkwavestudios.io/privacy">Privacy Policy</a>
