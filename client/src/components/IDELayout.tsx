@@ -601,13 +601,13 @@ export default function IDELayout() {
           <div className="ax-cs-brand" onClick={() => setShowDashboard(true)} style={{ cursor: "pointer" }} title="Home">
             <div style={{
               width: 26, height: 26, borderRadius: 7,
-              background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+              background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 12, fontWeight: 900, color: "#000",
             }}>⬡</div>
             <span style={{
               fontSize: 11, fontWeight: 800, letterSpacing: "0.12em",
-              background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+              background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             }}>AXIOM STUDIO</span>
           </div>
@@ -909,8 +909,8 @@ export default function IDELayout() {
               <button 
                 onClick={() => setIsAutoMode(false)}
                 style={{ flex: 1, padding: "6px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-                         background: !isAutoMode ? "rgba(168,85,247,0.2)" : "transparent",
-                         color: !isAutoMode ? "#a855f7" : "rgba(255,255,255,0.4)" }}>
+                         background: !isAutoMode ? "rgba(14,165,233,0.2)" : "transparent",
+                         color: !isAutoMode ? "#38bdf8" : "rgba(255,255,255,0.4)" }}>
                 MANUAL
               </button>
             </div>
@@ -929,13 +929,13 @@ export default function IDELayout() {
                       onClick={() => setActiveAgentId(a.id)}
                       style={{
                         padding: 10, borderRadius: 8, cursor: "pointer",
-                        background: isActive ? "rgba(168,85,247,0.15)" : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${isActive ? "rgba(168,85,247,0.4)" : "rgba(255,255,255,0.05)"}`,
+                        background: isActive ? "rgba(14,165,233,0.15)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${isActive ? "rgba(14,165,233,0.4)" : "rgba(255,255,255,0.05)"}`,
                         transition: "all 0.2s"
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? "#a855f7" : "#fff" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: isActive ? "#38bdf8" : "#fff" }}>
                           {a.name?.replace("Agent ", "") || a.id}
                         </span>
                         <span style={{ fontSize: 9, opacity: 0.5, color: "#fff" }}>{a.model}</span>

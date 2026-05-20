@@ -49,7 +49,7 @@ export default function CockpitNav({
       label: "Snippets",
       active: snippetsOpen,
       action: onToggleSnippets,
-      color: "#a855f7",
+      color: "#38bdf8",
     },
     {
       id: "artifacts",

@@ -17,7 +17,7 @@ export default function SignalChatWidget() {
         style={{
           position: "fixed", bottom: "20px", right: "20px", zIndex: 999,
           width: "48px", height: "48px", borderRadius: "50%",
-          background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+          background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
           border: "none", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 4px 24px rgba(6,182,212,0.3)",
@@ -48,14 +48,14 @@ export default function SignalChatWidget() {
           {/* Header */}
           <div style={{
             padding: "14px 16px",
-            background: "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(168,85,247,0.12))",
+            background: "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(14,165,233,0.12))",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{
                 width: "32px", height: "32px", borderRadius: "10px",
-                background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 <MessageSquare style={{ width: 15, height: 15, color: "white" }} />

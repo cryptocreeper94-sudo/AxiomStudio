@@ -123,7 +123,7 @@ export default function Footer({ onOpenAnalytics }: { onOpenAnalytics?: () => vo
         <div style={{
           maxWidth: "1100px", margin: "0 auto 32px",
           padding: "10px 20px", borderRadius: "12px",
-          background: "linear-gradient(135deg, rgba(6,182,212,0.04), rgba(168,85,247,0.04))",
+          background: "linear-gradient(135deg, rgba(6,182,212,0.04), rgba(14,165,233,0.04))",
           border: "1px solid rgba(6,182,212,0.08)",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
         }}>
@@ -147,7 +147,7 @@ export default function Footer({ onOpenAnalytics }: { onOpenAnalytics?: () => vo
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
               <div style={{
                 width: "28px", height: "28px", borderRadius: "8px",
-                background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 <Brain style={{ width: 14, height: 14, color: "white" }} />
@@ -334,7 +334,7 @@ export default function Footer({ onOpenAnalytics }: { onOpenAnalytics?: () => vo
             {/* Header */}
             <div style={{
               padding: "16px 20px",
-              background: "linear-gradient(135deg, rgba(6,182,212,0.08), rgba(168,85,247,0.08))",
+              background: "linear-gradient(135deg, rgba(6,182,212,0.08), rgba(14,165,233,0.08))",
               borderBottom: "1px solid rgba(255,255,255,0.06)",
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
@@ -375,12 +375,12 @@ export default function Footer({ onOpenAnalytics }: { onOpenAnalytics?: () => vo
               )}
               {[
                 { label: "DWTL Command Center", href: "https://darkwavestudios.io/command", color: "#06b6d4" },
-                { label: "Admin Dashboard", href: "https://darkwavestudios.io/admin", color: "#a855f7" },
+                { label: "Admin Dashboard", href: "https://darkwavestudios.io/admin", color: "#38bdf8" },
                 { label: "Analytics", href: "https://darkwavestudios.io/analytics", color: "#22c55e" },
                 { label: "Ecosystem Dashboard", href: "https://darkwavestudios.io/ecosystem-dashboard", color: "#f59e0b" },
                 { label: "Ecosystem Metrics", href: "https://darkwavestudios.io/ecosystem/metrics", color: "#ef4444" },
                 { label: "Blog Admin", href: "https://darkwavestudios.io/admin/blog", color: "#ec4899" },
-                { label: "Marketing Hub", href: "https://darkwavestudios.io/marketing", color: "#8b5cf6" },
+                { label: "Marketing Hub", href: "https://darkwavestudios.io/marketing", color: "#0ea5e9" },
                 { label: "Shared Components", href: "https://darkwavestudios.io/admin/shared-components", color: "#14b8a6" },
               ].map((item) => (
                 <a key={item.label} href={item.href} target="_blank" rel="noopener" style={{

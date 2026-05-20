@@ -131,7 +131,7 @@ export default function ThinkingIndicator({ agentName = "Axiom", agentColor = "#
               fontSize: 9, fontWeight: 600, padding: "2px 8px",
               borderRadius: 4, letterSpacing: "0.04em",
               background: isTooling ? "rgba(99,102,241,0.1)" : "rgba(6,182,212,0.08)",
-              color: isTooling ? "rgba(167,139,250,0.8)" : "rgba(34,211,238,0.6)",
+              color: isTooling ? "rgba(56,189,248,0.8)" : "rgba(34,211,238,0.6)",
               border: `1px solid ${isTooling ? "rgba(99,102,241,0.15)" : "rgba(6,182,212,0.1)"}`,
               fontFamily: "'JetBrains Mono', monospace",
             }}>
@@ -159,12 +159,12 @@ export default function ThinkingIndicator({ agentName = "Axiom", agentColor = "#
                   {getToolInfo(activeTool!.tool).icon}
                   {getToolInfo(activeTool!.tool).label}
                   {activeTool!.args?.CommandLine && (
-                    <code style={{ fontSize: 9, color: "rgba(167,139,250,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
+                    <code style={{ fontSize: 9, color: "rgba(56,189,248,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
                       {String(activeTool!.args.CommandLine).slice(0, 40)}
                     </code>
                   )}
                   {activeTool!.args?.TargetFile && (
-                    <code style={{ fontSize: 9, color: "rgba(167,139,250,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
+                    <code style={{ fontSize: 9, color: "rgba(56,189,248,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
                       {String(activeTool!.args.TargetFile).split("/").pop()?.split("\\").pop()}
                     </code>
                   )}
@@ -201,13 +201,13 @@ export default function ThinkingIndicator({ agentName = "Axiom", agentColor = "#
             }}>
               <span style={{ fontSize: 10, flexShrink: 0 }}>
                 {!t.done ? (
-                  <Loader2 style={{ width: 10, height: 10, color: "rgba(167,139,250,0.6)", animation: "spin 1s linear infinite" }} />
+                  <Loader2 style={{ width: 10, height: 10, color: "rgba(56,189,248,0.6)", animation: "spin 1s linear infinite" }} />
                 ) : t.isError ? "❌" : "✓"}
               </span>
               <span style={{
                 color: t.done
                   ? (t.isError ? "rgba(248,113,113,0.5)" : "rgba(255,255,255,0.2)")
-                  : "rgba(167,139,250,0.6)",
+                  : "rgba(56,189,248,0.6)",
                 flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}>
                 {getToolInfo(t.tool).label}
@@ -241,8 +241,8 @@ export default function ThinkingIndicator({ agentName = "Axiom", agentColor = "#
         <div style={{
           height: "100%",
           background: isTooling
-            ? "linear-gradient(90deg, rgba(99,102,241,0.4), rgba(167,139,250,0.6))"
-            : "linear-gradient(90deg, rgba(6,182,212,0.3), rgba(168,85,247,0.5))",
+            ? "linear-gradient(90deg, rgba(99,102,241,0.4), rgba(56,189,248,0.6))"
+            : "linear-gradient(90deg, rgba(6,182,212,0.3), rgba(14,165,233,0.5))",
           animation: "progressSweep 2s ease-in-out infinite",
         }} />
       </div>

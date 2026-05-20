@@ -42,7 +42,7 @@ const CATEGORIES: CategoryDef[] = [
     id: "artifacts",
     label: "Artifacts",
     icon: Sparkles,
-    color: "#a855f7",
+    color: "#38bdf8",
     match: (p) => /\.(md|artifact|plan|spec)$/i.test(p) || p.includes("artifact"),
   },
   {
@@ -105,7 +105,7 @@ function getFileIcon(name: string): { Icon: typeof File; color: string } {
     case "css": case "scss": return { Icon: FileCode, color: "#1572b6" };
     case "html": return { Icon: FileCode, color: "#e34f26" };
     case "json": return { Icon: FileJson, color: "#eab308" };
-    case "md": return { Icon: FileText, color: "#a855f7" };
+    case "md": return { Icon: FileText, color: "#38bdf8" };
     case "png": case "jpg": case "jpeg": case "gif": case "svg": case "webp":
       return { Icon: Image, color: "#f97316" };
     case "sh": case "bash": case "ps1": return { Icon: Terminal, color: "#22c55e" };
@@ -338,7 +338,7 @@ export default function LibraryPanel({ token, activeConvoId, onOpenFile }: Props
       {/* Header */}
       <div className="ax-fe-header" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <span className="ax-fe-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Package size={13} style={{ color: "#a855f7" }} />
+          <Package size={13} style={{ color: "#38bdf8" }} />
           LIBRARY
         </span>
         <div style={{ display: "flex", gap: 2 }}>
@@ -385,7 +385,7 @@ export default function LibraryPanel({ token, activeConvoId, onOpenFile }: Props
       {/* File count */}
       <div className="ax-lib-stats">
         <span>{filteredFiles.length} files</span>
-        {search && <span style={{ color: "#a855f7" }}> matching "{search}"</span>}
+        {search && <span style={{ color: "#38bdf8" }}> matching "{search}"</span>}
       </div>
 
       {/* Content */}

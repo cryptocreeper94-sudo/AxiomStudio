@@ -67,7 +67,7 @@ export default function SmsOptIn({ token, onBack }: { token: string; onBack: () 
           </p>
           <button onClick={onBack} style={{
             padding: "12px 24px", borderRadius: "12px",
-            background: "linear-gradient(135deg, #0891b2, #7c3aed)",
+            background: "linear-gradient(135deg, #0891b2, #0369a1)",
             color: "white", fontWeight: 600, fontSize: "13px", border: "none", cursor: "pointer",
           }}>
             Back to Studio
@@ -99,7 +99,7 @@ export default function SmsOptIn({ token, onBack }: { token: string; onBack: () 
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
           <div style={{
             width: "48px", height: "48px", borderRadius: "14px",
-            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <MessageSquare style={{ width: 22, height: 22, color: "white" }} />
@@ -172,7 +172,7 @@ export default function SmsOptIn({ token, onBack }: { token: string; onBack: () 
           }}>
             <div style={{
               width: "20px", height: "20px", borderRadius: "6px", flexShrink: 0, marginTop: "1px",
-              background: agreed ? "linear-gradient(135deg, #0891b2, #7c3aed)" : "rgba(255,255,255,0.06)",
+              background: agreed ? "linear-gradient(135deg, #0891b2, #0369a1)" : "rgba(255,255,255,0.06)",
               border: `1px solid ${agreed ? "rgba(6,182,212,0.4)" : "rgba(255,255,255,0.1)"}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all 0.2s",
@@ -210,7 +210,7 @@ export default function SmsOptIn({ token, onBack }: { token: string; onBack: () 
 
           <button type="submit" disabled={submitting || !agreed} style={{
             width: "100%", padding: "14px", borderRadius: "14px",
-            background: agreed ? "linear-gradient(135deg, #0891b2, #7c3aed)" : "rgba(255,255,255,0.06)",
+            background: agreed ? "linear-gradient(135deg, #0891b2, #0369a1)" : "rgba(255,255,255,0.06)",
             color: agreed ? "white" : "rgba(255,255,255,0.2)",
             fontWeight: 600, fontSize: "14px", border: "none",
             cursor: agreed && !submitting ? "pointer" : "not-allowed",

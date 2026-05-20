@@ -283,7 +283,7 @@ export default function LandingPage() {
               </div>
               <pre>
                 <span className="cm"># Download the native Windows application</span>{"\n"}
-                <span className="prompt" style={{ color: "#a855f7" }}>$</span> <span className="fn">curl</span> <span className="var">-O https://axiomstudio.dev/Axiom-Studio-Setup.exe</span>{"\n"}
+                <span className="prompt" style={{ color: "#38bdf8" }}>$</span> <span className="fn">curl</span> <span className="var">-O https://axiomstudio.dev/Axiom-Studio-Setup.exe</span>{"\n"}
                 {"\n"}
                 <span className="cm"># Or open the Cloud IDE at axiomstudio.dev</span>{"\n"}
                 <span className="cm"># Same account, same agents, same credits</span>{"\n"}
@@ -355,7 +355,7 @@ export default function LandingPage() {
               </div>
               <div className="demo-chat">
                 <div className="demo-chat-header">
-                  <Bot className="w-4 h-4" style={{ color: "#a855f7" }} />
+                  <Bot className="w-4 h-4" style={{ color: "#38bdf8" }} />
                   <span>AI Assistant</span>
                 </div>
                 <div className="demo-msg user">
@@ -568,7 +568,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="compare-value-item">
-              <Bot className="w-5 h-5" style={{ color: "#a855f7" }} />
+              <Bot className="w-5 h-5" style={{ color: "#38bdf8" }} />
               <div>
                 <strong>5 AI agents</strong>
                 <span>Auto-routed per task</span>
@@ -608,13 +608,13 @@ export default function LandingPage() {
               </a>
             </div>
 
-            <div className="install-card" style={{ borderColor: "rgba(168, 85, 247, 0.15)" }}>
+            <div className="install-card" style={{ borderColor: "rgba(14,165,233, 0.15)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <Monitor className="w-5 h-5" style={{ color: "#a855f7" }} />
+                <Monitor className="w-5 h-5" style={{ color: "#38bdf8" }} />
                 <h3>Desktop App</h3>
               </div>
               <p>Full filesystem access. Native terminal and git. Fast Electron desktop application for Windows.</p>
-              <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases/latest" target="_blank" rel="noopener noreferrer" className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #a855f7, #6366f1)", border: "none" }}>
+              <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases/latest" target="_blank" rel="noopener noreferrer" className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #38bdf8, #6366f1)", border: "none" }}>
                 Download for Windows (.exe)
               </a>
             </div>
@@ -632,7 +632,7 @@ export default function LandingPage() {
                 borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
               }}>
                 <div style={{
-                  width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #0891b2, #7c3aed)",
+                  width: 28, height: 28, borderRadius: 8, background: "linear-gradient(135deg, #0891b2, #0369a1)",
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "white", flexShrink: 0,
                 }}>{s.step}</div>
                 <div>
@@ -690,7 +690,7 @@ export default function LandingPage() {
                 </th>
                 <th style={{ padding: "14px 20px", textAlign: "center", fontWeight: 700 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                    <Monitor className="w-4 h-4" style={{ color: "#a855f7" }} /> Local
+                    <Monitor className="w-4 h-4" style={{ color: "#38bdf8" }} /> Local
                   </div>
                 </th>
               </tr>

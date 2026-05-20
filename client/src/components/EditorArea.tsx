@@ -123,8 +123,8 @@ export default function EditorArea({ files, activeFilePath, onSelectFile, onClos
                 onClick={() => setViewMode("code")}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px', fontWeight: 500, borderRadius: '4px', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-                  background: currentView === "code" ? 'rgba(168,85,247,0.15)' : 'transparent',
-                  color: currentView === "code" ? '#a855f7' : 'rgba(255,255,255,0.5)'
+                  background: currentView === "code" ? 'rgba(14,165,233,0.15)' : 'transparent',
+                  color: currentView === "code" ? '#38bdf8' : 'rgba(255,255,255,0.5)'
                 }}
               >
                 <Code2 size={12} /> Code

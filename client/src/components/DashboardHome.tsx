@@ -50,7 +50,7 @@ function timeAgo(dateStr: string): string {
 
 const QUICK_STARTS = [
   { title: "New Project", desc: "Start from scratch with AI assistance", icon: Plus, color: "#06b6d4", gradient: "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(6,182,212,0.04))" },
-  { title: "Import from GitHub", desc: "Clone a public repository", icon: Globe, color: "#a855f7", gradient: "linear-gradient(135deg, rgba(168,85,247,0.12), rgba(168,85,247,0.04))" },
+  { title: "Import from GitHub", desc: "Clone a public repository", icon: Globe, color: "#38bdf8", gradient: "linear-gradient(135deg, rgba(14,165,233,0.12), rgba(14,165,233,0.04))" },
   { title: "AI Code Generation", desc: "Describe what you want to build", icon: Sparkles, color: "#f59e0b", gradient: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.04))" },
   { title: "Run a Script", desc: "Execute commands with AI guidance", icon: Terminal, color: "#22c55e", gradient: "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))" },
 ];
@@ -75,13 +75,13 @@ export default function DashboardHome({
         <div className="ax-dash-brand">
           <div style={{
             width: 30, height: 30, borderRadius: 8,
-            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 14, fontWeight: 900, color: "#000",
           }}>⬡</div>
           <span style={{
             fontSize: 13, fontWeight: 800, letterSpacing: "0.1em",
-            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
           }}>AXIOM STUDIO</span>
         </div>
@@ -112,7 +112,7 @@ export default function DashboardHome({
           <section className="ax-dash-hero">
             <h1 className="ax-dash-greeting">
               {greeting}, <span style={{
-                background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
               }}>{user?.displayName || user?.username || "Builder"}</span>
             </h1>
@@ -141,7 +141,7 @@ export default function DashboardHome({
               </button>
             </div>
             <div className="ax-dash-stat-card">
-              <div className="ax-dash-stat-icon" style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7" }}>
+              <div className="ax-dash-stat-icon" style={{ background: "rgba(14,165,233,0.1)", color: "#38bdf8" }}>
                 <MessageSquare size={16} />
               </div>
               <div>

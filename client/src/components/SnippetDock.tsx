@@ -91,13 +91,13 @@ export default function SnippetDock({ isOpen, onClose, onInsert }: Props) {
         padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Package style={{ width: 16, height: 16, color: "#a855f7" }} />
+          <Package style={{ width: 16, height: 16, color: "#38bdf8" }} />
           <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
             Snippet Dock
           </span>
           <span style={{
             fontSize: "9px", padding: "2px 6px", borderRadius: "4px",
-            background: "rgba(168,85,247,0.1)", color: "#c084fc", border: "1px solid rgba(168,85,247,0.2)",
+            background: "rgba(14,165,233,0.1)", color: "#7dd3fc", border: "1px solid rgba(14,165,233,0.2)",
           }}>
             DWTL
           </span>
@@ -261,7 +261,7 @@ export default function SnippetDock({ isOpen, onClose, onInsert }: Props) {
                       style={{
                         flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
                         padding: "8px", borderRadius: "8px",
-                        background: "linear-gradient(135deg, #0891b2, #7c3aed)",
+                        background: "linear-gradient(135deg, #0891b2, #0369a1)",
                         border: "none", color: "white", fontSize: "11px", fontWeight: 600,
                         cursor: "pointer", boxShadow: "0 2px 12px rgba(6,182,212,0.2)",
                       }}
@@ -292,7 +292,7 @@ export default function SnippetDock({ isOpen, onClose, onInsert }: Props) {
           rel="noopener"
           style={{
             display: "flex", alignItems: "center", gap: "4px",
-            fontSize: "10px", color: "rgba(168,85,247,0.5)", textDecoration: "none",
+            fontSize: "10px", color: "rgba(14,165,233,0.5)", textDecoration: "none",
           }}
         >
           Full Marketplace <ExternalLink style={{ width: 9, height: 9 }} />

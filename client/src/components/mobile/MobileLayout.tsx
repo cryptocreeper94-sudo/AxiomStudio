@@ -192,7 +192,7 @@ export default function MobileLayout({
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 10,
-                  background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                  background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 16, fontWeight: 800, color: "white",
                   boxShadow: "0 0 0 2px rgba(6,8,16,1), 0 0 0 3px rgba(6,182,212,0.2)",

@@ -74,7 +74,7 @@ export default function ProfileBadge({ user, token, onLogout, onOpenCredits, bio
   }, [token]);
 
   const tierColor: Record<string, string> = {
-    free: "#94a3b8", developer: "#06b6d4", professional: "#a855f7",
+    free: "#94a3b8", developer: "#06b6d4", professional: "#38bdf8",
     business: "#f59e0b", enterprise: "#ef4444", owner: "#06b6d4",
   };
   const color = tierColor[user?.role === "owner" ? "owner" : (sub?.tier || "free")] || "#94a3b8";
@@ -193,7 +193,7 @@ export default function ProfileBadge({ user, token, onLogout, onOpenCredits, bio
                       <User size={13} /> View Full Profile
                     </button>
                     {onOpenCredits && (
-                      <button onClick={() => { onOpenCredits(); setOpen(false); }} style={{ width: "100%", padding: "10px", borderRadius: 10, background: "linear-gradient(135deg, #06b6d4, #a855f7)", border: "none", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                      <button onClick={() => { onOpenCredits(); setOpen(false); }} style={{ width: "100%", padding: "10px", borderRadius: 10, background: "linear-gradient(135deg, #06b6d4, #38bdf8)", border: "none", color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                         <Zap size={13} /> Buy Credits
                       </button>
                     )}
@@ -279,13 +279,13 @@ export default function ProfileBadge({ user, token, onLogout, onOpenCredits, bio
                   {biometricsAvailable && (
                     <div style={{ padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <Fingerprint size={14} style={{ color: "#a855f7" }} />
+                        <Fingerprint size={14} style={{ color: "#38bdf8" }} />
                         <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Biometric Login</span>
                       </div>
                       {biometricsEnrolled ? (
                         <p style={{ fontSize: 11, color: "#22c55e" }}>✓ Enrolled — Face ID / fingerprint active</p>
                       ) : (
-                        <button onClick={async () => { if (onEnrollBiometrics) { const err = await onEnrollBiometrics(); if (err) setSaveMsg(err); } }} style={{ fontSize: 11, color: "#a855f7", background: "none", border: "none", cursor: "pointer" }}>Enable biometrics →</button>
+                        <button onClick={async () => { if (onEnrollBiometrics) { const err = await onEnrollBiometrics(); if (err) setSaveMsg(err); } }} style={{ fontSize: 11, color: "#38bdf8", background: "none", border: "none", cursor: "pointer" }}>Enable biometrics →</button>
                       )}
                     </div>
                   )}
