@@ -4,21 +4,25 @@ import AgentPanel from "./pages/AgentPanel";
 import LandingPage from "./pages/LandingPage";
 import ProfileDashboard from "./pages/ProfileDashboard";
 import "./ide.css";
+import { EcosystemAccountHub } from "./components/EcosystemAccountHub";
 
 export default function App() {
   const isElectron = navigator.userAgent.toLowerCase().includes("electron");
 
   return (
-    <Switch>
-      <Route path="/" component={isElectron ? IDELayout : LandingPage} />
-      <Route path="/ide" component={IDELayout} />
-      <Route path="/profile" component={ProfileDashboard} />
-      <Route path="/chat" component={AgentPanel} />
-      <Route path="/agent" component={AgentPanel} />
-      <Route>
-        <Redirect to={isElectron ? "/ide" : "/"} />
-      </Route>
-    </Switch>
+    <>
+      <Switch>
+        <Route path="/" component={isElectron ? IDELayout : LandingPage} />
+        <Route path="/ide" component={IDELayout} />
+        <Route path="/profile" component={ProfileDashboard} />
+        <Route path="/chat" component={AgentPanel} />
+        <Route path="/agent" component={AgentPanel} />
+        <Route>
+          <Redirect to={isElectron ? "/ide" : "/"} />
+        </Route>
+      </Switch>
+      <EcosystemAccountHub />
+    </>
   );
 }
 
