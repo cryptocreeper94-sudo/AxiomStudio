@@ -61,7 +61,7 @@ export const STARTERS: StarterConfig[] = [
     systemPrompt: `You are a 3D rendering expert using Three.js and WebGL inside Axiom Studio. Help the user create 3D scenes, models, and interactive visualizations. You understand PBR materials, lighting setups, post-processing, and performance optimization. Create production-quality code with proper scene management, responsive rendering, and smooth interactions.`,
     checklist: ["Setup scene & renderer", "Add geometry / models", "Configure lighting", "Add materials & textures", "Interactions & animation", "Optimize & export"],
     color: "#06b6d4",
-    gradient: "linear-gradient(135deg, #06b6d4, #8b5cf6)",
+    gradient: "linear-gradient(135deg, #06b6d4, #0ea5e9)",
   },
   {
     id: "lume-app",
@@ -121,7 +121,7 @@ export default function StarterHub({ onSelectStarter, agentName = "Axiom" }: Pro
       <div style={{ textAlign: "center", marginBottom: 28, maxWidth: 420 }}>
         <div style={{
           width: 52, height: 52, margin: "0 auto 14px", borderRadius: 16,
-          background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+          background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 8px 32px rgba(6,182,212,0.2), 0 0 60px rgba(6,182,212,0.08)",
           position: "relative",

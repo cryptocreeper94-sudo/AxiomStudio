@@ -84,7 +84,7 @@ export default function AnalyticsDashboard({ token, onBack }: { token: string; o
   const tierColors: Record<string, string> = {
     free: "#94a3b8",
     developer: "#06b6d4",
-    professional: "#a855f7",
+    professional: "#38bdf8",
     business: "#f59e0b",
     enterprise: "#ef4444",
   };
@@ -174,7 +174,7 @@ export default function AnalyticsDashboard({ token, onBack }: { token: string; o
             }}>
               {[
                 { icon: Eye, label: "Page Views", value: data.pageViews.total, color: "#06b6d4" },
-                { icon: Users, label: "Unique Sessions", value: data.pageViews.uniqueSessions, color: "#a855f7" },
+                { icon: Users, label: "Unique Sessions", value: data.pageViews.uniqueSessions, color: "#38bdf8" },
                 { icon: MessageSquare, label: "Messages", value: data.messages.total, color: "#22c55e" },
                 { icon: Layers, label: "Conversations", value: data.conversations.total, color: "#f59e0b" },
                 { icon: TrendingUp, label: "Events", value: data.events.total, color: "#ec4899" },
@@ -286,7 +286,7 @@ export default function AnalyticsDashboard({ token, onBack }: { token: string; o
                         {e.category}
                       </span>
                     </div>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#c084fc" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#7dd3fc" }}>
                       {e.count}
                     </span>
                   </div>
@@ -355,7 +355,7 @@ export default function AnalyticsDashboard({ token, onBack }: { token: string; o
                 {[
                   { label: "Total Messages", value: data.messages.total, color: "#22c55e" },
                   { label: "User Messages", value: data.messages.userMessages, color: "#06b6d4" },
-                  { label: "Assistant Messages", value: data.messages.assistantMessages, color: "#a855f7" },
+                  { label: "Assistant Messages", value: data.messages.assistantMessages, color: "#38bdf8" },
                   { label: "Active Users", value: data.messages.activeUsers, color: "#f59e0b" },
                 ].map((s, i) => (
                   <div key={i} style={{

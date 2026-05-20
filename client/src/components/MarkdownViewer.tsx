@@ -53,8 +53,8 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
               icon = <CheckCircle2 style={{ width: 18, height: 18, color: '#10b981', flexShrink: 0 }} />;
               borderColor = '#10b981'; bg = 'rgba(16, 185, 129, 0.05)';
             } else if (strContent.includes('[!IMPORTANT]')) {
-              icon = <AlertCircle style={{ width: 18, height: 18, color: '#8b5cf6', flexShrink: 0 }} />;
-              borderColor = '#8b5cf6'; bg = 'rgba(139, 92, 246, 0.05)';
+              icon = <AlertCircle style={{ width: 18, height: 18, color: '#0ea5e9', flexShrink: 0 }} />;
+              borderColor = '#0ea5e9'; bg = 'rgba(14,165,233, 0.05)';
             } else if (strContent.includes('[!WARNING]')) {
               icon = <AlertTriangle style={{ width: 18, height: 18, color: '#f59e0b', flexShrink: 0 }} />;
               borderColor = '#f59e0b'; bg = 'rgba(245, 158, 11, 0.05)';
@@ -96,7 +96,7 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
             
             if (isInline) {
               return (
-                <code style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.2em 0.4em', borderRadius: '4px', fontSize: '0.85em', fontFamily: "'Fira Code', 'Consolas', monospace", color: '#a855f7' }} {...props}>
+                <code style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.2em 0.4em', borderRadius: '4px', fontSize: '0.85em', fontFamily: "'Fira Code', 'Consolas', monospace", color: '#38bdf8' }} {...props}>
                   {children}
                 </code>
               );

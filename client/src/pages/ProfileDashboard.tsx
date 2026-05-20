@@ -22,7 +22,7 @@ import "./profile.css";
 /* Ecosystem apps */
 const ECOSYSTEM_APPS = [
   { name: "Axiom Studio", icon: <Brain className="w-4 h-4" />, color: "#06b6d4", bg: "rgba(6,182,212,0.12)", url: "https://axiomstudio.dev", status: "Active" },
-  { name: "Lume Lang", icon: <Code2 className="w-4 h-4" />, color: "#a855f7", bg: "rgba(168,85,247,0.12)", url: "https://lume-lang.org", status: "v1.1.0" },
+  { name: "Lume Lang", icon: <Code2 className="w-4 h-4" />, color: "#38bdf8", bg: "rgba(14,165,233,0.12)", url: "https://lume-lang.org", status: "v1.1.0" },
   { name: "AXIOM42", icon: <Layers className="w-4 h-4" />, color: "#f59e0b", bg: "rgba(245,158,11,0.12)", url: "https://axiom42.dev", status: "Active" },
   { name: "HydroCore", icon: <Globe className="w-4 h-4" />, color: "#22c55e", bg: "rgba(34,197,94,0.12)", url: "https://hydrocore.dev", status: "Active" },
   { name: "Meridian Canon", icon: <Compass className="w-4 h-4" />, color: "#ec4899", bg: "rgba(236,72,153,0.12)", url: "https://meridiancanon.com", status: "Active" },
@@ -85,7 +85,7 @@ export default function ProfileDashboard() {
   const initial = (user.displayName?.[0] || user.username?.[0] || "?").toUpperCase();
   const tierName = user.role === "owner" ? "Owner" : (sub?.tierName || "Free");
   const tierColorMap: Record<string, string> = {
-    free: "#94a3b8", developer: "#06b6d4", professional: "#a855f7",
+    free: "#94a3b8", developer: "#06b6d4", professional: "#38bdf8",
     business: "#f59e0b", enterprise: "#ef4444",
   };
   const tierColor = user.role === "owner" ? "#06b6d4" : (tierColorMap[sub?.tier || "free"] || "#94a3b8");
@@ -254,7 +254,7 @@ export default function ProfileDashboard() {
             </div>
           </div>
           <div className="settings-card">
-            <div className="settings-icon" style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7" }}>
+            <div className="settings-icon" style={{ background: "rgba(14,165,233,0.1)", color: "#38bdf8" }}>
               <Palette style={{ width: 16, height: 16 }} />
             </div>
             <div>

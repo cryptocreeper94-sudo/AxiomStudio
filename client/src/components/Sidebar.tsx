@@ -51,7 +51,7 @@ export default function Sidebar({
       {/* Header */}
       <div className="p-4 border-b border-white/[0.06]">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -114,7 +114,7 @@ export default function Sidebar({
         {/* New Chat */}
         <button
           onClick={onNewChat}
-          className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-sm font-semibold transition shadow-lg shadow-cyan-500/10"
+          className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-sm font-semibold transition shadow-lg shadow-cyan-500/10"
         >
           <Plus className="w-4 h-4" />
           New Chat

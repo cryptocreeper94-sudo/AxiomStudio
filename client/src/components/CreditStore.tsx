@@ -47,9 +47,9 @@ const PACK_COLORS: Record<string, { gradient: string; glow: string; border: stri
     border: "rgba(6,182,212,0.25)",
   },
   builder: {
-    gradient: "linear-gradient(135deg, #a855f7, #7c3aed)",
-    glow: "rgba(168,85,247,0.15)",
-    border: "rgba(168,85,247,0.25)",
+    gradient: "linear-gradient(135deg, #38bdf8, #0369a1)",
+    glow: "rgba(14,165,233,0.15)",
+    border: "rgba(14,165,233,0.25)",
   },
   power: {
     gradient: "linear-gradient(135deg, #f97316, #ea580c)",
@@ -154,14 +154,14 @@ export default function CreditStore({ token, currentCredits, onBack, onPurchased
           <div style={{
             width: 64, height: 64, margin: "0 auto 16px",
             borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center",
-            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
             boxShadow: "0 0 40px rgba(6,182,212,0.2)",
           }}>
             <Zap style={{ width: 32, height: 32, color: "#fff" }} />
           </div>
           <h1 style={{
             fontSize: "28px", fontWeight: 800, marginBottom: "8px",
-            background: "linear-gradient(135deg, #67e8f9, #c084fc)",
+            background: "linear-gradient(135deg, #67e8f9, #7dd3fc)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
           }}>
             Buy Credits

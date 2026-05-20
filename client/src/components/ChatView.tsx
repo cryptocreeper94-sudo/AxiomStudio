@@ -253,8 +253,8 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
       <div style={{
         width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 2,
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: isUser ? "rgba(168,85,247,0.12)" : "rgba(6,182,212,0.12)",
-        color: isUser ? "#c084fc" : "#22d3ee",
+        background: isUser ? "rgba(14,165,233,0.12)" : "rgba(6,182,212,0.12)",
+        color: isUser ? "#7dd3fc" : "#22d3ee",
       }}>
         {isUser ? <User style={{ width: 14, height: 14 }} /> : <Brain style={{ width: 14, height: 14 }} />}
       </div>
@@ -290,8 +290,8 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
               <span key={i} style={{
                 display: "inline-flex", alignItems: "center", gap: "4px",
                 padding: "2px 8px", borderRadius: "6px", fontSize: "10px",
-                background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.15)",
-                color: "rgba(168,85,247,0.6)", fontFamily: "'JetBrains Mono', monospace",
+                background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.15)",
+                color: "rgba(14,165,233,0.6)", fontFamily: "'JetBrains Mono', monospace",
               }}>
                 <FileCode style={{ width: 10, height: 10 }} />
                 {f.split("/").pop()}
@@ -651,7 +651,7 @@ export default function ChatView({
                   fontSize: 9,
                   fontWeight: 700,
                   letterSpacing: "0.08em",
-                  color: "rgba(167,139,250,0.7)",
+                  color: "rgba(56,189,248,0.7)",
                   borderBottom: "1px solid rgba(99,102,241,0.1)",
                   display: "flex",
                   alignItems: "center",
@@ -669,7 +669,7 @@ export default function ChatView({
                       {!t.done ? "⏳" : t.isError ? "❌" : "✅"}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "rgba(167,139,250,0.9)" }}>
+                      <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "rgba(56,189,248,0.9)" }}>
                         {t.tool}({t.args ? Object.entries(t.args).map(([k, v]) => `${k}: "${String(v).slice(0, 40)}"`).join(", ") : ""})
                       </div>
                       {t.done && t.result && (
@@ -708,7 +708,7 @@ export default function ChatView({
                       </span>
                     )}
                     {routeInfo && (
-                      <span style={{ fontSize: 8, padding: "1px 6px", borderRadius: 4, background: "rgba(168,85,247,0.08)", color: "rgba(168,85,247,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 8, padding: "1px 6px", borderRadius: 4, background: "rgba(14,165,233,0.08)", color: "rgba(14,165,233,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
                         routed · {routeInfo.score}/10
                       </span>
                     )}
@@ -775,9 +775,9 @@ export default function ChatView({
                   display: "inline-flex", alignItems: "center", gap: 4,
                   padding: "3px 8px", borderRadius: 6, fontSize: 10,
                   fontFamily: "'JetBrains Mono', monospace",
-                  background: f.isImage ? "rgba(168,85,247,0.08)" : "rgba(34,197,94,0.08)",
-                  border: `1px solid ${f.isImage ? "rgba(168,85,247,0.15)" : "rgba(34,197,94,0.15)"}`,
-                  color: f.isImage ? "#c084fc" : "#4ade80",
+                  background: f.isImage ? "rgba(14,165,233,0.08)" : "rgba(34,197,94,0.08)",
+                  border: `1px solid ${f.isImage ? "rgba(14,165,233,0.15)" : "rgba(34,197,94,0.15)"}`,
+                  color: f.isImage ? "#7dd3fc" : "#4ade80",
                   maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {f.isImage ? <ImageIcon style={{ width: 10, height: 10, flexShrink: 0 }} /> : <FileCode style={{ width: 10, height: 10, flexShrink: 0 }} />}
@@ -875,7 +875,7 @@ export default function ChatView({
                 style={{
                   position: "absolute", right: 4, bottom: 4,
                   padding: 5, borderRadius: 6,
-                  background: (!input.trim() && uploadedFiles.length === 0) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #a855f7)",
+                  background: (!input.trim() && uploadedFiles.length === 0) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #38bdf8)",
                   border: "none", color: "#fff", cursor: (!input.trim() && uploadedFiles.length === 0) ? "not-allowed" : "pointer",
                   opacity: (!input.trim() && uploadedFiles.length === 0) ? 0.3 : 1,
                   transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",

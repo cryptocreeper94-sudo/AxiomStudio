@@ -181,7 +181,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
           {/* Logo */}
           <div style={{
             width: "60px", height: "60px", margin: "0 auto 20px", borderRadius: "16px",
-            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: "0 8px 32px rgba(6,182,212,0.3)",
           }}>
@@ -190,7 +190,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
 
           <h1 style={{
             fontSize: "26px", fontWeight: 800, textAlign: "center", marginBottom: "4px",
-            background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+            background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             letterSpacing: "-0.02em",
           }}>
@@ -316,7 +316,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
                     style={{
                       flex: 1, padding: "10px", borderRadius: "10px", border: "none", cursor: "pointer",
                       fontSize: "13px", fontWeight: 600, transition: "all 0.3s ease",
-                      background: mode === m ? "linear-gradient(135deg, #0891b2, #7c3aed)" : "transparent",
+                      background: mode === m ? "linear-gradient(135deg, #0891b2, #0369a1)" : "transparent",
                       color: mode === m ? "white" : "rgba(255,255,255,0.5)",
                       boxShadow: mode === m ? "0 4px 16px rgba(6,182,212,0.2)" : "none",
                       fontFamily: "inherit",
@@ -361,7 +361,7 @@ export default function LoginScreen({ onLogin, onSignup, onGoogleLogin, onGitHub
 
                 <button type="submit" disabled={loading} style={{
                   width: "100%", padding: "14px", borderRadius: "14px",
-                  background: "linear-gradient(135deg, #0891b2, #7c3aed)",
+                  background: "linear-gradient(135deg, #0891b2, #0369a1)",
                   color: "white", fontWeight: 600, fontSize: "14px", border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",

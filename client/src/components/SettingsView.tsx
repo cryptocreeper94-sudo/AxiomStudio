@@ -112,7 +112,7 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                       <span style={s.desc}>Primary color for highlights and badges</span>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                      {["#06b6d4", "#a855f7", "#ef4444", "#22c55e", "#f59e0b"].map(color => (
+                      {["#06b6d4", "#38bdf8", "#ef4444", "#22c55e", "#f59e0b"].map(color => (
                         <button key={color} style={s.colorBtn(color, settings.appearance.accentColor === color)} onClick={() => { handleAppearanceChange("accentColor", color); showSaved(); }} />
                       ))}
                     </div>
@@ -268,9 +268,9 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                       <button
                         onClick={onOpenCredits}
                         style={{
-                          padding: "10px 20px", borderRadius: 8, background: "linear-gradient(135deg, #06b6d4, #a855f7)",
+                          padding: "10px 20px", borderRadius: 8, background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
                           color: "white", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
-                          display: "flex", alignItems: "center", gap: 8, boxShadow: "0 0 15px rgba(168, 85, 247, 0.3)"
+                          display: "flex", alignItems: "center", gap: 8, boxShadow: "0 0 15px rgba(14,165,233, 0.3)"
                         }}
                       >
                         <Zap size={14} /> Buy Credits
@@ -283,7 +283,7 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom (Opus 4.7)</span>
-                        <span style={{ color: "#a855f7", fontWeight: 600 }}>27 credits / msg</span>
+                        <span style={{ color: "#38bdf8", fontWeight: 600 }}>27 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet 4.6)</span>

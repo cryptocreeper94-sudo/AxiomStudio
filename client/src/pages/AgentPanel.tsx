@@ -332,9 +332,9 @@ export default function AgentPanel() {
                 style={{
                   display: "flex", alignItems: "center", gap: "6px",
                   padding: "8px 14px", borderRadius: "10px",
-                  background: snippetsOpen ? "rgba(168,85,247,0.12)" : "rgba(255,255,255,0.03)",
-                  border: `1px solid ${snippetsOpen ? "rgba(168,85,247,0.2)" : "rgba(255,255,255,0.06)"}`,
-                  color: snippetsOpen ? "#c084fc" : "rgba(255,255,255,0.4)",
+                  background: snippetsOpen ? "rgba(14,165,233,0.12)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${snippetsOpen ? "rgba(14,165,233,0.2)" : "rgba(255,255,255,0.06)"}`,
+                  color: snippetsOpen ? "#7dd3fc" : "rgba(255,255,255,0.4)",
                   fontSize: "12px", fontWeight: 500, cursor: "pointer",
                 }}
               >
@@ -364,7 +364,7 @@ export default function AgentPanel() {
               streamingContent={streamingContent}
               isStreaming={isStreaming}
               agentName={activeAgentId === "auto" ? "Axiom" : (activeAgent?.name || "Axiom")}
-              agentColor={activeAgent?.color || "from-cyan-500 to-purple-600"}
+              agentColor={activeAgent?.color || "from-cyan-500 to-sky-600"}
               routeInfo={routeInfo}
               onSend={handleSend}
               onRetry={handleRetry}
