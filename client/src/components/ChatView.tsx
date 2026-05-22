@@ -446,8 +446,10 @@ export default function ChatView({
   const [dragOver, setDragOver] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; content: string; isImage: boolean; size: number }>>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
   
   // Voice Input State
   const [isListening, setIsListening] = useState(false);
@@ -498,9 +500,27 @@ export default function ChatView({
     setIsListening(true);
   }, [isListening]);
 
+  // Smart auto-scroll: only scroll to bottom if user hasn't scrolled up
   useEffect(() => {
+    if (!userScrolledUp) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, streamingContent, userScrolledUp]);
+
+  // When a new user message is sent, always scroll to bottom
+  useEffect(() => {
+    setUserScrolledUp(false);
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent]);
+  }, [messages.length]);
+
+  // Detect manual scroll: if user scrolls up, pause auto-scroll
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // If within 100px of bottom, consider "at bottom"
+    setUserScrolledUp(distFromBottom > 100);
+  }, []);
 
   // Auto-attach current file as context
   useEffect(() => {
@@ -607,7 +627,29 @@ export default function ChatView({
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div ref={scrollContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto" }}>
+        {/* Scroll-to-bottom FAB — shown when user scrolled up during streaming */}
+        {userScrolledUp && isStreaming && (
+          <button
+            onClick={() => {
+              setUserScrolledUp(false);
+              bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            style={{
+              position: "sticky", top: 8, left: "50%", transform: "translateX(-50%)",
+              zIndex: 40, display: "flex", alignItems: "center", gap: 5,
+              padding: "6px 14px", borderRadius: 20,
+              background: "rgba(6,182,212,0.15)", backdropFilter: "blur(12px)",
+              border: "1px solid rgba(6,182,212,0.25)", color: "#67e8f9",
+              fontSize: 11, fontWeight: 600, cursor: "pointer",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+              transition: "all 0.2s",
+            }}
+          >
+            <ChevronDown style={{ width: 13, height: 13 }} />
+            Jump to latest
+          </button>
+        )}
         {messages.length === 0 && !isStreaming ? (
           <StarterHub
             onSelectStarter={(starter) => onSelectStarter?.(starter)}
