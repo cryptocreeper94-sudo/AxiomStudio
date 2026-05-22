@@ -270,6 +270,12 @@ export default function LandingPage() {
                 Download App
               </a>
             )}
+            {isMobile && (
+              <a href="https://expo.dev/artifacts/eas/2S7BR72a27XskKHNKse9p2.apk" className="cta-secondary">
+                <Smartphone className="w-4 h-4" />
+                Download Android (.apk)
+              </a>
+            )}
           </div>
 
           {/* Code preview — desktop only */}

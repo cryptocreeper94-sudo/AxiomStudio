@@ -99,6 +99,40 @@ export function useAuth(): AuthState {
     }
   }, []);
 
+  // ── Mobile App Bridge: auto-authenticate when loaded inside the native APK ──
+  useEffect(() => {
+    const w = window as any;
+    const doMobileAuth = async (firebaseIdToken: string) => {
+      try {
+        const res = await fetch("/api/agent/auth/firebase", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: firebaseIdToken }),
+        });
+        const data = await res.json();
+        if (data.success && data.user && w.__AXIOM_USER__) {
+          data.user.photoURL = w.__AXIOM_USER__.photoURL;
+          data.user.authMethod = "firebase";
+        }
+        handleAuthResponse(data, true);
+      } catch (err) {
+        console.error("[Auth] Mobile bridge auth failed:", err);
+      }
+    };
+
+    // Check if launched from the native APK with a pre-injected token
+    if (w.__AXIOM_MOBILE__ && w.__AXIOM_FIREBASE_TOKEN__ && !token) {
+      doMobileAuth(w.__AXIOM_FIREBASE_TOKEN__);
+    }
+
+    // Also listen for the custom event (fired after WebView load)
+    const handler = (e: any) => {
+      if (e.detail?.token) doMobileAuth(e.detail.token);
+    };
+    window.addEventListener("axiom-mobile-auth", handler);
+    return () => window.removeEventListener("axiom-mobile-auth", handler);
+  }, [handleAuthResponse, token]);
+
   // ── Common response handler ──
   const handleAuthResponse = useCallback((data: any, persist = true) => {
     if (data.success && data.token) {
