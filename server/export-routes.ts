@@ -9,7 +9,9 @@ import { Router } from "express";
 import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { join, relative } from "path";
 import { getWorkspaceRoot } from "./local-tools.js";
-import archiver from "archiver";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const archiver = require("archiver");
 
 const router = Router();
 

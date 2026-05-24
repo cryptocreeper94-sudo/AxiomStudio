@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/axiom-studio?color=06b6d4&label=npm)](https://npmjs.com/package/axiom-studio)
 [![License](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
-[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
+[![Version](https://img.shields.io/badge/version-2.3.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
 
 Multi-agent AI coding environment with full filesystem access. Use in the cloud or install locally — same agents, same power.
 
@@ -17,13 +17,13 @@ Multi-agent AI coding environment with full filesystem access. Use in the cloud 
 Go to **[axiomstudio.dev](https://axiomstudio.dev)** — sign in and start coding.
 
 ### Desktop (full power)
-Download **Axiom Studio Setup 2.2.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
+Download **Axiom Studio Setup 2.3.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
 
 ### Local CLI (developers)
 ```bash
 npx axiom-studio
 ```
-Requires Node.js 18+. Browser opens automatically. Full filesystem access, real terminal, native git.
+Requires Node.js 18+ (v24 fully supported). Browser opens automatically. Full filesystem access, real terminal, native git.
 
 ---
 
@@ -98,8 +98,8 @@ npm run local
 ## Tech Stack
 
 - **Frontend**: React 19, TypeScript, TailwindCSS, Monaco Editor, Framer Motion
-- **Backend**: Express 5, Node.js 22
-- **AI**: Anthropic SDK, OpenAI SDK
+- **Backend**: Express 5, Node.js 18–24
+- **AI**: Anthropic SDK, OpenAI SDK, Google Gemini (via OpenAI compat layer)
 - **Database**: PostgreSQL (cloud) / SQLite (local)
 - **Auth**: Firebase, JWT
 - **Payments**: Stripe, Coinbase Commerce

@@ -842,44 +842,7 @@ export default function ChatView({
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {/* File upload button */}
-            <button
-              onClick={() => onFileUpload ? onFileUpload() : fileInputRef.current?.click()}
-              title="Attach files from your device"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 30, height: 30, borderRadius: 6, flexShrink: 0,
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                color: "rgba(255,255,255,0.3)", cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; e.currentTarget.style.color = "#06b6d4"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
-            >
-              <Upload style={{ width: 13, height: 13 }} />
-            </button>
-            
-            {/* Voice Input Button */}
-            <button
-              onClick={toggleVoiceRecording}
-              title={isListening ? "Stop listening" : "Start voice input"}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 30, height: 30, borderRadius: 6, flexShrink: 0,
-                background: isListening ? "rgba(239, 68, 68, 0.15)" : "rgba(255,255,255,0.04)", 
-                border: `1px solid ${isListening ? "rgba(239, 68, 68, 0.4)" : "rgba(255,255,255,0.08)"}`,
-                color: isListening ? "#ef4444" : "rgba(255,255,255,0.3)", 
-                cursor: "pointer",
-                transition: "all 0.2s",
-                animation: isListening ? "pulse-dot 1.5s infinite ease-in-out" : "none",
-              }}
-              onMouseEnter={e => { if (!isListening) { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; e.currentTarget.style.color = "#06b6d4"; } }}
-              onMouseLeave={e => { if (!isListening) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "rgba(255,255,255,0.3)"; } }}
-            >
-              {isListening ? <MicOff style={{ width: 13, height: 13 }} /> : <Mic style={{ width: 13, height: 13 }} />}
-            </button>
-
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 0 }}>
             <div style={{ flex: 1, position: "relative" }}>
               <textarea
                 ref={inputRef}
@@ -896,10 +859,10 @@ export default function ChatView({
                 style={{
                   width: "100%",
                   resize: "none",
-                  borderRadius: 10,
-                  padding: "8px 36px 8px 12px",
-                  fontSize: 12,
-                  lineHeight: 1.4,
+                  borderRadius: 12,
+                  padding: "10px 80px 10px 44px",
+                  fontSize: 13,
+                  lineHeight: 1.5,
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.12)",
                   color: "#e2e8f0",
@@ -911,35 +874,98 @@ export default function ChatView({
                 onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
                 disabled={false}
               />
-              <button
-                onClick={handleSend}
-                disabled={(!input.trim() && uploadedFiles.length === 0)}
-                style={{
-                  position: "absolute", right: 4, bottom: 4,
-                  padding: 5, borderRadius: 6,
-                  background: (!input.trim() && uploadedFiles.length === 0) ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #06b6d4, #38bdf8)",
-                  border: "none", color: "#fff", cursor: (!input.trim() && uploadedFiles.length === 0) ? "not-allowed" : "pointer",
-                  opacity: (!input.trim() && uploadedFiles.length === 0) ? 0.3 : 1,
-                  transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                {isStreaming ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 14, height: 14 }} />}
-              </button>
+
+              {/* Left-side action cluster (inside textarea) */}
+              <div style={{
+                position: "absolute", left: 6, bottom: 6,
+                display: "flex", alignItems: "center", gap: 2,
+              }}>
+                {/* File upload */}
+                <button
+                  onClick={() => onFileUpload ? onFileUpload() : fileInputRef.current?.click()}
+                  title="Attach files"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 28, height: 28, borderRadius: 6, flexShrink: 0,
+                    background: "transparent", border: "none",
+                    color: "rgba(255,255,255,0.25)", cursor: "pointer",
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = "#06b6d4"}
+                  onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.25)"}
+                >
+                  <Paperclip style={{ width: 14, height: 14 }} />
+                </button>
+              </div>
+
+              {/* Right-side action cluster (inside textarea) */}
+              <div style={{
+                position: "absolute", right: 6, bottom: 6,
+                display: "flex", alignItems: "center", gap: 3,
+              }}>
+                {/* Voice input */}
+                <button
+                  onClick={toggleVoiceRecording}
+                  title={isListening ? "Stop listening" : "Voice input"}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 26, height: 26, borderRadius: 6, flexShrink: 0,
+                    background: isListening ? "rgba(239, 68, 68, 0.15)" : "transparent",
+                    border: "none",
+                    color: isListening ? "#ef4444" : "rgba(255,255,255,0.25)",
+                    cursor: "pointer", transition: "color 0.15s",
+                    animation: isListening ? "pulse-dot 1.5s infinite ease-in-out" : "none",
+                  }}
+                  onMouseEnter={e => { if (!isListening) e.currentTarget.style.color = "#06b6d4"; }}
+                  onMouseLeave={e => { if (!isListening) e.currentTarget.style.color = "rgba(255,255,255,0.25)"; }}
+                >
+                  {isListening ? <MicOff style={{ width: 13, height: 13 }} /> : <Mic style={{ width: 13, height: 13 }} />}
+                </button>
+
+                {/* Retry */}
+                {onRetry && messages.length > 0 && !isStreaming && (
+                  <button
+                    onClick={onRetry}
+                    title="Retry last"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 26, height: 26, borderRadius: 6,
+                      background: "transparent", border: "none",
+                      color: "rgba(255,255,255,0.25)", cursor: "pointer",
+                      transition: "color 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = "#06b6d4"}
+                    onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.25)"}
+                  >
+                    <RotateCcw style={{ width: 13, height: 13 }} />
+                  </button>
+                )}
+
+                {/* Send / Stop */}
+                <button
+                  onClick={isStreaming ? onStop : handleSend}
+                  disabled={!isStreaming && (!input.trim() && uploadedFiles.length === 0)}
+                  style={{
+                    padding: 5, borderRadius: 8,
+                    background: isStreaming
+                      ? "rgba(239,68,68,0.15)"
+                      : (!input.trim() && uploadedFiles.length === 0)
+                        ? "rgba(255,255,255,0.05)"
+                        : "linear-gradient(135deg, #06b6d4, #38bdf8)",
+                    border: isStreaming ? "1px solid rgba(239,68,68,0.3)" : "none",
+                    color: isStreaming ? "#ef4444" : "#fff",
+                    cursor: (!isStreaming && !input.trim() && uploadedFiles.length === 0) ? "not-allowed" : "pointer",
+                    opacity: (!isStreaming && !input.trim() && uploadedFiles.length === 0) ? 0.3 : 1,
+                    transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  {isStreaming
+                    ? <StopCircle style={{ width: 14, height: 14 }} />
+                    : <Send style={{ width: 14, height: 14 }} />
+                  }
+                </button>
+              </div>
             </div>
-            {onRetry && messages.length > 0 && !isStreaming && (
-              <button
-                onClick={onRetry}
-                title="Retry last"
-                style={{
-                  padding: 7, borderRadius: 6, width: 30, height: 30,
-                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.3)", cursor: "pointer",
-                  transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <RotateCcw style={{ width: 13, height: 13 }} />
-              </button>
-            )}
           </div>
           <p style={{ fontSize: 8, color: "rgba(255,255,255,0.12)", textAlign: "center", marginTop: 6 }}>
             Shift+Enter for new line · Drop files to attach · Auto-routes to optimal model
