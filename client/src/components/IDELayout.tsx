@@ -5,7 +5,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff, Download, Zap, Plus } from "lucide-react";
+import { Terminal, PanelRightClose, PanelRightOpen, Eye, EyeOff, Download, Zap, Plus, ArrowUpCircle } from "lucide-react";
 import ActivityBar, { type SidePanel } from "./ActivityBar";
 import FileExplorer from "./FileExplorer";
 import EditorArea, { type OpenFile } from "./EditorArea";
@@ -22,6 +22,7 @@ import LibraryPanel from "./LibraryPanel";
 import ConversationHistory from "./ConversationHistory";
 import DashboardHome from "./DashboardHome";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
+import DepotPushModal from "./DepotPushModal";
 import { useAuth } from "../hooks/useAuth";
 import { useIsMobile } from "../hooks/use-mobile";
 import * as api from "../lib/api";
@@ -48,6 +49,8 @@ export default function IDELayout() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showCreditStore, setShowCreditStore] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [showDepotModal, setShowDepotModal] = useState(false);
+  const [isPushing, setIsPushing] = useState(false);
 
   // Chat state (preserved from AgentPanel)
   const [activeConvoId, setActiveConvoId] = useState<string | null>(() => {
@@ -524,6 +527,41 @@ export default function IDELayout() {
     setSidePanel(p);
   }, []);
 
+  // ── Depot Push ──
+  const handleDepotPush = async (message: string) => {
+    setIsPushing(true);
+    try {
+      const res = await fetch("/api/workspace/depot-push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-convo-id": activeConvoId || "default"
+        },
+        body: JSON.stringify({ message }),
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to push to Depot");
+      }
+      setShowDepotModal(false);
+      setMessages(prev => [...prev, {
+        id: `sys-${Date.now()}`, role: "assistant", 
+        content: `✅ Successfully committed and pushed to remote repository.`, 
+        createdAt: new Date().toISOString()
+      }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, {
+        id: `err-${Date.now()}`, role: "assistant", 
+        content: `⚠️ Axiom Depot Push Failed: ${err.message}`, 
+        createdAt: new Date().toISOString()
+      }]);
+    } finally {
+      setIsPushing(false);
+      setShowDepotModal(false);
+    }
+  };
+
   // Auth gate
   if (!token) return (
     <LoginScreen
@@ -669,6 +707,21 @@ export default function IDELayout() {
           >
             {previewVisible ? <EyeOff size={14} /> : <Eye size={14} />}
             {previewVisible ? "Close Preview" : "Live Preview"}
+          </button>
+          <button
+            onClick={() => setShowDepotModal(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(6, 182, 212, 0.15)",
+              border: "1px solid rgba(6, 182, 212, 0.3)",
+              color: "#06b6d4",
+              padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+              cursor: "pointer", marginRight: 12, transition: "all 0.2s"
+            }}
+            title="Commit and Push to Remote Repository"
+          >
+            <ArrowUpCircle size={14} />
+            Depot Push
           </button>
           <button
             onClick={async () => {
@@ -1023,8 +1076,15 @@ export default function IDELayout() {
           <button onClick={() => setTerminalVisible(v => !v)}>⌨️<span>Term</span></button>
         </div>
       </nav>
+
+      {showDepotModal && (
+        <DepotPushModal 
+          onClose={() => setShowDepotModal(false)}
+          onPush={handleDepotPush}
+          isPushing={isPushing}
+        />
+      )}
     </div>
     </div>
   );
 }
-

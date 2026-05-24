@@ -287,6 +287,99 @@ router.delete("/file", requireAuth, async (req: any, res) => {
   }
 });
 
+// POST /api/workspace/depot-push — Push workspace to Axiom Depot
+router.post("/depot-push", requireAuth, async (req: any, res: any) => {
+  const { message } = req.body;
+  const convoId = getConvoId(req);
+  const userId = req.uid;
+
+  if (!message) {
+    res.status(400).json({ error: "Commit message is required" });
+    return;
+  }
+
+  try {
+    // 1. Get all workspace files for this convo
+    const prefix = `${convoId}/`;
+    const files = await db.select()
+      .from(workspaceFiles)
+      .where(and(
+        eq(workspaceFiles.userId, userId),
+        like(workspaceFiles.filePath, `${prefix}%`),
+        eq(workspaceFiles.isDirectory, false)
+      ));
+
+    if (files.length === 0) {
+      res.status(400).json({ error: "Workspace is empty. Nothing to push." });
+      return;
+    }
+
+    // 2. Ensure a Depot repo exists for this convo
+    const slug = convoId.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    const repoName = `workspace-${slug}`;
+
+    let repoId: string;
+    const { rows: existingRepoRows } = await db.execute(sql`
+      SELECT id FROM depot_repos WHERE user_id = ${userId} AND slug = ${slug}
+    `);
+
+    if (existingRepoRows[0]) {
+      repoId = (existingRepoRows[0] as any).id;
+    } else {
+      const { rows: newRepoRows } = await db.execute(sql`
+        INSERT INTO depot_repos (user_id, name, slug, description, is_private)
+        VALUES (${userId}, ${repoName}, ${slug}, 'Auto-created from Axiom Studio', true)
+        RETURNING id
+      `);
+      repoId = (newRepoRows[0] as any).id;
+    }
+
+    // 3. Create a snapshot
+    const totalSize = files.reduce((sum, f) => sum + (f.sizeBytes || 0), 0);
+    const { rows: snapRows } = await db.execute(sql`
+      INSERT INTO depot_snapshots (repo_id, user_id, message, file_count, total_size_bytes)
+      VALUES (${repoId}, ${userId}, ${message}, ${files.length}, ${totalSize})
+      RETURNING id
+    `);
+    const snapshotId = (snapRows[0] as any).id;
+
+    // 4. Insert files into Depot
+    await db.execute(sql`DELETE FROM depot_files WHERE repo_id = ${repoId}`);
+    
+    for (const file of files) {
+      const relativePath = file.filePath.substring(prefix.length);
+      const ext = relativePath.match(/\.[a-z]+$/i)?.[0] || '';
+      
+      await db.execute(sql`
+        INSERT INTO depot_files (repo_id, snapshot_id, file_path, content, size_bytes, language, is_directory)
+        VALUES (${repoId}, ${snapshotId}, ${relativePath}, ${file.content || ''}, ${file.sizeBytes || 0}, ${ext}, false)
+      `);
+    }
+
+    // 5. Update repo stats
+    await db.execute(sql`
+      UPDATE depot_repos SET
+        file_count = ${files.length},
+        total_size_bytes = ${totalSize},
+        snapshot_count = snapshot_count + 1,
+        last_snapshot_at = NOW(),
+        updated_at = NOW()
+      WHERE id = ${repoId}
+    `);
+
+    // 6. Log activity
+    await db.execute(sql`
+      INSERT INTO depot_activity (repo_id, user_id, action, details)
+      VALUES (${repoId}, ${userId}, 'push', ${`Pushed workspace files: ${message}`})
+    `);
+
+    res.json({ success: true, message: "Successfully pushed to Axiom Depot" });
+  } catch (err: any) {
+    console.error("Cloud Depot Push Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/workspace/serve/* — Serve raw file content for iframe previews
 router.get("/serve/*filepath", requireAuth, async (req: any, res: any) => {
   const rawPath = req.params.filepath || "index.html";

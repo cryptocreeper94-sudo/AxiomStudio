@@ -12,7 +12,11 @@ import {
   existsSync, mkdirSync, rmSync,
 } from "fs";
 import { join, resolve, relative } from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
 import { getWorkspaceRoot } from "./local-tools.js";
+
+const execAsync = promisify(exec);
 
 const router = Router();
 
@@ -136,6 +140,64 @@ router.delete("/file", (req: any, res) => {
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/workspace/depot-push — Commit and Push to remote repository
+router.post("/depot-push", async (req: any, res: any) => {
+  const { message } = req.body;
+  const root = getWorkspaceRoot(req.headers['x-convo-id'] || req.query.convoId || req.body?.convoId);
+
+  if (!message) {
+    res.status(400).json({ error: "Commit message is required" });
+    return;
+  }
+
+  try {
+    // Ensure it's a git repo
+    if (!existsSync(join(root, ".git"))) {
+      await execAsync("git init", { cwd: root });
+    }
+
+    // Add all files
+    await execAsync("git add -A", { cwd: root });
+
+    // Commit changes
+    // If there's nothing to commit, git commit exits with code 1, so we catch it and check
+    try {
+      await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: root });
+    } catch (commitErr: any) {
+      if (commitErr.stdout && commitErr.stdout.includes("nothing to commit")) {
+        // Just push if nothing to commit
+      } else {
+        throw commitErr;
+      }
+    }
+
+    // Push to default remote branch
+    // If no upstream is set, try to push to origin main/master
+    try {
+      await execAsync("git push", { cwd: root });
+    } catch (pushErr: any) {
+      // If error is about no upstream branch, try to set it
+      if (pushErr.stderr && pushErr.stderr.includes("has no upstream branch")) {
+        try {
+          await execAsync("git push -u origin main", { cwd: root });
+        } catch {
+          await execAsync("git push -u origin master", { cwd: root });
+        }
+      } else if (pushErr.stderr && pushErr.stderr.includes("No configured push destination")) {
+        res.status(400).json({ error: "No remote repository configured. Please add a git remote via the terminal first." });
+        return;
+      } else {
+        throw pushErr;
+      }
+    }
+
+    res.json({ success: true, message: "Successfully pushed to Depot" });
+  } catch (err: any) {
+    console.error("Depot Push Error:", err);
+    res.status(500).json({ error: err.stderr || err.message || "Failed to push" });
   }
 });
 

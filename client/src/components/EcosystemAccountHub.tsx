@@ -109,7 +109,7 @@ const APPS = [
   { n:'LumeLine',    u:'https://lumeline.bet',            i:'📊' },
   { n:'Meridian',    u:'https://meridiancanon.com',       i:'📖' },
   { n:'Screener',    u:'https://dwtl.io/guardian-ai',     i:'🔍' },
-  { n:'AxiomDepot', u:'https://axiomdepot.com',           i:'📦' },
+  { n:'AxiomDepot', u:'https://axiomdepot.tlid.io',           i:'📦' },
 ];
 const APPS_PER_PAGE = 8;
 const APP_TOTAL_PAGES = Math.ceil(APPS.length / APPS_PER_PAGE);

@@ -26,6 +26,7 @@ import { localDb } from "./local-db.js";
 import { LOCAL_ANTHROPIC_TOOLS, LOCAL_OPENAI_TOOLS, executeLocalTool, getWorkspaceRoot } from "./local-tools.js";
 import localWorkspaceRoutes from "./local-workspace-routes.js";
 import exportRoutes from "./export-routes.js";
+import depotRoutes from "./depot-routes.js";
 import { AGENT_PROMPTS, AGENT_SEEDS } from "./agent-prompts.js";
 import { setupTerminalWebSocket } from "./pty.js";
 import {
@@ -506,13 +507,14 @@ app.post("/api/agent/chat", async (req, res) => {
 
 // ── Workspace routes (real filesystem) ──
 app.use("/api/workspace", localWorkspaceRoutes);
-app.use("/api/workspace", exportRoutes);
+app.use("/api/workspace/export", exportRoutes);
+app.use("/api/depot", depotRoutes);
 
 // ── Health ──
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok", mode: IS_OWNER_MODE ? "OWNER" : "TENANT",
-    service: "axiom-studio-local", version: "2.3.0-local",
+    service: "axiom-studio-local", version: "3.0.0-local",
     workspaceRoot: getWorkspaceRoot(), timestamp: new Date().toISOString(),
   });
 });

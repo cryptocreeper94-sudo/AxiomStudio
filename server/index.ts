@@ -17,6 +17,7 @@ import { registerCoinbaseRoutes } from "./coinbase-routes.js";
 import notificationRoutes from "./notification-routes.js";
 import analyticsRoutes from "./analytics-routes.js";
 import workspaceRoutes from "./workspace-routes.js";
+import depotRoutes from "./depot-routes.js";
 import { setupTerminalWebSocket } from "./pty.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -112,12 +113,14 @@ app.use("/api/analytics", analyticsRoutes);
 console.log("[Axiom Studio] Analytics routes registered");
 app.use("/api/workspace", workspaceRoutes);
 console.log("[Axiom Studio] Workspace FS routes registered");
+app.use("/api/depot", depotRoutes);
+console.log("[Axiom Studio] Depot routes registered");
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "axiom-studio",
-    version: "2.1.0",
+    version: "3.0.0",
     timestamp: new Date().toISOString(),
   });
 });
@@ -151,7 +154,7 @@ async function startServer() {
   const PORT = parseInt(process.env.PORT || "5100");
   const server = app.listen(PORT, () => {
     console.log(`\n  ╔══════════════════════════════════════╗`);
-    console.log(`  ║     AXIOM STUDIO IDE — v2.1.0        ║`);
+    console.log(`  ║     AXIOM STUDIO IDE — v3.0.0        ║`);
     console.log(`  ║     DarkWave Studios LLC              ║`);
     console.log(`  ║     http://localhost:${PORT}             ║`);
     console.log(`  ╚══════════════════════════════════════╝\n`);

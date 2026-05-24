@@ -1,0 +1,756 @@
+/**
+ * Axiom Depot — Premium CSS
+ * Clean, modern, GitHub-level with diamond polish
+ * Minimal purple, heavy cyan/teal/emerald
+ */
+
+/* ── Design Tokens ── */
+:root {
+  --depot-bg: #0a0c10;
+  --depot-surface: #12151c;
+  --depot-surface-hover: #181c26;
+  --depot-border: rgba(255, 255, 255, 0.06);
+  --depot-border-hover: rgba(255, 255, 255, 0.12);
+  --depot-text: #e2e8f0;
+  --depot-text-muted: #64748b;
+  --depot-text-dim: #475569;
+  --depot-accent: #06b6d4;
+  --depot-accent-hover: #22d3ee;
+  --depot-accent-bg: rgba(6, 182, 212, 0.08);
+  --depot-success: #10b981;
+  --depot-cell-empty: rgba(255, 255, 255, 0.04);
+  --depot-radius: 12px;
+  --depot-radius-sm: 8px;
+}
+
+/* ── Landing Page ── */
+.depot-landing, .depot-app {
+  min-height: 100vh;
+  background: var(--depot-bg);
+  color: var(--depot-text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Navigation ── */
+.depot-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10, 12, 16, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--depot-border);
+}
+
+.depot-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.depot-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.depot-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.depot-logo-text {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  color: white;
+}
+
+.depot-nav-search {
+  flex: 1;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 36px;
+  border-radius: var(--depot-radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--depot-border);
+  color: var(--depot-text-muted);
+  transition: all 0.2s;
+}
+
+.depot-nav-search:focus-within {
+  border-color: var(--depot-accent);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.depot-nav-search input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--depot-text);
+  font-size: 13px;
+  width: 100%;
+}
+
+.depot-nav-search input::placeholder {
+  color: var(--depot-text-dim);
+}
+
+.depot-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.depot-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  padding: 6px;
+  cursor: pointer;
+}
+
+/* ── Buttons ── */
+.depot-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a0c10;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border: none;
+  border-radius: var(--depot-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.depot-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+}
+
+.depot-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.depot-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--depot-text-muted);
+  background: transparent;
+  border: 1px solid var(--depot-border);
+  border-radius: var(--depot-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.depot-btn-ghost:hover {
+  color: white;
+  border-color: var(--depot-border-hover);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.depot-btn-sm { padding: 6px 14px; font-size: 12px; }
+.depot-btn-lg { padding: 12px 28px; font-size: 14px; }
+
+/* ── Hero ── */
+.depot-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.depot-hero-content {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3rem;
+}
+
+.depot-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--depot-accent);
+  background: var(--depot-accent-bg);
+  border: 1px solid rgba(6, 182, 212, 0.12);
+  border-radius: 999px;
+  margin-bottom: 1.5rem;
+}
+
+.depot-hero-title {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin-bottom: 1.25rem;
+  color: white;
+}
+
+.depot-gradient-text {
+  background: linear-gradient(135deg, #06b6d4, #10b981, #06b6d4);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: depot-gradient-shift 4s ease-in-out infinite;
+}
+
+@keyframes depot-gradient-shift {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
+.depot-hero-sub {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--depot-text-muted);
+  margin-bottom: 2rem;
+}
+
+.depot-hero-ctas {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.depot-hero-features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.depot-feature-card {
+  padding: 1.5rem;
+  border-radius: var(--depot-radius);
+  background: var(--depot-surface);
+  border: 1px solid var(--depot-border);
+  transition: all 0.25s;
+}
+
+.depot-feature-card:hover {
+  border-color: var(--depot-border-hover);
+  background: var(--depot-surface-hover);
+  transform: translateY(-2px);
+}
+
+.depot-feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--depot-accent-bg);
+  color: var(--depot-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.depot-feature-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: white;
+}
+
+.depot-feature-card p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--depot-text-muted);
+}
+
+/* ── Dashboard ── */
+.depot-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.depot-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.depot-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem 1.25rem;
+  border-radius: var(--depot-radius);
+  background: var(--depot-surface);
+  border: 1px solid var(--depot-border);
+  color: var(--depot-accent);
+}
+
+.depot-stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+.depot-stat-label {
+  font-size: 12px;
+  color: var(--depot-text-muted);
+}
+
+/* ── Sections ── */
+.depot-section {
+  margin-bottom: 1.5rem;
+  border-radius: var(--depot-radius);
+  background: var(--depot-surface);
+  border: 1px solid var(--depot-border);
+  overflow: hidden;
+}
+
+.depot-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--depot-border);
+}
+
+.depot-section-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+/* ── Heatmap ── */
+.depot-heatmap {
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+}
+
+.depot-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(52, 12px);
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+}
+
+.depot-heatmap-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  transition: transform 0.1s;
+}
+
+.depot-heatmap-cell:hover {
+  transform: scale(1.4);
+}
+
+.depot-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--depot-text-dim);
+  justify-content: flex-end;
+}
+
+/* ── Filter Bar ── */
+.depot-filter-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.depot-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--depot-text-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.depot-filter-btn:hover {
+  color: var(--depot-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.depot-filter-btn.active {
+  color: var(--depot-accent);
+  background: var(--depot-accent-bg);
+  border-color: rgba(6, 182, 212, 0.15);
+}
+
+/* ── Repo Cards ── */
+.depot-repo-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.depot-repo-card {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--depot-border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.depot-repo-card:last-child {
+  border-bottom: none;
+}
+
+.depot-repo-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.depot-repo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.depot-repo-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--depot-accent);
+}
+
+.depot-repo-name svg {
+  color: var(--depot-text-dim);
+}
+
+.depot-repo-desc {
+  font-size: 13px;
+  color: var(--depot-text-muted);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.depot-repo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.depot-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--depot-text-dim);
+}
+
+.depot-lang-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.depot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--depot-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+/* ── Modal ── */
+.depot-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.depot-modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--depot-surface);
+  border: 1px solid var(--depot-border);
+  border-radius: var(--depot-radius);
+  overflow: hidden;
+}
+
+.depot-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--depot-border);
+}
+
+.depot-modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+
+.depot-modal-header button {
+  background: none;
+  border: none;
+  color: var(--depot-text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.depot-modal-body {
+  padding: 1.25rem;
+}
+
+.depot-modal-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--depot-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.depot-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--depot-text);
+  margin-bottom: 6px;
+  margin-top: 12px;
+}
+
+.depot-label:first-child { margin-top: 0; }
+
+.depot-optional {
+  font-weight: 400;
+  color: var(--depot-text-dim);
+}
+
+.depot-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--depot-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--depot-border);
+  border-radius: var(--depot-radius-sm);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.depot-input:focus {
+  border-color: var(--depot-accent);
+}
+
+.depot-visibility-options {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.depot-visibility-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--depot-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--depot-border);
+  border-radius: var(--depot-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.depot-visibility-btn.active {
+  color: var(--depot-accent);
+  border-color: var(--depot-accent);
+  background: var(--depot-accent-bg);
+}
+
+/* ── Empty & Loading States ── */
+.depot-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--depot-text-dim);
+}
+
+.depot-empty h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--depot-text-muted);
+}
+
+.depot-empty p {
+  font-size: 13px;
+  max-width: 300px;
+}
+
+.depot-empty .depot-btn-primary {
+  margin-top: 12px;
+}
+
+.depot-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 2rem;
+  color: var(--depot-text-muted);
+  font-size: 13px;
+}
+
+.depot-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--depot-border);
+  border-top-color: var(--depot-accent);
+  border-radius: 50%;
+  animation: depot-spin 0.6s linear infinite;
+}
+
+@keyframes depot-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Mobile Menu ── */
+.depot-mobile-menu {
+  background: var(--depot-surface);
+  border-bottom: 1px solid var(--depot-border);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.depot-mobile-menu button,
+.depot-mobile-menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--depot-text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--depot-radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+  width: 100%;
+  text-align: left;
+}
+
+.depot-mobile-menu button:hover,
+.depot-mobile-menu a:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Mobile Responsive ── */
+@media (max-width: 768px) {
+  .depot-nav-search { display: none; }
+  .depot-nav-actions { display: none; }
+  .depot-hamburger { display: block; }
+
+  .depot-hero { padding: 2rem 1rem 3rem; }
+  .depot-hero-title { font-size: clamp(2rem, 8vw, 3rem); }
+  .depot-hero-sub { font-size: 14px; }
+
+  .depot-hero-features {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .depot-feature-card { padding: 1.25rem; }
+  .depot-feature-card h3 { font-size: 13px; }
+  .depot-feature-card p { font-size: 11px; }
+
+  .depot-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .depot-stat-value { font-size: 16px; }
+
+  .depot-heatmap-grid {
+    grid-template-columns: repeat(26, 12px);
+  }
+
+  .depot-repo-meta { gap: 10px; }
+  .depot-repo-name { font-size: 14px; }
+}
+
+@media (max-width: 480px) {
+  .depot-hero-features {
+    grid-template-columns: 1fr;
+  }
+
+  .depot-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .depot-hero-ctas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .depot-hero-ctas .depot-btn-primary,
+  .depot-hero-ctas .depot-btn-ghost {
+    justify-content: center;
+  }
+}

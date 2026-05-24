@@ -42,13 +42,13 @@ const SLIDES = ["/bg/slide-1.png", "/bg/slide-2.png", "/bg/slide-3.png", "/bg/sl
 const SLIDE_DURATION = 7000;
 
 const FEATURES = [
-  { icon: <Bot className="w-5 h-5" />, bg: "rgba(6, 182, 212, 0.12)", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, GPT-4o — auto-routed to the best model for each task. No manual switching." },
-  { icon: <Monitor className="w-5 h-5" />, bg: "rgba(20, 40, 80, 0.25)", title: "Full IDE in Browser", desc: "Monaco editor, file explorer, real terminal — everything you need without leaving the browser." },
-  { icon: <Terminal className="w-5 h-5" />, bg: "rgba(56, 189, 248, 0.12)", title: "Real Terminal", desc: "Not a sandbox. A real shell on your machine. Run git, npm, python — anything." },
-  { icon: <GitBranch className="w-5 h-5" />, bg: "rgba(34, 197, 94, 0.12)", title: "Native Git", desc: "Push, pull, branch, merge — directly from the IDE. No copy-pasting commands." },
-  { icon: <Image className="w-5 h-5" />, bg: "rgba(220, 50, 70, 0.12)", title: "Image Generation", desc: "Generate images with DALL-E 3 directly in your project. Save to disk or preview inline." },
-  { icon: <Zap className="w-5 h-5" />, bg: "rgba(250, 204, 21, 0.12)", title: "Local Mode", desc: "Install locally with npx. Full filesystem access, web search, browser automation. Same credits." },
-  { icon: <Shield className="w-5 h-5" />, bg: "rgba(140, 20, 30, 0.15)", title: "Enterprise Security", desc: "OAuth, biometrics, Trust Layer SSO. Your code stays on your machine in local mode." },
+  { image: "/features/multi-agent.png", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, GPT-4o — auto-routed to the best model for each task. No manual switching." },
+  { image: "/features/browser-ide.png", title: "Full IDE in Browser", desc: "Monaco editor, file explorer, real terminal — everything you need without leaving the browser." },
+  { image: "/features/terminal.png", title: "Real Terminal", desc: "Not a sandbox. A real shell on your machine. Run git, npm, python — anything." },
+  { image: "/features/git.png", title: "Native Git", desc: "Push, pull, branch, merge — directly from the IDE. No copy-pasting commands." },
+  { image: "/features/image-gen.png", title: "Image Generation", desc: "Generate images with DALL-E 3 directly in your project. Save to disk or preview inline." },
+  { image: "/features/local.png", title: "Local Mode", desc: "Install locally with npx. Full filesystem access, web search, browser automation. Same credits." },
+  { image: "/features/security.png", title: "Enterprise Security", desc: "OAuth, biometrics, Trust Layer SSO. Your code stays on your machine in local mode." },
 ];
 
 const AGENTS = [
@@ -58,6 +58,11 @@ const AGENTS = [
   { name: "GPT-4o", model: "gpt-4o", img: "/agents/gpt4o.png", border: "rgba(34, 197, 94, 0.3)", cost: "2 credits" },
   { name: "Lume", model: "lume-agent", img: "/agents/lume.png", border: "rgba(168, 85, 247, 0.3)", cost: "3 credits" },
   { name: "o3-mini", model: "o3-mini", img: "/agents/o3mini.png", border: "rgba(180, 60, 30, 0.3)", cost: "1 credit" },
+];
+
+const AGENT_TRIPLETS = [
+  [AGENTS[0], AGENTS[1], AGENTS[2]],
+  [AGENTS[3], AGENTS[4], AGENTS[5]],
 ];
 
 const DEMO_CODE_LINES = [
@@ -124,6 +129,7 @@ export default function LandingPage() {
   const [copied, setCopied] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [featureIdx, setFeatureIdx] = useState(0);
+  const [agentIdx, setAgentIdx] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -317,8 +323,8 @@ export default function LandingPage() {
             <Sparkles className="w-6 h-6" />
           </div>
           <div className="credits-banner-text">
-            <h3>50 Free Credits on Signup</h3>
-            <p>No credit card required. Start building with Claude Opus, Sonnet, and GPT-4o — completely free.</p>
+            <h3>Get 50 Autonomous Task Credits Free</h3>
+            <p>1 Credit = 1 Full Agent Execution. No token-bloat. 50 credits covers 50 complete coding tasks with Axiom Quick (Sonnet), or 16 massive architectural tasks with Axiom (Opus 4.7). Basic Q&A is always free.</p>
           </div>
           <a href="/ide" className="credits-banner-cta">
             Claim Free Credits <ArrowRight className="w-4 h-4" />
@@ -421,17 +427,19 @@ export default function LandingPage() {
                   className={`feature-slide ${isCenter ? "active" : ""}`}
                   key={i}
                   style={{
-                    transform: isCenter ? "translateX(0) scale(1)" : isLeft ? "translateX(-110%) scale(0.85)" : isRight ? "translateX(110%) scale(0.85)" : "translateX(200%) scale(0.7)",
-                    opacity: visible ? 1 : 0,
+                    transform: isCenter ? "translateX(0) scale(1)" : isLeft ? "translateX(-150%) scale(0.8)" : isRight ? "translateX(150%) scale(0.8)" : "translateX(250%) scale(0.7)",
+                    opacity: visible ? (isCenter ? 1 : 0) : 0, /* Hide side cards on desktop visually via CSS, fallback here to 0 for non-center */
                     pointerEvents: isCenter ? "auto" : "none",
                     zIndex: isCenter ? 3 : 1,
                   }}
                 >
-                  <div className="feature-icon" style={{ background: f.bg, color: "white" }}>
-                    {f.icon}
+                  <div className="feature-slide-image">
+                    <img src={f.image} alt={f.title} />
                   </div>
-                  <h3>{f.title}</h3>
-                  <p>{f.desc}</p>
+                  <div className="feature-slide-content">
+                    <h3>{f.title}</h3>
+                    <p>{f.desc}</p>
+                  </div>
                 </div>
               );
             })}
@@ -466,22 +474,113 @@ export default function LandingPage() {
           file editing, terminal, git, image generation, web search, and browser automation.
         </p>
 
-        <div className="agent-grid">
-          {AGENTS.map((a, i) => (
-            <div className="agent-card" key={i} style={{ borderColor: a.border }}>
-              <img
-                src={a.img}
-                alt={a.name}
-                style={{
-                  width: 56, height: 56, borderRadius: 12, objectFit: "cover",
-                  marginBottom: 12, border: `1px solid ${a.border}`,
-                }}
-              />
-              <h4>{a.name}</h4>
-              <div className="model">{a.model}</div>
-              <div className="cost">{a.cost} / message</div>
+        <div className="agent-carousel feature-carousel">
+          <div className="carousel-track" style={{ height: 260 }}>
+            {AGENT_TRIPLETS.map((triplet, i) => {
+              const offset = (i - agentIdx + AGENT_TRIPLETS.length) % AGENT_TRIPLETS.length;
+              const isCenter = offset === 0;
+              const isLeft = offset === AGENT_TRIPLETS.length - 1;
+              const isRight = offset === 1;
+              const visible = isCenter || isLeft || isRight;
+              return (
+                <div
+                  className={`agent-slide feature-slide ${isCenter ? "active" : ""}`}
+                  key={i}
+                  style={{
+                    transform: isCenter ? "translateX(0) scale(1)" : isLeft ? "translateX(-150%) scale(0.8)" : isRight ? "translateX(150%) scale(0.8)" : "translateX(250%) scale(0.7)",
+                    opacity: visible ? (isCenter ? 1 : 0) : 0,
+                    pointerEvents: isCenter ? "auto" : "none",
+                    zIndex: isCenter ? 3 : 1,
+                  }}
+                >
+                  <div className="agent-slide-grid">
+                    {triplet.map((a, j) => (
+                      <div className="agent-card" key={j} style={{ borderColor: a.border }}>
+                        <img
+                          src={a.img}
+                          alt={a.name}
+                          style={{
+                            width: 56, height: 56, borderRadius: 12, objectFit: "cover",
+                            marginBottom: 12, border: `1px solid ${a.border}`,
+                          }}
+                        />
+                        <h4>{a.name}</h4>
+                        <div className="model">{a.model}</div>
+                        <div className="cost">{a.cost} / message</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="carousel-controls">
+            <button className="carousel-arrow" onClick={() => setAgentIdx((agentIdx - 1 + AGENT_TRIPLETS.length) % AGENT_TRIPLETS.length)}>
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="carousel-dots">
+              {AGENT_TRIPLETS.map((_, i) => (
+                <button
+                  key={i}
+                  className={`carousel-dot ${i === agentIdx ? "active" : ""}`}
+                  onClick={() => setAgentIdx(i)}
+                />
+              ))}
             </div>
-          ))}
+            <button className="carousel-arrow" onClick={() => setAgentIdx((agentIdx + 1) % AGENT_TRIPLETS.length)}>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+          <p style={{ textAlign: "center", color: "#64748b", fontSize: "0.85rem", marginTop: "1.5rem" }}>
+            *Basic chat and code explanation is always free.
+          </p>
+        </div>
+
+        <div className="matrix-container mt-16">
+          <h3 className="matrix-title">Auto-Routing Logic Matrix</h3>
+          <div className="matrix-table-wrapper">
+            <table className="matrix-table">
+              <thead>
+                <tr>
+                  <th>Task Type</th>
+                  <th>Trigger Criteria</th>
+                  <th>Deployed Agent</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div className="matrix-badge">Heavy Architecture</div></td>
+                  <td>Cross-file refactors, zero-shot creation, deep structural logic</td>
+                  <td className="agent-opus">Claude Opus 4.7</td>
+                </tr>
+                <tr>
+                  <td><div className="matrix-badge">Massive Context</div></td>
+                  <td>Codebase-wide analysis, 2M+ token parsing, huge log reading</td>
+                  <td className="agent-gemini">Gemini 3.1 Pro</td>
+                </tr>
+                <tr>
+                  <td><div className="matrix-badge">Rapid Iteration</div></td>
+                  <td>Syntax fixes, CSS styling, fast isolated patches</td>
+                  <td className="agent-sonnet">Claude Sonnet 4.6</td>
+                </tr>
+                <tr>
+                  <td><div className="matrix-badge">Web & Visual</div></td>
+                  <td>Browser automation, DOM scraping, image analysis</td>
+                  <td className="agent-gpt4o">GPT-4o</td>
+                </tr>
+                <tr>
+                  <td><div className="matrix-badge">Specialized Ops</div></td>
+                  <td>Trust Layer integration, proprietary ecosystem deployments</td>
+                  <td className="agent-lume">Lume Agent</td>
+                </tr>
+                <tr>
+                  <td><div className="matrix-badge">Deep Reasoning</div></td>
+                  <td>Complex algorithms, math, intense step-by-step logic</td>
+                  <td className="agent-o3mini">o3-mini</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -530,7 +629,7 @@ export default function LandingPage() {
               ] as [string, string, string, string, string, string][]).map(([label, axiom, cursor, replit, copilot, windsurf], i) => (
                 <tr key={i}>
                   <td className="compare-label">{label}</td>
-                  <td className="compare-highlight-cell">{axiom.startsWith("✦") ? <span className="compare-star">{axiom}</span> : axiom.startsWith("✓") ? <span className="compare-yes">{axiom}</span> : axiom}</td>
+                  <td className="compare-highlight-cell">{axiom === "✦ 50 free on signup" ? <span className="compare-star">✦ <span className="credit-tooltip" style={{textDecorationColor: "rgba(255,255,255,0.4)"}}>50 free on signup</span></span> : axiom.startsWith("✦") ? <span className="compare-star">{axiom}</span> : axiom.startsWith("✓") ? <span className="compare-yes">{axiom}</span> : axiom}</td>
                   <td>{cursor.startsWith("✓") ? <span className="compare-yes">{cursor}</span> : cursor.startsWith("✗") ? <span className="compare-no">{cursor}</span> : cursor}</td>
                   <td>{replit.startsWith("✓") ? <span className="compare-yes">{replit}</span> : replit.startsWith("✗") ? <span className="compare-no">{replit}</span> : replit}</td>
                   <td>{copilot.startsWith("✓") ? <span className="compare-yes">{copilot}</span> : copilot.startsWith("✗") ? <span className="compare-no">{copilot}</span> : copilot}</td>
@@ -545,7 +644,7 @@ export default function LandingPage() {
         <div className="switcher-grid">
           <div className="switcher-card">
             <div className="switcher-from">Coming from <strong>Cursor</strong>?</div>
-            <p>You love AI-first coding but you're locked to desktop and paying $20/mo for one model. Axiom gives you <strong>6 agents with auto-routing</strong>, cloud + local hybrid, and pay-per-use pricing — start free with 50 credits.</p>
+            <p>You love AI-first coding but you're locked to desktop and paying $20/mo for one model. Axiom gives you <strong>6 agents with auto-routing</strong>, cloud + local hybrid, and pay-per-use pricing — start free with <span className="credit-tooltip" style={{fontWeight: 'bold', color: '#fff', textDecorationColor: "rgba(255,255,255,0.4)"}}>50 credits</span>.</p>
             <a href="/ide" className="switcher-cta">Try Free →</a>
           </div>
           <div className="switcher-card">
@@ -571,7 +670,7 @@ export default function LandingPage() {
             <div className="compare-value-item">
               <Zap className="w-5 h-5" style={{ color: "#06b6d4" }} />
               <div>
-                <strong>50 free credits</strong>
+                <strong><span className="credit-tooltip" style={{textDecorationColor: "rgba(255,255,255,0.4)"}}>50 free credits</span></strong>
                 <span>No credit card required</span>
               </div>
             </div>
@@ -726,45 +825,56 @@ export default function LandingPage() {
 
       {/* ── Footer ── */}
       <footer className="landing-footer">
-        <div style={{ marginBottom: 16 }}>
-          <a href="/" className="nav-logo" style={{ justifyContent: "center", marginBottom: 12, display: "inline-flex" }}>
-            <div className="nav-logo-icon">
-              <Brain className="w-4 h-4" style={{ color: "white" }} />
+        <div className="footer-top">
+          <div className="footer-brand">
+            <a href="/" className="nav-logo" style={{ marginBottom: 16, display: "inline-flex" }}>
+              <div className="nav-logo-icon">
+                <Brain className="w-4 h-4" style={{ color: "white" }} />
+              </div>
+              Axiom Studio
+            </a>
+            <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: "1rem" }}>
+              Proudly Engineered in Gladeville, TN, USA <img src="https://flagcdn.com/w20/us.png" alt="USA" style={{ display: "inline-block", verticalAlign: "middle", marginLeft: 4, height: 14 }} />
+            </p>
+            <p style={{ fontSize: "0.85rem", marginBottom: "1.25rem" }}>DarkWave Studios LLC © 2026</p>
+            <div className="footer-socials" style={{ display: "flex", gap: "0.75rem" }}>
+              <a href="https://x.com/trustsignal26" target="_blank" rel="noopener noreferrer" className="social-button" aria-label="X (Twitter)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
             </div>
-            Axiom Studio
-          </a>
+          </div>
+          
+          <div className="footer-links-grid">
+            <div className="footer-col">
+              <strong>Ecosystem</strong>
+              <a href="https://npmjs.com/package/axiom-studio">npm Package</a>
+              <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio">GitHub Repo</a>
+              <a href="https://dwtl.io">Trust Layer</a>
+              <a href="https://lume-lang.org">Lume Lang</a>
+            </div>
+            <div className="footer-col">
+              <strong>Studio</strong>
+              <a href="https://darkwavestudios.io" target="_blank" rel="noopener">DarkWave Studios</a>
+              <a href="https://trustvault.studio" target="_blank" rel="noopener">TrustVault</a>
+              <a href="https://trustgen.design" target="_blank" rel="noopener">TrustGen 3D</a>
+              <a href="https://trustshield.tech" target="_blank" rel="noopener">TrustShield</a>
+            </div>
+            <div className="footer-col">
+              <strong>Legal</strong>
+              <a href="https://darkwavestudios.io/terms">Terms of Service</a>
+              <a href="https://darkwavestudios.io/privacy">Privacy Policy</a>
+              <a href="mailto:team@dwsc.io">team@dwsc.io</a>
+            </div>
+          </div>
         </div>
-        <p style={{ marginBottom: 8 }}>
-          <a href="https://npmjs.com/package/axiom-studio">npm</a>
-          {" · "}
-          <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio">GitHub</a>
-          {" · "}
-          <a href="https://dwtl.io">Trust Layer</a>
-          {" · "}
-          <a href="https://lume-lang.org">Lume</a>
-          {" · "}
-          <a href="#blog">Blog</a>
-        </p>
-        <p style={{ marginBottom: 8 }}>
-          <a href="https://darkwavestudios.io" target="_blank" rel="noopener">DarkWave Studios</a>
-          {" · "}
-          <a href="https://trustvault.studio" target="_blank" rel="noopener">TrustVault</a>
-          <span>·</span>
-          <a href="https://trustgen.design" target="_blank" rel="noopener">TrustGen 3D</a>
-          {" · "}
-          <a href="https://trustshield.tech" target="_blank" rel="noopener">TrustShield</a>
-        </p>
-        <p style={{ marginBottom: 8 }}>
-          <a href="https://darkwavestudios.io/terms">Terms of Service</a>
-          {" · "}
-          <a href="https://darkwavestudios.io/privacy">Privacy Policy</a>
-          {" · "}
-          <a href="mailto:support@axiomstudio.dev">support@axiomstudio.dev</a>
-        </p>
-        <p>DarkWave Studios LLC · 2026 · All Rights Reserved</p>
-        <p style={{ fontSize: 9, color: "#334155", marginTop: 8 }}>
-          Patent Pending: U.S. 64/032,339 · U.S. 64/047,512 · U.S. 64/047,467 · U.S. 64/047,496 · U.S. 64/047,536
-        </p>
+        
+        <div style={{ textAlign: "left" }}>
+          <p style={{ fontSize: 10, color: "#475569" }}>
+            Patent Pending: U.S. 64/032,339 · U.S. 64/047,512 · U.S. 64/047,467 · U.S. 64/047,496 · U.S. 64/047,536
+          </p>
+        </div>
       </footer>
     </div>
   );
