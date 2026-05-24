@@ -512,7 +512,7 @@ app.use("/api/workspace", exportRoutes);
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok", mode: IS_OWNER_MODE ? "OWNER" : "TENANT",
-    service: "axiom-studio-local", version: "2.1.0-local",
+    service: "axiom-studio-local", version: "2.3.0-local",
     workspaceRoot: getWorkspaceRoot(), timestamp: new Date().toISOString(),
   });
 });
@@ -554,9 +554,9 @@ async function startServer() {
   } else {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
-      configFile: path.resolve(__dirname, "../../vite.config.ts"), // fixed path for local dev
+      configFile: path.resolve(__dirname, "../vite.config.ts"),
       server: { middlewareMode: true },
-      root: path.resolve(__dirname, "../../client"), // fixed path
+      root: path.resolve(__dirname, "../client"),
       appType: "spa",
     });
     app.use(vite.middlewares);
