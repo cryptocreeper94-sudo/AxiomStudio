@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -78,6 +78,17 @@
     .footer a:hover{color:var(--accent)}
     .footer span{color:var(--border)}
 
+    .compare-wrap{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:40px;width:100%}
+    .compare-table{width:100%;border-collapse:collapse;font-size:11px;text-align:left}
+    .compare-table th{padding:14px 16px;border-bottom:1px solid var(--border);color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .compare-table td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text-dim);font-weight:500}
+    .compare-table tr:last-child td{border-bottom:none}
+    .compare-highlight-col{background:rgba(var(--accent-rgb),.05);color:var(--text) !important;font-weight:700 !important;border-left:1px solid var(--border-accent);border-right:1px solid var(--border-accent)}
+    .compare-highlight-th{background:rgba(var(--accent-rgb),.1);color:var(--accent) !important;border-top:2px solid var(--accent);border-left:1px solid var(--border-accent);border-right:1px solid var(--border-accent)}
+    .c-yes{color:#22c55e;font-weight:700}
+    .c-no{color:#ef4444;opacity:.7}
+    .c-star{color:var(--accent);font-weight:800}
+    @media(max-width:600px){.compare-table th:not(:first-child):not(.compare-highlight-th),.compare-table td:not(:first-child):not(.compare-highlight-col){display:none}}
     @media(max-width:540px){
       .page{padding:24px 16px 40px}
       .features{grid-template-columns:1fr}
@@ -133,13 +144,89 @@
 
       <div class="features">
         <div class="feat"><span class="feat-dot"></span>120K+ Expert Topics</div>
-            <div class="feat"><span class="feat-dot"></span>Zero Hallucination Engine</div>
-            <div class="feat"><span class="feat-dot"></span>Offline-First Architecture</div>
-            <div class="feat"><span class="feat-dot"></span>Windows & macOS Native</div>
-            <div class="feat"><span class="feat-dot"></span>Pack Streaming Protocol</div>
-            <div class="feat"><span class="feat-dot"></span>Ed25519 Signed Packs</div>
+        <div class="feat"><span class="feat-dot"></span>Zero Hallucination Engine</div>
+        <div class="feat"><span class="feat-dot"></span>Offline-First Architecture</div>
+        <div class="feat"><span class="feat-dot"></span>Windows & macOS Native</div>
+        <div class="feat"><span class="feat-dot"></span>Pack Streaming Protocol</div>
+        <div class="feat"><span class="feat-dot"></span>Ed25519 Signed Packs</div>
       </div>
     </div>
+
+    <div class="section">
+      <div class="section-title">How Axiom Stacks Up</div>
+      <div class="compare-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="compare-highlight-th">Axiom Studio</th>
+              <th>Cursor</th>
+              <th>Replit</th>
+              <th>Windsurf</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AI Models</td>
+              <td class="compare-highlight-col">6 agents (Opus, Sonnet, GPT-4o, Mini)</td>
+              <td>Claude + GPT</td>
+              <td>1 model</td>
+              <td>1 model</td>
+            </tr>
+            <tr>
+              <td>Auto-Routing</td>
+              <td class="compare-highlight-col"><span class="c-star">✦ Smart auto-select</span></td>
+              <td>—</td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Free Credits</td>
+              <td class="compare-highlight-col"><span class="c-star">✦ 50 free on signup</span></td>
+              <td>Limited trial</td>
+              <td>Limited</td>
+              <td>Limited trial</td>
+            </tr>
+            <tr>
+              <td>Pricing</td>
+              <td class="compare-highlight-col">Pay-per-use from $0.01</td>
+              <td>$20/mo minimum</td>
+              <td>$25/mo+</td>
+              <td>$15/mo</td>
+            </tr>
+            <tr>
+              <td>Cloud IDE</td>
+              <td class="compare-highlight-col"><span class="c-yes">✓ Full IDE</span></td>
+              <td><span class="c-no">✗ Desktop only</span></td>
+              <td><span class="c-yes">✓</span></td>
+              <td><span class="c-no">✗ Desktop only</span></td>
+            </tr>
+            <tr>
+              <td>Local Mode</td>
+              <td class="compare-highlight-col"><span class="c-yes">✓ Full filesystem</span></td>
+              <td><span class="c-yes">✓</span></td>
+              <td><span class="c-no">✗</span></td>
+              <td><span class="c-yes">✓</span></td>
+            </tr>
+            <tr>
+              <td>Image Gen</td>
+              <td class="compare-highlight-col"><span class="c-yes">✓ DALL-E 3 built-in</span></td>
+              <td><span class="c-no">✗</span></td>
+              <td><span class="c-no">✗</span></td>
+              <td><span class="c-no">✗</span></td>
+            </tr>
+            <tr>
+              <td>Mobile IDE</td>
+              <td class="compare-highlight-col"><span class="c-yes">✓ Full support</span></td>
+              <td><span class="c-no">✗</span></td>
+              <td><span class="c-yes">✓ Partial</span></td>
+              <td><span class="c-no">✗</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
 
     <div class="video-section">
       <div class="section-title">See It In Action</div>
