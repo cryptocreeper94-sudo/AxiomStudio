@@ -484,15 +484,14 @@ router.post("/repos/:repoId/clone", async (req: Request, res: Response) => {
     if (files.length === 0) return res.status(400).json({ error: "Repository has no files" });
 
     // Insert each file into the user's workspace
-    const convoId = req.body.conversationId || "default";
     let imported = 0;
     for (const file of files) {
       const f = file as any;
       try {
         await db.execute(sql`
-          INSERT INTO workspace_files (user_id, conversation_id, file_path, content, size_bytes)
-          VALUES (${userId}, ${convoId}, ${f.file_path}, ${f.content || ''}, ${f.size_bytes || 0})
-          ON CONFLICT (user_id, conversation_id, file_path) DO UPDATE SET
+          INSERT INTO workspace_files (user_id, file_path, content, size_bytes)
+          VALUES (${userId}, ${f.file_path}, ${f.content || ''}, ${f.size_bytes || 0})
+          ON CONFLICT (user_id, file_path) DO UPDATE SET
             content = EXCLUDED.content,
             size_bytes = EXCLUDED.size_bytes,
             updated_at = NOW()

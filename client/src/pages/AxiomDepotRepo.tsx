@@ -203,11 +203,12 @@ export default function AxiomDepotRepo() {
 
       <main className="flex-1 max-w-[1200px] w-full mx-auto px-8 py-8">
         {activeTab === 'code' ? (
+          <>
           <div className="bg-[#0d1117] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden shadow-2xl">
             <div className="bg-[rgba(255,255,255,0.02)] border-b border-[rgba(255,255,255,0.05)] px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3 text-sm font-medium text-white">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center text-[10px] font-bold">
-                  {repo.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                  {repo.username?.[0]?.toUpperCase() || (user as any)?.email?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <span>{repo.username || 'You'}</span>
                 <span className="text-[rgba(255,255,255,0.4)] font-normal text-xs">{snapshots[0]?.message || 'Initial commit'}</span>
@@ -258,6 +259,7 @@ export default function AxiomDepotRepo() {
               />
             </div>
           )}
+          </>
         ) : (
           <div className="space-y-4">
             {snapshots.length === 0 ? (

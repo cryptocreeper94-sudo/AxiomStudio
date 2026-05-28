@@ -714,6 +714,7 @@ export function registerAgentRoutes(app: Express): void {
       return;
     }
 
+    let streamTimeout: ReturnType<typeof setTimeout> | undefined;
     try {
 
     let activeAgent = agentId || "auto";
@@ -849,7 +850,7 @@ export function registerAgentRoutes(app: Express): void {
     res.setHeader("X-Accel-Buffering", "no");
 
     // 5-minute safety timeout for hung streams
-    const streamTimeout = setTimeout(() => {
+    streamTimeout = setTimeout(() => {
       if (!res.writableEnded) {
         console.warn(`[Chat] Stream timed out after 5 minutes for convo=${conversationId}`);
         res.write(`data: ${JSON.stringify({ type: "error", error: "Stream timed out after 5 minutes" })}\n\n`);
@@ -959,7 +960,7 @@ export function registerAgentRoutes(app: Express): void {
     console.log(`[Chat] ✓ Response complete. Saved assistant message.`);
     res.end();
     } catch (err: any) {
-      clearTimeout(streamTimeout);
+      if (streamTimeout) clearTimeout(streamTimeout);
       console.error("[Chat] ✗ UNHANDLED ERROR:", err.message, err.stack);
       if (!res.headersSent) {
         res.status(500).json({ error: `Chat error: ${err.message}` });
