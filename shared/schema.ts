@@ -69,6 +69,7 @@ export const agentConversations = pgTable("agent_conversations", {
   title: text("title").notNull().default("New conversation"),
   agentId: text("agent_id").notNull().default("opus"),
   model: text("model").notNull().default("claude-opus-4-7"),
+  lockedModel: text("locked_model"),
   contextFiles: text("context_files").array(),
   totalTokens: integer("total_tokens").default(0),
   totalCost: decimal("total_cost", { precision: 10, scale: 4 }).default("0"),

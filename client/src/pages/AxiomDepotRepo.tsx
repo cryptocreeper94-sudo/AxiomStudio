@@ -3,9 +3,11 @@ import { useRoute, Link } from "wouter";
 import { motion } from "framer-motion";
 import { 
   Archive, ArrowLeft, GitBranch, Star, Clock, 
-  FolderOpen, FileCode, Lock, Globe, HardDrive, GitCommit, FileText
+  FolderOpen, FileCode, Lock, Globe, HardDrive, GitCommit, FileText,
+  Download, Copy, Check, BookOpen
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { marked } from "marked";
 import "./axiom-depot.css";
 
 const formatBytes = (bytes: number) => {
@@ -39,7 +41,10 @@ export default function AxiomDepotRepo() {
   const [repo, setRepo] = useState<any>(null);
   const [files, setFiles] = useState<any[]>([]);
   const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [readme, setReadme] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"code" | "snapshots">("code");
+  const [cloning, setCloning] = useState(false);
+  const [cloneResult, setCloneResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (!match || !params?.slug) return;
@@ -52,6 +57,13 @@ export default function AxiomDepotRepo() {
         setRepo(data.repo);
         setFiles(data.files || []);
         setSnapshots(data.snapshots || []);
+        // Fetch README
+        if (data.repo?.id) {
+          fetch(`/api/depot/repos/${data.repo.id}/readme`)
+            .then(r => r.json())
+            .then(d => { if (d.readme) setReadme(d.readme); })
+            .catch(() => {});
+        }
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
@@ -104,6 +116,39 @@ export default function AxiomDepotRepo() {
             <button className="depot-btn-ghost flex items-center gap-2">
               <Star className="w-4 h-4" /> Star ({repo.stars})
             </button>
+            <button 
+              className="depot-btn-ghost flex items-center gap-2"
+              disabled={cloning}
+              onClick={async () => {
+                setCloning(true);
+                setCloneResult(null);
+                try {
+                  const token = localStorage.getItem('token') || '';
+                  const res = await fetch(`/api/depot/repos/${repo.id}/clone`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ conversationId: 'default' }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setCloneResult(`✓ Cloned ${data.imported} files to workspace`);
+                  } else {
+                    setCloneResult(`✗ ${data.error}`);
+                  }
+                } catch (err: any) {
+                  setCloneResult(`✗ ${err.message}`);
+                }
+                setCloning(false);
+                setTimeout(() => setCloneResult(null), 4000);
+              }}
+            >
+              <Download className="w-4 h-4" /> {cloning ? 'Cloning...' : 'Clone to Workspace'}
+            </button>
+            {cloneResult && (
+              <span className={`text-xs font-medium ${cloneResult.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
+                {cloneResult}
+              </span>
+            )}
             <a href="https://axiomstudio.dev" target="_blank" rel="noopener noreferrer">
               <button className="depot-btn-primary">Open in Studio</button>
             </a>
@@ -198,6 +243,21 @@ export default function AxiomDepotRepo() {
               )}
             </div>
           </div>
+
+          {/* README */}
+          {readme && (
+            <div className="mt-6 bg-[#0d1117] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden">
+              <div className="bg-[rgba(255,255,255,0.02)] border-b border-[rgba(255,255,255,0.05)] px-4 py-3 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm font-medium text-white">README.md</span>
+              </div>
+              <div 
+                className="p-6 prose prose-invert prose-sm max-w-none"
+                style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, fontSize: 14 }}
+                dangerouslySetInnerHTML={{ __html: marked.parse(readme, { gfm: true, breaks: true }) as string }}
+              />
+            </div>
+          )}
         ) : (
           <div className="space-y-4">
             {snapshots.length === 0 ? (

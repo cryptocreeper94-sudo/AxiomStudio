@@ -65,6 +65,23 @@ pool.query("SELECT 1").then(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_agent_convos_user ON agent_conversations(user_id);
       CREATE INDEX IF NOT EXISTS idx_agent_msgs_convo ON agent_messages(conversation_id);
+
+      -- Model lock per conversation
+      ALTER TABLE agent_conversations ADD COLUMN IF NOT EXISTS locked_model TEXT;
+
+      -- Shared builds (public project links)
+      CREATE TABLE IF NOT EXISTS shared_builds (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT 'Untitled Build',
+        description TEXT DEFAULT '',
+        files JSONB NOT NULL DEFAULT '[]',
+        preview_html TEXT,
+        view_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_shared_builds_user ON shared_builds(user_id);
       
       -- Chat Users schema updates (for shared DWTL tables)
       ALTER TABLE chat_users ADD COLUMN IF NOT EXISTS ecosystem_pin_hash TEXT;

@@ -663,7 +663,18 @@ export function registerAgentRoutes(app: Express): void {
       const updates: any = {};
       if (req.body.activeStarter !== undefined) updates.activeStarter = req.body.activeStarter;
       if (req.body.checklist !== undefined) updates.checklist = req.body.checklist;
+      if (req.body.title !== undefined) updates.title = req.body.title;
       
+      // Handle model lock separately via raw SQL (column may not be in Drizzle schema yet)
+      if (req.body.lockedModel !== undefined) {
+        const lockVal = req.body.lockedModel || null; // null to unlock
+        await pool.query(
+          `UPDATE agent_conversations SET locked_model = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3`,
+          [lockVal, req.params.id, userId]
+        );
+        console.log(`[ModelLock] Conversation ${req.params.id} locked to: ${lockVal || 'AUTO'}`);
+      }
+
       if (Object.keys(updates).length > 0) {
         updates.updatedAt = new Date();
         await db
@@ -709,6 +720,25 @@ export function registerAgentRoutes(app: Express): void {
     let routedModel: string | null = null;
     let routeScore: number | null = null;
     let routeReason: string | null = null;
+
+    // ── Check for model lock on this conversation ────────────────────
+    if (activeAgent === "auto") {
+      try {
+        const { rows: lockRows } = await pool.query(
+          `SELECT locked_model FROM agent_conversations WHERE id = $1 AND user_id = $2`,
+          [conversationId, userId]
+        );
+        const lockedModel = lockRows[0]?.locked_model;
+        if (lockedModel) {
+          activeAgent = lockedModel;
+          routeReason = `Locked to ${lockedModel}`;
+          routeScore = -1;
+          console.log(`[ModelLock] Conversation ${conversationId} is locked to ${lockedModel}, skipping auto-router`);
+        }
+      } catch (err) {
+        console.warn("[ModelLock] Lock check failed, falling back to auto-route:", (err as any).message);
+      }
+    }
 
     // ── Auto-Router: classify and pick optimal model ─────────────────
     if (activeAgent === "auto") {

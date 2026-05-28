@@ -59,6 +59,7 @@ export default function IDELayout() {
   });
   const [activeAgentId, setActiveAgentId] = useState("opus");
   const [isAutoMode, setIsAutoMode] = useState(true);
+  const [lockedModel, setLockedModel] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingContent, setStreamingContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -732,6 +733,53 @@ export default function IDELayout() {
           </button>
           <button
             onClick={async () => {
+              if (!token) return;
+              try {
+                // Get all workspace files
+                const res = await fetch("/api/workspace/files?path=", {
+                  headers: { Authorization: `Bearer ${token}`, "x-convo-id": activeConvoId || "default" },
+                });
+                const data = await res.json();
+                const files = [];
+                for (const f of (data.files || [])) {
+                  if (f.isDirectory) continue;
+                  const fRes = await fetch(`/api/workspace/files?path=${encodeURIComponent(f.path)}`, {
+                    headers: { Authorization: `Bearer ${token}`, "x-convo-id": activeConvoId || "default" },
+                  });
+                  const fData = await fRes.json();
+                  files.push({ path: f.path, content: fData.content || fData.files?.[0]?.content || "" });
+                }
+                if (files.length === 0) { alert("No files to share"); return; }
+                // Create shared build
+                const shareRes = await fetch("/api/share", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ title: conversations.find((c: any) => c.id === activeConvoId)?.title || "My Build", files }),
+                });
+                const shareData = await shareRes.json();
+                if (shareData.shareUrl) {
+                  const url = `${window.location.origin}${shareData.shareUrl}`;
+                  await navigator.clipboard.writeText(url);
+                  alert(`✓ Share link copied!\n\n${url}`);
+                }
+              } catch (err: any) {
+                alert("Share failed: " + err.message);
+              }
+            }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "rgba(168, 85, 247, 0.12)",
+              border: "1px solid rgba(168, 85, 247, 0.25)",
+              color: "#c084fc",
+              padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+              cursor: "pointer", marginRight: 12, transition: "all 0.2s"
+            }}
+            title="Share this build with a public link"
+          >
+            🔗 Share Build
+          </button>
+          <button
+            onClick={async () => {
               try {
                 const res = await fetch("/api/workspace/export", {
                   headers: {
@@ -1040,7 +1088,13 @@ export default function IDELayout() {
 
             {isAutoMode ? (
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", lineHeight: 1.4, padding: "4px 8px" }}>
-                <strong>Auto Mode:</strong> Axiom will intelligently route your message to the most cost-effective and capable model (Mini → Sonnet → Gemini → Opus) based on complexity and attached files.
+                <strong>Auto Mode:</strong> Axiom routes your message to the optimal model based on complexity.
+                {lockedModel && (
+                  <div style={{ marginTop: 6, padding: "4px 8px", borderRadius: 6, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 10, color: "#fbbf24" }}>🔒 Locked to <strong>{lockedModel}</strong> for this conversation</span>
+                    <button onClick={async () => { setLockedModel(null); if (token && activeConvoId) { await fetch(`/api/agent/conversations/${activeConvoId}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ lockedModel: null }) }); } }} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 9, padding: "2px 6px" }}>Unlock</button>
+                  </div>
+                )}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1066,6 +1120,29 @@ export default function IDELayout() {
                       <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", lineHeight: 1.3 }}>
                         {a.description}
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newLock = lockedModel === a.id ? null : a.id;
+                          setLockedModel(newLock);
+                          if (token && activeConvoId) {
+                            fetch(`/api/agent/conversations/${activeConvoId}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ lockedModel: newLock }),
+                            });
+                          }
+                        }}
+                        style={{
+                          marginTop: 6, padding: "3px 8px", borderRadius: 4, fontSize: 9, fontWeight: 600,
+                          background: lockedModel === a.id ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.03)",
+                          border: `1px solid ${lockedModel === a.id ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.06)"}`,
+                          color: lockedModel === a.id ? "#fbbf24" : "rgba(255,255,255,0.3)",
+                          cursor: "pointer", fontFamily: "inherit",
+                        }}
+                      >
+                        {lockedModel === a.id ? "🔒 Locked for conversation" : "🔓 Lock for conversation"}
+                      </button>
                     </div>
                   );
                 })}
@@ -1080,9 +1157,12 @@ export default function IDELayout() {
               <button
                 key={c.id}
                 className={`ax-convo-item ${c.id === activeConvoId ? "ax-convo-item--active" : ""}`}
-                onClick={() => setActiveConvoId(c.id)}
+                onClick={() => {
+                  setActiveConvoId(c.id);
+                  setLockedModel(c.lockedModel || c.locked_model || null);
+                }}
               >
-                {c.title || "Untitled"}
+                {c.lockedModel || c.locked_model ? "🔒 " : ""}{c.title || "Untitled"}
               </button>
             ))}
           </div>

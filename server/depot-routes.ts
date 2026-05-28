@@ -457,5 +457,132 @@ router.get("/explore", async (_req: Request, res: Response) => {
     res.status(500).json({ error: err.message });
   }
 });
+// ════════════════════════════════════════════════
+// CLONE TO WORKSPACE
+// ════════════════════════════════════════════════
+
+router.post("/repos/:repoId/clone", async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+  const repoId = req.params.repoId;
+
+  try {
+    // Verify repo exists and is accessible (public or owned)
+    const { rows: repoRows } = await db.execute(sql`
+      SELECT id, name, slug FROM depot_repos
+      WHERE id = ${repoId} AND (user_id = ${userId} OR is_private = false)
+    `);
+    if (!repoRows[0]) return res.status(404).json({ error: "Repository not found" });
+
+    // Get all files from the repo
+    const { rows: files } = await db.execute(sql`
+      SELECT file_path, content, size_bytes FROM depot_files
+      WHERE repo_id = ${repoId} AND is_directory = false
+    `);
+
+    if (files.length === 0) return res.status(400).json({ error: "Repository has no files" });
+
+    // Insert each file into the user's workspace
+    const convoId = req.body.conversationId || "default";
+    let imported = 0;
+    for (const file of files) {
+      const f = file as any;
+      try {
+        await db.execute(sql`
+          INSERT INTO workspace_files (user_id, conversation_id, file_path, content, size_bytes)
+          VALUES (${userId}, ${convoId}, ${f.file_path}, ${f.content || ''}, ${f.size_bytes || 0})
+          ON CONFLICT (user_id, conversation_id, file_path) DO UPDATE SET
+            content = EXCLUDED.content,
+            size_bytes = EXCLUDED.size_bytes,
+            updated_at = NOW()
+        `);
+        imported++;
+      } catch (insertErr: any) {
+        console.warn(`[Depot Clone] Failed to import ${f.file_path}:`, insertErr.message);
+      }
+    }
+
+    // Log activity
+    const repo = repoRows[0] as any;
+    await db.execute(sql`
+      INSERT INTO depot_activity (repo_id, user_id, action, details)
+      VALUES (${repoId}, ${userId}, 'clone', ${`Cloned ${imported} files from ${repo.name} to workspace`})
+    `);
+
+    res.json({ success: true, imported, total: files.length, repoName: repo.name });
+  } catch (err: any) {
+    console.error("[Depot Clone] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════
+// SNAPSHOT DIFF
+// ════════════════════════════════════════════════
+
+router.get("/repos/:repoId/diff", async (req: Request, res: Response) => {
+  const { from, to } = req.query;
+  if (!from || !to) return res.status(400).json({ error: "from and to snapshot IDs required" });
+
+  try {
+    // Get files from both snapshots
+    const { rows: fromFiles } = await db.execute(sql`
+      SELECT file_path, content FROM depot_files
+      WHERE repo_id = ${req.params.repoId} AND snapshot_id = ${from as string}
+    `);
+    const { rows: toFiles } = await db.execute(sql`
+      SELECT file_path, content FROM depot_files
+      WHERE repo_id = ${req.params.repoId} AND snapshot_id = ${to as string}
+    `);
+
+    const fromMap = new Map((fromFiles as any[]).map(f => [f.file_path, f.content]));
+    const toMap = new Map((toFiles as any[]).map(f => [f.file_path, f.content]));
+
+    const changes: Array<{ path: string; type: "added" | "modified" | "deleted"; additions: number; deletions: number }> = [];
+
+    // Check for added/modified
+    for (const [path, content] of toMap) {
+      if (!fromMap.has(path)) {
+        changes.push({ path, type: "added", additions: (content as string).split("\n").length, deletions: 0 });
+      } else if (fromMap.get(path) !== content) {
+        const oldLines = (fromMap.get(path) as string).split("\n").length;
+        const newLines = (content as string).split("\n").length;
+        changes.push({ path, type: "modified", additions: Math.max(0, newLines - oldLines), deletions: Math.max(0, oldLines - newLines) });
+      }
+    }
+
+    // Check for deleted
+    for (const [path] of fromMap) {
+      if (!toMap.has(path)) {
+        changes.push({ path, type: "deleted", additions: 0, deletions: (fromMap.get(path) as string).split("\n").length });
+      }
+    }
+
+    res.json({ changes, fromSnapshot: from, toSnapshot: to });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════
+// README
+// ════════════════════════════════════════════════
+
+router.get("/repos/:repoId/readme", async (req: Request, res: Response) => {
+  try {
+    const { rows } = await db.execute(sql`
+      SELECT content FROM depot_files
+      WHERE repo_id = ${req.params.repoId}
+        AND LOWER(file_path) IN ('readme.md', 'README.md', 'Readme.md', '/readme.md', '/README.md')
+        AND is_directory = false
+      LIMIT 1
+    `);
+    if (!rows[0]) return res.json({ readme: null });
+    res.json({ readme: (rows[0] as any).content });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;
