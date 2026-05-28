@@ -7,10 +7,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
-import { ANTHROPIC_TOOLS, OPENAI_TOOLS, executeTool } from "./agent-tools.js";
+import { ANTHROPIC_TOOLS, OPENAI_TOOLS, executeTool, TOOLS_REQUIRING_APPROVAL } from "./agent-tools.js";
+import { randomUUID } from "crypto";
 
 export interface StreamChunk {
-  type: "text" | "usage" | "done" | "error" | "tool_call" | "tool_result";
+  type: "text" | "usage" | "done" | "error" | "tool_call" | "tool_result" | "approval_required";
   content?: string;
   inputTokens?: number;
   outputTokens?: number;
@@ -19,6 +20,26 @@ export interface StreamChunk {
   args?: Record<string, any>;
   result?: string;
   isError?: boolean;
+  approvalId?: string;
+}
+
+// Pending approval store — resolves/rejects tool execution
+interface PendingApproval {
+  resolve: (approved: boolean) => void;
+  tool: string;
+  args: Record<string, any>;
+  timeout: ReturnType<typeof setTimeout>;
+}
+
+export const pendingApprovals = new Map<string, PendingApproval>();
+
+export function resolveApproval(approvalId: string, approved: boolean): boolean {
+  const pending = pendingApprovals.get(approvalId);
+  if (!pending) return false;
+  clearTimeout(pending.timeout);
+  pending.resolve(approved);
+  pendingApprovals.delete(approvalId);
+  return true;
 }
 
 export interface ChatMessage {
@@ -34,6 +55,7 @@ export interface ProviderConfig {
   userId: string;
   userRole: string;
   signal?: AbortSignal;
+  trustMode?: boolean; // If true, skip approval prompts
 }
 
 const MAX_TOOL_ITERATIONS = 100;
@@ -122,14 +144,35 @@ export async function* streamAnthropic(
           const args = toolUse.input as Record<string, any>;
           yield { type: "tool_call", tool: toolUse.name, args };
 
-          const result = await executeTool(
-            toolUse.name,
-            args,
-            config.userId,
-            config.userRole
-          );
+          // Check if this tool requires approval
+          let shouldExecute = true;
+          if (TOOLS_REQUIRING_APPROVAL.has(toolUse.name) && !config.trustMode) {
+            const approvalId = randomUUID();
+            yield { type: "approval_required", tool: toolUse.name, args, approvalId };
 
-          const isError = result.startsWith("Error:");
+            // Wait for approval (60-second timeout)
+            shouldExecute = await new Promise<boolean>((resolve) => {
+              const timeout = setTimeout(() => {
+                pendingApprovals.delete(approvalId);
+                resolve(false); // Auto-reject on timeout
+              }, 60_000);
+              pendingApprovals.set(approvalId, { resolve, tool: toolUse.name, args, timeout });
+            });
+          }
+
+          let result: string;
+          if (shouldExecute) {
+            result = await executeTool(
+              toolUse.name,
+              args,
+              config.userId,
+              config.userRole
+            );
+          } else {
+            result = "User rejected this action. Do not retry — ask the user what they'd like instead.";
+          }
+
+          const isError = result.startsWith("Error:") || !shouldExecute;
           yield { type: "tool_result", tool: toolUse.name, result, isError };
 
           toolResults.push({
@@ -257,8 +300,29 @@ export async function* streamOpenAI(
           const { name, args } = toolCalls[i];
           yield { type: "tool_call", tool: name, args };
 
-          const result = await executeTool(name, args, config.userId, config.userRole);
-          const isError = result.startsWith("Error:");
+          // Check if this tool requires approval
+          let shouldExecute = true;
+          if (TOOLS_REQUIRING_APPROVAL.has(name) && !config.trustMode) {
+            const approvalId = randomUUID();
+            yield { type: "approval_required", tool: name, args, approvalId };
+
+            shouldExecute = await new Promise<boolean>((resolve) => {
+              const timeout = setTimeout(() => {
+                pendingApprovals.delete(approvalId);
+                resolve(false);
+              }, 60_000);
+              pendingApprovals.set(approvalId, { resolve, tool: name, args, timeout });
+            });
+          }
+
+          let result: string;
+          if (shouldExecute) {
+            result = await executeTool(name, args, config.userId, config.userRole);
+          } else {
+            result = "User rejected this action. Do not retry — ask the user what they'd like instead.";
+          }
+
+          const isError = result.startsWith("Error:") || !shouldExecute;
           yield { type: "tool_result", tool: name, result, isError };
 
           convoMessages.push({

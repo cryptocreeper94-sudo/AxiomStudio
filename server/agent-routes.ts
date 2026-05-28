@@ -19,7 +19,7 @@ import {
   aiCreditTransactions,
 } from "../shared/schema.js";
 import { AGENT_COSTS } from "./tiers.js";
-import { getProviderStream, type ChatMessage } from "./agent-providers.js";
+import { getProviderStream, type ChatMessage, resolveApproval } from "./agent-providers.js";
 import { AGENT_PROMPTS, AGENT_SEEDS } from "./agent-prompts.js";
 import { classifyMessage, ROUTE_MODELS } from "./auto-router.js";
 import { verifyFirebaseToken } from "./firebase-admin.js";
@@ -626,6 +626,33 @@ export function registerAgentRoutes(app: Express): void {
     }
   );
 
+  // ── Tool Approval ──────────────────────────────────────────────────
+
+  app.post(
+    "/api/agent/approve/:approvalId",
+    async (req: Request, res: Response) => {
+      const userId = requireAuth(req, res);
+      if (!userId) return;
+
+      const { approvalId } = req.params;
+      const { approved } = req.body;
+
+      if (typeof approved !== "boolean") {
+        res.status(400).json({ error: "'approved' boolean required" });
+        return;
+      }
+
+      const resolved = resolveApproval(approvalId, approved);
+      if (!resolved) {
+        res.status(404).json({ error: "Approval not found or already resolved" });
+        return;
+      }
+
+      console.log(`[Approval] ${approvalId} => ${approved ? "ACCEPTED" : "REJECTED"} by ${userId}`);
+      res.json({ success: true, approved });
+    }
+  );
+
   // ── Update conversation ────────────────────────────────────────────
   app.patch(
     "/api/agent/conversations/:id",
@@ -854,6 +881,9 @@ export function registerAgentRoutes(app: Express): void {
         } else if (chunk.type === "tool_result") {
           console.log(`[Chat] ✓ Tool result: ${chunk.tool} → ${String(chunk.result).slice(0, 80)}`);
           res.write(`data: ${JSON.stringify({ type: "tool_result", tool: chunk.tool, result: chunk.result, isError: chunk.isError })}\n\n`);
+        } else if (chunk.type === "approval_required") {
+          console.log(`[Chat] ⏳ Approval required: ${chunk.tool} — waiting for user (${chunk.approvalId})`);
+          res.write(`data: ${JSON.stringify({ type: "approval_required", tool: chunk.tool, args: chunk.args, approvalId: chunk.approvalId })}\n\n`);
         } else if (chunk.type === "error") {
           res.write(`data: ${JSON.stringify({ type: "error", error: chunk.error })}\n\n`);
         } else if (chunk.type === "done") {

@@ -15,6 +15,7 @@ import { marked } from "marked";
 import StarterHub, { type StarterConfig } from "./StarterHub";
 import ThinkingIndicator from "./ThinkingIndicator";
 import ProgressTracker, { type ChecklistItem } from "./ProgressTracker";
+import ApprovalCard from "./ApprovalCard";
 
 interface Message {
   id: string;
@@ -48,7 +49,8 @@ interface Props {
   activeFileName?: string;
   openFiles?: FileContextItem[];
   workspaceFiles?: FileContextItem[];
-  toolActivity?: Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean }>;
+  toolActivity?: Array<{ tool: string; args?: any; result?: string; isError?: boolean; done: boolean; approvalId?: string; needsApproval?: boolean }>;
+  token?: string;
   contextFiles?: string[];
   activeAgentId?: string;
   agents?: any[];
@@ -438,7 +440,7 @@ function FileContextBar({ files, selected, onToggle, onClear }: {
 export default function ChatView({
   messages, streamingContent, isStreaming, agentName = "Axiom", agentColor = "#06b6d4", agentModel,
   routeInfo, onSend, onRetry, onStop, onApplyCode, activeFileName, openFiles = [], workspaceFiles = [],
-  toolActivity = [], onFileUpload, onSelectStarter, activeStarter, progressChecklist, onClearStarter,
+  toolActivity = [], onFileUpload, onSelectStarter, activeStarter, progressChecklist, onClearStarter, token,
 }: Props) {
   const [trackerCollapsed, setTrackerCollapsed] = useState(false);
   const [input, setInput] = useState("");
@@ -726,6 +728,14 @@ export default function ChatView({
                         }}>
                           {t.result.slice(0, 200)}{t.result.length > 200 ? "…" : ""}
                         </div>
+                      )}
+                      {t.needsApproval && t.approvalId && token && (
+                        <ApprovalCard
+                          tool={t.tool}
+                          args={t.args || {}}
+                          approvalId={t.approvalId}
+                          token={token}
+                        />
                       )}
                     </div>
                   </div>

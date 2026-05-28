@@ -17,9 +17,10 @@ import { type ChecklistItem } from "./ProgressTracker";
 import LoginScreen from "./LoginScreen";
 import CreditStore from "./CreditStore";
 import SettingsView from "./SettingsView";
-import ProfileBadge from "./ProfileBadge";
 import LibraryPanel from "./LibraryPanel";
 import ConversationHistory from "./ConversationHistory";
+import ArtifactPanel from "./ArtifactPanel";
+import ProfileBadge from "./ProfileBadge";
 import DashboardHome from "./DashboardHome";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import DepotPushModal from "./DepotPushModal";
@@ -427,10 +428,16 @@ export default function IDELayout() {
                 pendingArtifactPathRef.current = parsed.args.TargetFile;
               }
             }
+            if (parsed.type === "approval_required") {
+              setToolActivity(prev => [...prev, {
+                tool: parsed.tool, args: parsed.args, done: false,
+                approvalId: parsed.approvalId, needsApproval: true,
+              }]);
+            }
             if (parsed.type === "tool_result") {
               setToolActivity(prev => prev.map((t, i) =>
-                i === prev.length - 1 && t.tool === parsed.tool
-                  ? { ...t, result: parsed.result, isError: parsed.isError, done: true }
+                (i === prev.length - 1 || (t.tool === parsed.tool && !t.done))
+                  ? { ...t, result: parsed.result, isError: parsed.isError, done: true, needsApproval: false }
                   : t
               ));
               if (pendingArtifactPathRef.current && !parsed.isError && (parsed.tool === "write_to_file" || parsed.tool === "write_file" || parsed.tool === "replace_file_content")) {
@@ -839,6 +846,7 @@ export default function IDELayout() {
             )}
             {sidePanel === "settings" && <SettingsView credits={creditData?.credits ?? 0} onOpenCredits={() => setShowCreditStore(true)} />}
             {sidePanel === "library" && <LibraryPanel token={token} activeConvoId={activeConvoId} onOpenFile={handleOpenFile} />}
+            {sidePanel === "artifacts" && <ArtifactPanel token={token} onOpenFile={handleOpenFile} />}
             {sidePanel === "history" && (
               <ConversationHistory
                 conversations={conversations}
@@ -1097,6 +1105,7 @@ export default function IDELayout() {
             activeFileName={activeFilePath || undefined}
             openFiles={openFiles.map(f => ({ path: f.path, name: f.name }))}
             toolActivity={toolActivity}
+            token={token}
             activeStarter={activeStarter}
             progressChecklist={progressChecklist}
             onSelectStarter={(starter) => {

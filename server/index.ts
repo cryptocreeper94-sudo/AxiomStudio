@@ -19,6 +19,7 @@ import analyticsRoutes from "./analytics-routes.js";
 import workspaceRoutes from "./workspace-routes.js";
 import depotRoutes from "./depot-routes.js";
 import waitlistRoutes from "./waitlist-routes.js";
+import historyRoutes from "./history-routes.js";
 import { setupTerminalWebSocket } from "./pty.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -118,6 +119,8 @@ app.use("/api/depot", depotRoutes);
 console.log("[Axiom Studio] Depot routes registered");
 app.use("/api/waitlist", waitlistRoutes);
 console.log("[Axiom Studio] Waitlist routes registered");
+app.use("/api/history", historyRoutes);
+console.log("[Axiom Studio] File history routes registered");
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({

@@ -5,10 +5,10 @@
  */
 import {
   FolderTree, Search, GitBranch, Bot, BarChart3,
-  Settings, Terminal as TermIcon, Library, Clock,
+  Settings, Terminal as TermIcon, Library, Clock, Sparkles,
 } from "lucide-react";
 
-export type SidePanel = "files" | "search" | "git" | "library" | "history" | "ai" | "analytics" | "settings" | null;
+export type SidePanel = "files" | "search" | "git" | "library" | "history" | "artifacts" | "ai" | "analytics" | "settings" | null;
 
 interface Props {
   activePanel: SidePanel;
@@ -23,6 +23,7 @@ const ITEMS: { id: SidePanel; icon: typeof FolderTree; label: string; ownerOnly?
   { id: "git", icon: GitBranch, label: "Source Control" },
   { id: "library", icon: Library, label: "Library" },
   { id: "history", icon: Clock, label: "History" },
+  { id: "artifacts", icon: Sparkles, label: "Artifacts" },
   { id: "ai", icon: Bot, label: "AI Assistant" },
   { id: "analytics", icon: BarChart3, label: "Analytics", ownerOnly: true },
   { id: "settings", icon: Settings, label: "Settings" },

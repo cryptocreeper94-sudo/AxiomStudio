@@ -156,3 +156,17 @@ export const workspaceFiles = pgTable("workspace_files", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// File version history for undo/revert
+export const workspaceFileHistory = pgTable("workspace_file_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  filePath: text("file_path").notNull(),
+  content: text("content").notNull(),
+  action: text("action").notNull(), // "write" | "delete" | "revert"
+  agentId: text("agent_id"),
+  conversationId: text("conversation_id"),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+

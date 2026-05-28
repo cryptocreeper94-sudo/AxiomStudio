@@ -14,8 +14,9 @@ import { join, relative, extname } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { db } from "./db.js";
-import { workspaceFiles } from "../shared/schema.js";
+import { workspaceFiles, workspaceFileHistory } from "../shared/schema.js";
 import { eq, and, like, ilike, sql } from "drizzle-orm";
+import { computeDiff, compactDiff } from "./diff-utils.js";
 
 const execAsync = promisify(exec);
 
@@ -177,7 +178,26 @@ export const ANTHROPIC_TOOLS: any[] = [
       required: ["path"],
     },
   },
+  {
+    name: "delegate_task",
+    description: "Delegate a subtask to another AI agent. The subagent runs independently with access to the same workspace, then returns its result. Use for research, boilerplate generation, code review, or parallel work. The subagent has a 2-minute timeout and max 20 tool iterations.",
+    input_schema: {
+      type: "object",
+      properties: {
+        task: { type: "string", description: "Clear description of the subtask for the subagent to complete" },
+        agent: {
+          type: "string",
+          enum: ["sonnet", "mini", "gemini"],
+          description: "Which agent to delegate to. 'sonnet' for code tasks, 'mini' for simple Q&A, 'gemini' for large context analysis",
+        },
+      },
+      required: ["task", "agent"],
+    },
+  },
 ];
+
+// Tools that require user approval before execution
+export const TOOLS_REQUIRING_APPROVAL = new Set(["write_file", "delete_file", "run_command"]);
 
 // OpenAI function-calling format (wraps Anthropic defs)
 export const OPENAI_TOOLS: any[] = ANTHROPIC_TOOLS.map((t) => ({
@@ -225,6 +245,8 @@ export async function executeTool(
         return await toolSearchWeb(args.query, args.num_results);
       case "delete_file":
         return await toolDeleteFile(args.path, userId);
+      case "delegate_task":
+        return await toolDelegateTask(args.task, args.agent, userId, userRole);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -288,16 +310,47 @@ async function toolWriteFile(
     }
   }
 
-  // Upsert the file
-  const existing = await db
-    .select({ id: workspaceFiles.id })
+  // Read existing content for history snapshot + diff
+  const existingRows = await db
+    .select({ id: workspaceFiles.id, content: workspaceFiles.content })
     .from(workspaceFiles)
     .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
     .limit(1);
 
+  const oldContent = existingRows.length ? (existingRows[0].content ?? "") : null;
+  let diffSummary = "";
+
+  // Snapshot old content into history before overwriting
+  if (oldContent !== null) {
+    await db.insert(workspaceFileHistory).values({
+      userId,
+      filePath: normalized,
+      content: oldContent,
+      action: "write",
+      sizeBytes: Buffer.byteLength(oldContent, "utf8"),
+    });
+
+    // Compute diff for the response
+    const diff = computeDiff(oldContent, content);
+    diffSummary = ` (${diff.summary})`;
+
+    // Prune old history — keep last 50 versions per file
+    try {
+      await db.execute(sql`
+        DELETE FROM workspace_file_history
+        WHERE user_id = ${userId} AND file_path = ${normalized}
+        AND id NOT IN (
+          SELECT id FROM workspace_file_history
+          WHERE user_id = ${userId} AND file_path = ${normalized}
+          ORDER BY created_at DESC LIMIT 50
+        )
+      `);
+    } catch { /* best effort */ }
+  }
+
   const sizeBytes = Buffer.byteLength(content, "utf8");
 
-  if (existing.length) {
+  if (existingRows.length) {
     await db
       .update(workspaceFiles)
       .set({ content, sizeBytes, updatedAt: new Date() })
@@ -312,7 +365,7 @@ async function toolWriteFile(
     });
   }
 
-  return `Successfully wrote ${sizeBytes} bytes to "${normalized}"`;
+  return `Successfully wrote ${sizeBytes} bytes to "${normalized}"${diffSummary}`;
 }
 
 // ─── list_directory ────────────────────────────────────────────────────
@@ -790,11 +843,54 @@ async function toolDeleteFile(filePath: string, userId: string): Promise<string>
   if (!filePath) return "Error: path is required";
   const normalized = normalizePath(filePath);
 
+  // Snapshot files before deleting for undo support
+  const filesToDelete = await db
+    .select({ filePath: workspaceFiles.filePath, content: workspaceFiles.content, isDirectory: workspaceFiles.isDirectory })
+    .from(workspaceFiles)
+    .where(and(
+      eq(workspaceFiles.userId, userId),
+      eq(workspaceFiles.filePath, normalized),
+    ));
+
+  for (const f of filesToDelete) {
+    if (!f.isDirectory) {
+      await db.insert(workspaceFileHistory).values({
+        userId,
+        filePath: f.filePath,
+        content: f.content ?? "",
+        action: "delete",
+        sizeBytes: Buffer.byteLength(f.content ?? "", "utf8"),
+      });
+    }
+  }
+
   // Delete the file and any children (if directory)
   const pattern = `${normalized}/%`;
-  const result = await db.execute(
+  await db.execute(
     sql`DELETE FROM workspace_files WHERE user_id = ${userId} AND (file_path = ${normalized} OR file_path LIKE ${pattern})`
   );
 
   return `Deleted "${normalized}" from workspace.`;
 }
+
+// ─── delegate_task (subagent) ─────────────────────────────────────────
+
+async function toolDelegateTask(
+  task: string,
+  agentId: string,
+  userId: string,
+  userRole: string
+): Promise<string> {
+  if (!task) return "Error: task description is required";
+  if (!agentId) return "Error: agent is required (sonnet, mini, or gemini)";
+
+  try {
+    // Dynamic import to avoid circular dependency
+    const { executeSubagent } = await import("./subagent-executor.js");
+    const result = await executeSubagent(task, agentId, userId, userRole);
+    return result;
+  } catch (err: any) {
+    return `Error delegating task: ${err.message}`;
+  }
+}
+

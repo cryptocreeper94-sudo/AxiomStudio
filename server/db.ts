@@ -126,6 +126,20 @@ pool.query("SELECT 1").then(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_waitlist_email ON axiom_waitlist(email);
 
+      -- File version history for undo/revert
+      CREATE TABLE IF NOT EXISTS workspace_file_history (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        action TEXT NOT NULL DEFAULT 'write',
+        agent_id TEXT,
+        conversation_id TEXT,
+        size_bytes INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_file_history_user_path ON workspace_file_history(user_id, file_path, created_at DESC);
+
       -- Force upgrade specific admin accounts to owner
       UPDATE chat_users SET role = 'owner' WHERE email = 'cryptocreeper94@gmail.com';
 
