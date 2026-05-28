@@ -99,6 +99,23 @@ export function useAuth(): AuthState {
     }
   }, []);
 
+  // ── Common response handler ──
+  const handleAuthResponse = useCallback((data: any, persist = true) => {
+    if (data.success && data.token) {
+      setToken(data.token);
+      setUser(data.user);
+      if (persist) {
+        setTokenWithExpiry(data.token);
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      } else {
+        sessionStorage.setItem(STORAGE_KEY, data.token);
+        sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      }
+      return null;
+    }
+    return data.error || "Authentication failed";
+  }, []);
+
   // ── Mobile App Bridge: auto-authenticate when loaded inside the native APK ──
   useEffect(() => {
     const w = window as any;
@@ -132,23 +149,6 @@ export function useAuth(): AuthState {
     window.addEventListener("axiom-mobile-auth", handler);
     return () => window.removeEventListener("axiom-mobile-auth", handler);
   }, [handleAuthResponse, token]);
-
-  // ── Common response handler ──
-  const handleAuthResponse = useCallback((data: any, persist = true) => {
-    if (data.success && data.token) {
-      setToken(data.token);
-      setUser(data.user);
-      if (persist) {
-        setTokenWithExpiry(data.token);
-        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-      } else {
-        sessionStorage.setItem(STORAGE_KEY, data.token);
-        sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
-      }
-      return null;
-    }
-    return data.error || "Authentication failed";
-  }, []);
 
   // ── Legacy username/password login ──
   const login = useCallback(async (email: string, password: string, remember = true): Promise<string | null> => {

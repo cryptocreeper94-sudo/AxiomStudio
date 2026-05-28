@@ -71,12 +71,12 @@ export default function MarkdownViewer({ content }: MarkdownViewerProps) {
                 return child.replace(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/g, '');
               }
               // If it's a <p> element, we need to clean its children too
-              if (React.isValidElement(child) && child.props.children) {
-                const cleanedGrandchildren = React.Children.map(child.props.children, gc => {
+              if (React.isValidElement(child) && (child.props as any).children) {
+                const cleanedGrandchildren = React.Children.map((child.props as any).children, gc => {
                   if (typeof gc === 'string') return gc.replace(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/g, '');
                   return gc;
                 });
-                return React.cloneElement(child, { ...child.props, children: cleanedGrandchildren });
+                return React.cloneElement(child as React.ReactElement<any>, { ...(child.props as any), children: cleanedGrandchildren });
               }
               return child;
             });

@@ -35,7 +35,7 @@ interface Message {
 }
 
 export default function AgentPanel() {
-  const { token, user, login, signup, logout } = useAuth();
+  const { token, user, login, signup, logout, loginWithGoogle, loginWithGitHub } = useAuth();
   const queryClient = useQueryClient();
   const [activeConvoId, setActiveConvoId] = useState<string | null>(() => {
     try { return localStorage.getItem('axiom_active_convo') || null; } catch { return null; }
@@ -274,7 +274,7 @@ export default function AgentPanel() {
 
   // Not logged in
   if (!token) {
-    return <LoginScreen onLogin={login} onSignup={signup} />;
+    return <LoginScreen onLogin={login} onSignup={signup} onGoogleLogin={loginWithGoogle} onGitHubLogin={loginWithGitHub} />;
   }
 
   if (showSmsOptIn) {

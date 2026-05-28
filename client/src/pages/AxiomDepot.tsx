@@ -142,7 +142,6 @@ function CreateRepoModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
   const [desc, setDesc] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleCreate = async () => {
     if (!name.trim()) return alert("Name required");
@@ -272,7 +271,7 @@ function RepoCard({ repo }: { repo: Repo }) {
 
 // ── Main Component ──
 export default function AxiomDepot() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [repos, setRepos] = useState<Repo[]>([]);
   const [stats, setStats] = useState<Stats>({ repos: 0, snapshots: 0, totalSizeBytes: 0, starsReceived: 0 });
   const [contributions, setContributions] = useState<ContributionDay[]>([]);
@@ -324,7 +323,7 @@ export default function AxiomDepot() {
   }, []);
 
   // ── Unauthenticated Landing ──
-  if (!isLoggedIn && !authLoading) {
+  if (!isLoggedIn) {
     return (
       <div className="depot-landing">
         <nav className="depot-nav">

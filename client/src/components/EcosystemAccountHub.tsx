@@ -261,7 +261,7 @@ const S = {
   carouselArrow: (disabled: boolean) => ({
     background: 'none', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 6,
     width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: (disabled ? 'default' : 'pointer') as const, padding: 0, outline: 'none',
+    cursor: disabled ? 'default' : 'pointer', padding: 0, outline: 'none',
     color: disabled ? 'rgba(255,255,255,0.12)' : '#67e8f9', fontSize: 14, lineHeight: 1,
     opacity: disabled ? 0.4 : 1, transition: 'all 0.15s',
   }),

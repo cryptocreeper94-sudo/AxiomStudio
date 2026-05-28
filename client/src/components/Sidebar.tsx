@@ -39,7 +39,7 @@ interface Props {
 
 export default function Sidebar({
   conversations, agents, activeConvoId, activeAgentId, credits,
-  onSelectConvo, onNewChat, onDeleteConvo, onSelectAgent,
+  onSelectConvo, onNewChat, onDeleteConvo, onSelectAgent, sidebarOpen,
 }: Props) {
   const [agentOpen, setAgentOpen] = useState(false);
   const isAuto = activeAgentId === "auto";

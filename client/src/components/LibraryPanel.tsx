@@ -5,7 +5,7 @@
  * 
  * DarkWave Studios LLC — Copyright 2026
  */
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Search, Download, Share2, Copy, Trash2, FolderOpen,
   FileText, FileCode, Image, FileJson, File, Database,
@@ -292,7 +292,7 @@ export default function LibraryPanel({ token, activeConvoId, onOpenFile }: Props
   }, [token, activeConvoId, showToast]);
 
   // ── File Tree view (like Replit's "File tree" toggle) ──
-  const renderTreeNode = (node: FileNode, depth: number = 0): JSX.Element | null => {
+  const renderTreeNode = (node: FileNode, depth: number = 0): React.ReactElement | null => {
     if (node.type === "file") {
       const { Icon, color } = getFileIcon(node.name);
       return (
