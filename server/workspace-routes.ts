@@ -421,4 +421,42 @@ router.get("/serve/*filepath", requireAuth, async (req: any, res: any) => {
   }
 });
 
+// GET /api/workspace/search?q=... — Search workspace files
+router.get("/search", requireAuth, async (req: any, res: any) => {
+  const query = String(req.query.q || "").trim();
+  if (!query) { res.json({ results: [] }); return; }
+
+  const convoId = getConvoId(req);
+  const prefix = `${convoId}/`;
+
+  try {
+    const files = await db.select({
+      filePath: workspaceFiles.filePath,
+      content: workspaceFiles.content,
+    }).from(workspaceFiles).where(
+      and(
+        eq(workspaceFiles.userId, req.uid),
+        eq(workspaceFiles.isDirectory, false),
+        like(workspaceFiles.filePath, `${prefix}%`),
+        sql`LOWER(${workspaceFiles.content}) LIKE LOWER(${'%' + query + '%'})`
+      )
+    ).limit(20);
+
+    const results = files.map(file => {
+      const displayPath = file.filePath.substring(prefix.length);
+      const lines = (file.content || '').split('\n');
+      const matches = lines
+        .map((line, i) => ({ line: i + 1, text: line.trim() }))
+        .filter(m => m.text.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 5);
+      return { path: displayPath, matches };
+    });
+
+    res.json({ results });
+  } catch (err: any) {
+    res.json({ results: [], error: err.message });
+  }
+});
+
 export default router;
+

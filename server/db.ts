@@ -114,6 +114,18 @@ pool.query("SELECT 1").then(async () => {
       );
       CREATE INDEX IF NOT EXISTS idx_whitelist_email ON ecosystem_whitelist(email);
 
+      -- Waitlist for early access
+      CREATE TABLE IF NOT EXISTS axiom_waitlist (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT NOT NULL UNIQUE,
+        name TEXT,
+        source TEXT DEFAULT 'landing_page',
+        position INTEGER NOT NULL DEFAULT 0,
+        notified BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_waitlist_email ON axiom_waitlist(email);
+
       -- Force upgrade specific admin accounts to owner
       UPDATE chat_users SET role = 'owner' WHERE email = 'cryptocreeper94@gmail.com';
 

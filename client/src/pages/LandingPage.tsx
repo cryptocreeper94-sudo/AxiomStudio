@@ -132,6 +132,11 @@ export default function LandingPage() {
   const [agentIdx, setAgentIdx] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistName, setWaitlistName] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<{success: boolean; message: string; position?: number} | null>(null);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistCount, setWaitlistCount] = useState(0);
 
   // Detect mobile
   useEffect(() => {
@@ -182,6 +187,35 @@ export default function LandingPage() {
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch waitlist count
+  useEffect(() => {
+    fetch("/api/waitlist/count").then(r => r.json()).then(d => setWaitlistCount(d.count || 0)).catch(() => {});
+  }, []);
+
+  const submitWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail.trim()) return;
+    setWaitlistSubmitting(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: waitlistEmail.trim(), name: waitlistName.trim(), source: "landing_page" }),
+      });
+      const data = await res.json();
+      setWaitlistStatus(data);
+      if (data.success) {
+        setWaitlistEmail("");
+        setWaitlistName("");
+        setWaitlistCount(prev => prev + 1);
+      }
+    } catch {
+      setWaitlistStatus({ success: false, message: "Network error. Please try again." });
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
 
   const copyCmd = () => {
     navigator.clipboard.writeText("npx axiom-studio");
@@ -269,8 +303,8 @@ export default function LandingPage() {
           </p>
 
           <div className="hero-ctas">
-            <a href="/ide" className="cta-primary">
-              {isMobile ? "Open Cloud IDE" : "Start Free"} <ArrowRight className="w-4 h-4" />
+            <a href="#waitlist" className="cta-primary">
+              {isMobile ? "Join Waitlist" : "Join Waitlist"} <ArrowRight className="w-4 h-4" />
             </a>
             {!isMobile && (
               <a href="#install" className="cta-secondary">
@@ -316,19 +350,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Free Credits Banner ── */}
-      <section className="free-credits-banner">
-        <div className="credits-banner-content">
-          <div className="credits-banner-icon">
-            <Sparkles className="w-6 h-6" />
+      {/* ── Early Access Waitlist ── */}
+      <section className="waitlist-section" id="waitlist">
+        <div className="waitlist-container">
+          <div className="waitlist-content">
+            <div className="waitlist-badge">
+              <Zap className="w-4 h-4" />
+              {waitlistCount > 0 ? `${waitlistCount} developers signed up` : "Launching June 23, 2026"}
+            </div>
+            <h2 className="waitlist-title">Get Early Access</h2>
+            <p className="waitlist-sub">
+              The first 500 signups get access on launch day — June 23, 2026.
+              Everyone gets <strong>50 free credits</strong> to start building immediately.
+            </p>
+
+            {waitlistStatus?.success ? (
+              <div className="waitlist-success">
+                <div className="waitlist-check">✓</div>
+                <p>{waitlistStatus.message}</p>
+              </div>
+            ) : (
+              <form className="waitlist-form" onSubmit={submitWaitlist}>
+                <div className="waitlist-inputs">
+                  <input
+                    type="text"
+                    placeholder="Your name (optional)"
+                    value={waitlistName}
+                    onChange={e => setWaitlistName(e.target.value)}
+                    className="waitlist-input"
+                  />
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={waitlistEmail}
+                    onChange={e => setWaitlistEmail(e.target.value)}
+                    className="waitlist-input waitlist-email"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="waitlist-btn"
+                  disabled={waitlistSubmitting || !waitlistEmail.trim()}
+                >
+                  {waitlistSubmitting ? "Joining..." : "Join the Waitlist"}
+                  {!waitlistSubmitting && <ArrowRight className="w-4 h-4" />}
+                </button>
+                {waitlistStatus && !waitlistStatus.success && (
+                  <p className="waitlist-error">{waitlistStatus.message}</p>
+                )}
+              </form>
+            )}
           </div>
-          <div className="credits-banner-text">
-            <h3>Get 50 Autonomous Task Credits Free</h3>
-            <p>1 Credit = 1 Full Agent Execution. No token-bloat. 50 credits covers 50 complete coding tasks with Axiom Quick (Sonnet), or 16 massive architectural tasks with Axiom (Opus 4.7). Basic Q&A is always free.</p>
-          </div>
-          <a href="/ide" className="credits-banner-cta">
-            Claim Free Credits <ArrowRight className="w-4 h-4" />
-          </a>
         </div>
       </section>
 

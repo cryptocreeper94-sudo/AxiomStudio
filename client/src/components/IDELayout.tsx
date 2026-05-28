@@ -785,9 +785,50 @@ export default function IDELayout() {
           <div className="ax-side-panel" style={{ width: sidePanelWidth, minWidth: 180, maxWidth: 500 }}>
             {sidePanel === "files" && <FileExplorer token={token} activeConvoId={activeConvoId} onOpenFile={handleOpenFile} />}
             {sidePanel === "search" && (
-              <div className="ax-panel-placeholder">
+              <div className="ax-panel-placeholder" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <div className="ax-fe-header"><span className="ax-fe-title">SEARCH</span></div>
-                <div style={{ padding: 16, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Search across workspace (coming soon)</div>
+                <div style={{ padding: '8px 12px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search in workspace... (Enter to search)"
+                    style={{
+                      width: '100%', padding: '8px 12px', borderRadius: 6,
+                      border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)',
+                      color: '#fff', fontSize: 12, fontFamily: 'inherit', outline: 'none',
+                      boxSizing: 'border-box' as const,
+                    }}
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter') {
+                        const query = (e.target as HTMLInputElement).value.trim();
+                        if (!query || !token) return;
+                        try {
+                          const res = await fetch(`/api/workspace/search?q=${encodeURIComponent(query)}`, {
+                            headers: { Authorization: `Bearer ${token}`, 'x-convo-id': activeConvoId || 'default' },
+                          });
+                          const data = await res.json();
+                          const resultEl = document.getElementById('ax-search-results');
+                          if (resultEl) {
+                            if (data.results?.length > 0) {
+                              resultEl.innerHTML = data.results.map((r: any) =>
+                                `<div style="padding:6px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px">`
+                                + `<div style="color:#06b6d4;font-weight:600;margin-bottom:2px">📄 ${r.path}</div>`
+                                + (r.matches ? r.matches.slice(0,3).map((m: any) =>
+                                  `<div style="color:rgba(255,255,255,0.5);font-family:'JetBrains Mono',monospace;font-size:10px;padding-left:8px">L${m.line}: ${(m.text || '').slice(0,80)}</div>`
+                                ).join('') : '')
+                                + `</div>`
+                              ).join('');
+                            } else {
+                              resultEl.innerHTML = '<div style="padding:16px;font-size:12px;color:rgba(255,255,255,0.3);text-align:center">No results found</div>';
+                            }
+                          }
+                        } catch (err) {
+                          console.error('Search error:', err);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <div id="ax-search-results" style={{ flex: 1, overflow: 'auto', fontSize: 12 }} />
               </div>
             )}
             {sidePanel === "git" && (
@@ -927,8 +968,29 @@ export default function IDELayout() {
                 </div>
               )}
               {bottomTab === 'output' && (
-                <div style={{ padding: 16, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: "'JetBrains Mono', monospace" }}>
-                  Build output will appear here
+                <div style={{ padding: 8, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", overflow: 'auto', height: '100%' }}>
+                  {toolActivity.length === 0 ? (
+                    <div style={{ padding: 16, color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
+                      Agent tool activity will appear here when the AI uses tools
+                    </div>
+                  ) : (
+                    toolActivity.map((t: any, i: number) => (
+                      <div key={i} style={{
+                        padding: '4px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        color: t.isError ? '#ef4444' : t.done ? 'rgba(255,255,255,0.5)' : '#06b6d4',
+                      }}>
+                        <span style={{ color: '#06b6d4', fontWeight: 600 }}>{t.done ? '✓' : '↻'}</span>{' '}
+                        <span style={{ color: '#e2e8f0' }}>{t.tool}</span>
+                        {t.args?.path && <span style={{ color: 'rgba(255,255,255,0.3)' }}> — {t.args.path}</span>}
+                        {t.args?.command && <span style={{ color: 'rgba(255,255,255,0.3)' }}> — {String(t.args.command).slice(0,60)}</span>}
+                        {t.result && t.done && (
+                          <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, marginTop: 2, paddingLeft: 16, whiteSpace: 'pre-wrap', maxHeight: 60, overflow: 'hidden' }}>
+                            {String(t.result).slice(0, 200)}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>

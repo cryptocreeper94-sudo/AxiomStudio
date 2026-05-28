@@ -405,9 +405,30 @@ async function toolSearchFiles(
 async function toolRunCommand(command: string, cwd?: string): Promise<string> {
   if (!command) return "Error: command is required";
 
-  const blocked = /\b(rm\s+-rf\s+\/|format\s+[a-z]:|shutdown|reboot|mkfs|dd\s+if=)\b/i;
-  if (blocked.test(command)) {
-    return `Error: Command blocked for safety: "${command}"`;
+  // Whitelist of safe command prefixes
+  const ALLOWED_COMMANDS = [
+    'npm', 'npx', 'node', 'git', 'ls', 'dir', 'cat', 'type', 'echo',
+    'mkdir', 'cp', 'mv', 'touch', 'head', 'tail', 'grep', 'find',
+    'pwd', 'cd', 'which', 'where', 'tsc', 'tsx', 'python', 'python3',
+    'pip', 'pip3', 'cargo', 'rustc', 'go', 'java', 'javac', 'make',
+    'cmake', 'gcc', 'g++', 'clang', 'dotnet', 'ruby', 'perl',
+    'curl', 'wget', 'tar', 'unzip', 'zip',
+    'docker', 'docker-compose',
+    'tree', 'wc', 'sort', 'uniq', 'diff', 'patch', 'sed', 'awk',
+    'chmod', 'chown', 'ln',
+    'sass', 'less', 'prettier', 'eslint', 'vitest', 'jest', 'mocha',
+    'vite', 'webpack', 'rollup', 'esbuild', 'bun', 'deno',
+  ];
+
+  const firstWord = command.trim().split(/\s+/)[0].toLowerCase();
+  if (!ALLOWED_COMMANDS.includes(firstWord)) {
+    return `Error: Command "${firstWord}" is not in the allowed command list. Allowed: ${ALLOWED_COMMANDS.slice(0, 15).join(', ')}...`;
+  }
+
+  // Block dangerous patterns even in allowed commands
+  const dangerousPatterns = /\b(rm\s+-rf\s+\/|format\s+[a-z]:|>\s*\/dev\/|>\s*\/etc\/|\|\s*sh\b|\|\s*bash\b|eval\s|exec\s|`|;\s*rm\s|&&\s*rm\s)/i;
+  if (dangerousPatterns.test(command)) {
+    return `Error: Command contains dangerous patterns and was blocked for safety.`;
   }
 
   try {

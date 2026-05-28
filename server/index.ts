@@ -18,6 +18,7 @@ import notificationRoutes from "./notification-routes.js";
 import analyticsRoutes from "./analytics-routes.js";
 import workspaceRoutes from "./workspace-routes.js";
 import depotRoutes from "./depot-routes.js";
+import waitlistRoutes from "./waitlist-routes.js";
 import { setupTerminalWebSocket } from "./pty.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -115,6 +116,8 @@ app.use("/api/workspace", workspaceRoutes);
 console.log("[Axiom Studio] Workspace FS routes registered");
 app.use("/api/depot", depotRoutes);
 console.log("[Axiom Studio] Depot routes registered");
+app.use("/api/waitlist", waitlistRoutes);
+console.log("[Axiom Studio] Waitlist routes registered");
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({

@@ -585,6 +585,11 @@ export function registerAgentRoutes(app: Express): void {
       const userId = requireAuth(req, res);
       if (!userId) return;
 
+      // Verify conversation belongs to this user
+      const [convo] = await db.select({ id: agentConversations.id }).from(agentConversations)
+        .where(and(eq(agentConversations.id, req.params.id), eq(agentConversations.userId, userId))).limit(1);
+      if (!convo) { res.status(404).json({ error: "Conversation not found" }); return; }
+
       console.log(`[Messages] GET convoId=${req.params.id} userId=${userId}`);
 
       const messages = await db
@@ -605,12 +610,17 @@ export function registerAgentRoutes(app: Express): void {
       const userId = requireAuth(req, res);
       if (!userId) return;
 
+      // Verify conversation belongs to this user
+      const [convo] = await db.select({ id: agentConversations.id }).from(agentConversations)
+        .where(and(eq(agentConversations.id, req.params.id), eq(agentConversations.userId, userId))).limit(1);
+      if (!convo) { res.status(404).json({ error: "Conversation not found" }); return; }
+
       await db
         .delete(agentMessages)
         .where(eq(agentMessages.conversationId, req.params.id));
       await db
         .delete(agentConversations)
-        .where(eq(agentConversations.id, req.params.id));
+        .where(and(eq(agentConversations.id, req.params.id), eq(agentConversations.userId, userId)));
 
       res.json({ success: true });
     }
@@ -655,6 +665,14 @@ export function registerAgentRoutes(app: Express): void {
     if (!message || !conversationId) {
       console.error("[Chat] 400 — missing message or conversationId:", req.body);
       res.status(400).json({ error: "message and conversationId required" });
+      return;
+    }
+
+    // Verify conversation ownership
+    const [convoOwnership] = await db.select({ id: agentConversations.id }).from(agentConversations)
+      .where(and(eq(agentConversations.id, conversationId), eq(agentConversations.userId, userId))).limit(1);
+    if (!convoOwnership) {
+      res.status(403).json({ error: "Conversation not found or access denied" });
       return;
     }
 
@@ -773,6 +791,16 @@ export function registerAgentRoutes(app: Express): void {
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
 
+    // 5-minute safety timeout for hung streams
+    const streamTimeout = setTimeout(() => {
+      if (!res.writableEnded) {
+        console.warn(`[Chat] Stream timed out after 5 minutes for convo=${conversationId}`);
+        res.write(`data: ${JSON.stringify({ type: "error", error: "Stream timed out after 5 minutes" })}\n\n`);
+        res.end();
+        controller.abort();
+      }
+    }, 5 * 60 * 1000);
+
     // Send route decision to client (so UI can show which model was used)
     if (routeScore !== null) {
       res.write(`data: ${JSON.stringify({
@@ -840,6 +868,8 @@ export function registerAgentRoutes(app: Express): void {
       return;
     }
 
+    clearTimeout(streamTimeout);
+
     // Save assistant message
     await db.insert(agentMessages).values({
       conversationId,
@@ -869,6 +899,7 @@ export function registerAgentRoutes(app: Express): void {
     console.log(`[Chat] ✓ Response complete. Saved assistant message.`);
     res.end();
     } catch (err: any) {
+      clearTimeout(streamTimeout);
       console.error("[Chat] ✗ UNHANDLED ERROR:", err.message, err.stack);
       if (!res.headersSent) {
         res.status(500).json({ error: `Chat error: ${err.message}` });
