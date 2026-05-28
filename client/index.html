@@ -253,399 +253,132 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Axiom Studio — Coming Soon | DarkWave Studios</title>
-  <meta name="description" content="Axiom Studio is the world's first offline-capable, deterministic AI knowledge engine. Unlike cloud-dependent AI chatbots that hallucinate and require subsc...">
+  <title>Axiom Studio — The Apex Predator IDE | DarkWave Studios</title>
+  <meta name="description" content="Axiom Studio is the world's first offline-capable, deterministic AI knowledge engine with multi-agent coding. Claude Opus, Sonnet, GPT-4o — all in one IDE.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    :root{--accent:#00ffd4;--accent-rgb:0,255,212;--bg:#030712;--text:#f0f4f8;--text-dim:rgba(240,244,248,.55);--text-muted:rgba(240,244,248,.28);--border:rgba(255,255,255,.06);--border-accent:rgba(var(--accent-rgb),.18)}
-    html,body{min-height:100vh;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-
-    .bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0}
-    .orb{position:absolute;border-radius:50%;filter:blur(140px);opacity:.1;animation:drift 28s ease-in-out infinite alternate}
-    .orb-1{width:600px;height:600px;background:var(--accent);top:-200px;left:-100px}
-    .orb-2{width:500px;height:500px;background:#8b5cf6;bottom:-200px;right:-100px;animation-delay:8s}
-    @keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(50px,-30px) scale(1.05)}}
-    .bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:60px 60px}
-
-    .page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 20px 60px;max-width:800px;margin:0 auto}
-
-    .topbar{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:48px}
-    .dw-logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;opacity:.7;transition:opacity .2s}
-    .dw-logo:hover{opacity:1}
-    .dw-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000}
-    .dw-text{font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.04em}
-    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.2);font-size:9px;font-weight:800;color:#f9a8d4;letter-spacing:.1em;text-transform:uppercase;text-decoration:none}
-    .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:#ec4899;animation:blink 1.2s ease-in-out infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-
-    .hero{text-align:center;width:100%;margin-bottom:40px}
-    .app-icon{font-size:4rem;margin-bottom:16px;display:block;filter:drop-shadow(0 0 30px rgba(var(--accent-rgb),.25));animation:float 4s ease-in-out infinite}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    .chip{display:inline-flex;padding:4px 14px;border-radius:999px;background:rgba(var(--accent-rgb),.08);border:1px solid var(--border-accent);font-size:10px;font-weight:800;color:var(--accent);margin-bottom:16px;letter-spacing:.12em;font-family:'JetBrains Mono',monospace}
-    h1{font-size:clamp(2.2rem,6vw,3.5rem);font-weight:900;letter-spacing:-.04em;line-height:1.08;margin-bottom:12px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 60%,#8b5cf6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .tagline{font-size:1.05rem;color:var(--text-dim);line-height:1.7;margin-bottom:24px}
-
-    .countdown{display:flex;align-items:flex-start;justify-content:center;gap:8px;margin-bottom:32px}
-    .cd-block{display:flex;flex-direction:column;align-items:center}
-    .cd-num{font-size:clamp(1.8rem,4.5vw,2.4rem);font-weight:900;font-family:'JetBrains Mono',monospace;background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.12);border-radius:10px;padding:10px 14px;min-width:64px;text-align:center;line-height:1}
-    .cd-label{font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.14em;margin-top:5px;font-weight:600}
-    .cd-sep{font-size:1.6rem;font-weight:900;color:var(--accent);opacity:.3;padding:10px 0}
-
-    .section{width:100%;margin-bottom:40px}
-    .section-title{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.16em;margin-bottom:16px;text-align:center}
-
-    .desc-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;padding:28px 24px;margin-bottom:32px}
-    .desc-card p{font-size:15px;color:var(--text-dim);line-height:1.8}
-
-    .features{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:32px}
-    .feat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim);font-weight:500;padding:10px 14px;background:rgba(var(--accent-rgb),.03);border:1px solid rgba(var(--accent-rgb),.08);border-radius:10px}
-    .feat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
-
-    .video-section{width:100%;margin-bottom:40px}
-
-    .notify-wrap{text-align:center;margin-bottom:40px;width:100%}
-    .notify-label{font-size:12px;color:var(--text-muted);margin-bottom:12px}
-    .capture{display:flex;gap:8px;max-width:420px;margin:0 auto}
-    .capture input{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border-accent);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:all .2s}
-    .capture input:focus{border-color:var(--accent);box-shadow:0 0 16px rgba(var(--accent-rgb),.1)}
-    .capture input::placeholder{color:var(--text-muted)}
-    .capture button{padding:12px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),rgba(var(--accent-rgb),.7));color:#000;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .2s;flex-shrink:0}
-    .capture button:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(var(--accent-rgb),.25)}
-    .capture button.done{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.25);pointer-events:none}
-
-    .presale-card{background:linear-gradient(135deg,rgba(var(--accent-rgb),.04),rgba(139,92,246,.04));border:1px solid rgba(var(--accent-rgb),.12);border-radius:16px;padding:24px;text-align:center;position:relative;overflow:hidden;margin-bottom:32px}
-    .presale-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),#8b5cf6,#ec4899)}
-    .presale-card h3{font-size:1.1rem;font-weight:800;margin-bottom:6px}
-    .presale-card p{font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6}
-    .btn-presale{display:block;width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center;transition:all .3s;margin-bottom:8px}
-    .btn-presale:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(var(--accent-rgb),.2)}
-    .btn-secondary{display:block;width:100%;padding:10px;border-radius:10px;border:1px solid var(--border-accent);background:transparent;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center;transition:all .2s}
-
-    .footer{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
-    .footer a{font-size:10px;color:var(--text-muted);text-decoration:none;transition:color .2s}
-    .footer a:hover{color:var(--accent)}
-    .footer span{color:var(--border)}
-
-    .compare-wrap{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:40px;width:100%}
-    .compare-table{width:100%;border-collapse:collapse;font-size:11px;text-align:left}
-    .compare-table th{padding:14px 16px;border-bottom:1px solid var(--border);color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
-    .compare-table td{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text-dim);font-weight:500}
-    .compare-table tr:last-child td{border-bottom:none}
-    .compare-highlight-col{background:rgba(var(--accent-rgb),.05);color:var(--text) !important;font-weight:700 !important;border-left:1px solid var(--border-accent);border-right:1px solid var(--border-accent)}
-    .compare-highlight-th{background:rgba(var(--accent-rgb),.1);color:var(--accent) !important;border-top:2px solid var(--accent);border-left:1px solid var(--border-accent);border-right:1px solid var(--border-accent)}
-    .c-yes{color:#22c55e;font-weight:700}
-    .c-no{color:#ef4444;opacity:.7}
-    .c-star{color:var(--accent);font-weight:800}
-    @media(max-width:600px){.compare-table th:not(:first-child):not(.compare-highlight-th),.compare-table td:not(:first-child):not(.compare-highlight-col){display:none}}
-    @media(max-width:540px){
-      .page{padding:24px 16px 40px}
-      .features{grid-template-columns:1fr}
-      .capture{flex-direction:column}
-      .capture button{width:100%;padding:14px}
-      .countdown{gap:4px}
-      .cd-num{padding:8px 8px;min-width:52px;font-size:1.4rem}
-      .topbar{flex-direction:column;gap:12px;text-align:center}
-      .desc-card{padding:20px 16px}
-      .desc-card p{font-size:14px}
-      .presale-card{padding:20px 16px}
-      .section-title{font-size:10px}
-      h1{margin-bottom:8px}
-      .tagline{font-size:.95rem}
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="bg-canvas"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
-  <div class="bg-grid"></div>
 
-  <div class="page">
-    <div class="topbar">
-      <a href="https://tlid.io" class="dw-logo">
-        <div class="dw-mark">DW</div>
-        <span class="dw-text">DarkWave Studios</span>
-      </a>
-      <a href="https://dwtl.io/presale" class="badge" target="_blank">Signal Presale Live</a>
-    </div>
+  <!-- React App mounts here — the full IDE UI -->
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 
-    <div class="hero">
-      <span class="app-icon">🧠</span>
-      <div class="chip">LAUNCHING JUNE 23, 2026</div>
-      <h1>Axiom Studio</h1>
-      <p class="tagline">The Deterministic AI Knowledge Operating System</p>
-
-      <div class="countdown">
-        <div class="cd-block"><span class="cd-num" id="cd-d">--</span><span class="cd-label">Days</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-num" id="cd-h">--</span><span class="cd-label">Hours</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-num" id="cd-m">--</span><span class="cd-label">Mins</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-block"><span class="cd-num" id="cd-s">--</span><span class="cd-label">Secs</span></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">About Axiom Studio</div>
-      <div class="desc-card">
-        <p>Axiom Studio is the world's first offline-capable, deterministic AI knowledge engine. Unlike cloud-dependent AI chatbots that hallucinate and require subscriptions, Axiom delivers mathematically verified answers from a curated corpus of over 120,000 expert-authored topics — with zero internet required. Available as a native desktop application for Windows and macOS.</p>
-      </div>
-
-      <div class="features">
-        <div class="feat"><span class="feat-dot"></span>120K+ Expert Topics</div>
-        <div class="feat"><span class="feat-dot"></span>Zero Hallucination Engine</div>
-        <div class="feat"><span class="feat-dot"></span>Offline-First Architecture</div>
-        <div class="feat"><span class="feat-dot"></span>Windows & macOS Native</div>
-        <div class="feat"><span class="feat-dot"></span>Pack Streaming Protocol</div>
-        <div class="feat"><span class="feat-dot"></span>Ed25519 Signed Packs</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">How Axiom Stacks Up</div>
-      <div class="compare-wrap">
-        <table class="compare-table">
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th class="compare-highlight-th">Axiom Studio</th>
-              <th>Cursor</th>
-              <th>Replit</th>
-              <th>Windsurf</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>AI Models</td>
-              <td class="compare-highlight-col">6 agents (Opus, Sonnet, GPT-4o, Mini)</td>
-              <td>Claude + GPT</td>
-              <td>1 model</td>
-              <td>1 model</td>
-            </tr>
-            <tr>
-              <td>Auto-Routing</td>
-              <td class="compare-highlight-col"><span class="c-star">✦ Smart auto-select</span></td>
-              <td>—</td>
-              <td>—</td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td>Free Credits</td>
-              <td class="compare-highlight-col"><span class="c-star">✦ 50 free on signup</span></td>
-              <td>Limited trial</td>
-              <td>Limited</td>
-              <td>Limited trial</td>
-            </tr>
-            <tr>
-              <td>Pricing</td>
-              <td class="compare-highlight-col">Pay-per-use from $0.01</td>
-              <td>$20/mo minimum</td>
-              <td>$25/mo+</td>
-              <td>$15/mo</td>
-            </tr>
-            <tr>
-              <td>Cloud IDE</td>
-              <td class="compare-highlight-col"><span class="c-yes">✓ Full IDE</span></td>
-              <td><span class="c-no">✗ Desktop only</span></td>
-              <td><span class="c-yes">✓</span></td>
-              <td><span class="c-no">✗ Desktop only</span></td>
-            </tr>
-            <tr>
-              <td>Local Mode</td>
-              <td class="compare-highlight-col"><span class="c-yes">✓ Full filesystem</span></td>
-              <td><span class="c-yes">✓</span></td>
-              <td><span class="c-no">✗</span></td>
-              <td><span class="c-yes">✓</span></td>
-            </tr>
-            <tr>
-              <td>Image Gen</td>
-              <td class="compare-highlight-col"><span class="c-yes">✓ DALL-E 3 built-in</span></td>
-              <td><span class="c-no">✗</span></td>
-              <td><span class="c-no">✗</span></td>
-              <td><span class="c-no">✗</span></td>
-            </tr>
-            <tr>
-              <td>Mobile IDE</td>
-              <td class="compare-highlight-col"><span class="c-yes">✓ Full support</span></td>
-              <td><span class="c-no">✗</span></td>
-              <td><span class="c-yes">✓ Partial</span></td>
-              <td><span class="c-no">✗</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-
-    <div class="video-section">
-      <div class="section-title">See It In Action</div>
+  <!-- Glass Blackout Overlay (sits on top of the React app) -->
+  <div id="glass-blackout-overlay">
+    <div class="gb-modal">
+      <div class="gb-badge">🔒 Ecosystem Unlock <span style="opacity:0.5; margin:0 8px;">|</span> Patent Pending</div>
+      <h1 class="gb-title">Axiom Studio</h1>
+      <p class="gb-subtitle">The Apex Predator IDE. A multi-agent AI coding environment with Claude Opus, Sonnet, and GPT-4o.</p>
       
-          <video controls playsinline preload="metadata" poster="" style="width:100%;border-radius:16px;border:1px solid rgba(0,255,212,.2);box-shadow:0 8px 40px rgba(0,0,0,.5);">
-            <source src="videos/demo.mp4" type="video/mp4">
-          </video>
-    </div>
-
-    <div class="notify-wrap">
-      <p class="notify-label">Get notified when Axiom Studio goes live.</p>
-      <div class="capture">
-        <input type="email" id="teaser-email" placeholder="Enter your enterprise email" autocomplete="email">
-        <button id="teaser-btn" onclick="submitEmail()">Notify Me</button>
+      <div class="gb-timer">
+        <div class="gb-time-box"><div class="num" id="gb-days">--</div><div class="lbl">Days</div></div>
+        <div class="gb-time-box"><div class="num" id="gb-hours">--</div><div class="lbl">Hours</div></div>
+        <div class="gb-time-box"><div class="num" id="gb-mins">--</div><div class="lbl">Mins</div></div>
+        <div class="gb-time-box"><div class="num" id="gb-secs">--</div><div class="lbl">Secs</div></div>
       </div>
-    </div>
+      
+      <div class="gb-ctas">
+        <button class="gb-btn-primary" onclick="enterDemoMode()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Enter Demo Mode
+        </button>
+        <a href="https://dwtl.io/presale" class="gb-btn-secondary">Join $SIG Presale</a>
+      </div>
 
-    <div class="presale-card">
-      <h3>Signal Presale — Live Now</h3>
-      <p>Early supporters earn up to <strong style="color:var(--accent)">+25% bonus Signal ($SIG)</strong> — the token that powers access across every app in the ecosystem.</p>
-      <a href="https://dwtl.io/presale" target="_blank" class="btn-presale">Join the Presale — From $10</a>
-      <a href="https://dwtl.io" target="_blank" class="btn-secondary">Explore the Trust Layer</a>
-    </div>
-
-    <div class="footer">
-      <a href="https://axiomstudio.dev">Axiom AI</a>
-      <span>&middot;</span>
-      <a href="https://dwtl.io/presale">Signal Presale</a>
-      <span>&middot;</span>
-      <a href="https://tlid.io">TLID Domains</a>
-      <span>&middot;</span>
-      <a href="https://darkwavestudios.io">DarkWave Studios</a>
+      <div class="gb-free-banner">
+        <p>While you wait, download our 100% Free &amp; Ad-Free platforms today:</p>
+        <div class="gb-free-links">
+          <a href="https://chronoverse.tlid.io" class="gb-free-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Chronoverse
+          </a>
+          <a href="https://trustshield.tech" class="gb-free-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            TrustShield
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <div id="gb-demo-indicator">Preview Mode</div>
+  <div id="gb-toast-container"></div>
+
   <script>
-    firebase.initializeApp({apiKey:'AIzaSyCVPbg2gQ9K3UB3qNCrb-VHfsYM7ABZBck',authDomain:'darkwave-auth.firebaseapp.com',projectId:'darkwave-auth',storageBucket:'darkwave-auth.firebasestorage.app',messagingSenderId:'41307406912',appId:'1:41307406912:web:b82a15c90790542e2a55a5'});var db=firebase.firestore();
+    // Glass Blackout Countdown Timer
     (function(){
-      var launch=new Date('2026-06-23T09:00:00-05:00').getTime();
-      function tick(){
-        var diff=launch-Date.now();
-        if(diff<=0){document.querySelector('.countdown').innerHTML='<span style="font-size:1.4rem;font-weight:900;color:var(--accent)">We are live!</span>';return;}
-        var pad=function(n){return n<10?'0'+n:''+n;};
-        document.getElementById('cd-d').textContent=pad(Math.floor(diff/86400000));
-        document.getElementById('cd-h').textContent=pad(Math.floor((diff%86400000)/3600000));
-        document.getElementById('cd-m').textContent=pad(Math.floor((diff%3600000)/60000));
-        document.getElementById('cd-s').textContent=pad(Math.floor((diff%60000)/1000));
+      var targetDate = new Date('June 23, 2026 09:00:00').getTime();
+      function update() {
+        var now = new Date().getTime();
+        var dist = targetDate - now;
+        if (dist < 0) {
+          var overlay = document.getElementById('glass-blackout-overlay');
+          if (overlay) overlay.classList.add('hidden');
+          return;
+        }
+        document.getElementById('gb-days').innerText = Math.floor(dist / (1000 * 60 * 60 * 24));
+        document.getElementById('gb-hours').innerText = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+        document.getElementById('gb-mins').innerText = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+        document.getElementById('gb-secs').innerText = Math.floor((dist % (1000 * 60)) / 1000).toString().padStart(2, '0');
       }
-      tick();setInterval(tick,1000);
+      update();
+      setInterval(update, 1000);
     })();
-    function submitEmail(){
-      var input=document.getElementById('teaser-email');
-      var btn=document.getElementById('teaser-btn');
-      var email=input.value.trim();
-      if(!email||!email.includes('@')){input.style.borderColor='rgba(239,68,68,.5)';setTimeout(function(){input.style.borderColor='';},1200);return;}
-      try{var l=JSON.parse(localStorage.getItem('dw_launch_list')||'[]');if(!l.includes(email)){l.push(email);localStorage.setItem('dw_launch_list',JSON.stringify(l));}}catch(e){}
-      db.collection('launch_emails').add({email:email,app:'axiom-studio',source:window.location.hostname,timestamp:firebase.firestore.FieldValue.serverTimestamp()}).catch(function(){});
-      fetch('https://axiom42.com/api/sms/optin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Launch Subscriber',phone:'email-only',email:email,consent:true,consentTimestamp:new Date().toISOString(),consentSource:'teaser_'+window.location.hostname})}).catch(function(){});
-      btn.textContent='\u2713 You\'re on the list';
-      btn.classList.add('done');
-      input.value='';
-    }
-    document.getElementById('teaser-email').addEventListener('keydown',function(e){if(e.key==='Enter')submitEmail();});
-  </script>
 
-<div id="glass-blackout-overlay">
-  <div class="gb-modal">
-    <div class="gb-badge">🔒 Ecosystem Unlock</div>
-    <h1 class="gb-title">Axiom Studio</h1>
-    <p class="gb-subtitle">The Apex Predator IDE. A multi-agent AI coding environment with Claude Opus, Sonnet, and GPT-4o.</p>
-    
-    <div class="gb-timer">
-      <div class="gb-time-box"><div class="num" id="gb-days">28</div><div class="lbl">Days</div></div>
-      <div class="gb-time-box"><div class="num" id="gb-hours">00</div><div class="lbl">Hours</div></div>
-      <div class="gb-time-box"><div class="num" id="gb-mins">00</div><div class="lbl">Mins</div></div>
-      <div class="gb-time-box"><div class="num" id="gb-secs">00</div><div class="lbl">Secs</div></div>
-    </div>
-    
-    <div class="gb-ctas">
-      <button class="gb-btn-primary" onclick="enterDemoMode()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-        Enter Demo Mode
-      </button>
-      <a href="https://dwtl.io/presale" class="gb-btn-secondary">Join $SIG Presale</a>
-    </div>
-
-    <div class="gb-free-banner">
-      <p>While you wait, download our 100% Free & Ad-Free platforms today:</p>
-      <div class="gb-free-links">
-        <a href="https://chronoverse.tlid.io" class="gb-free-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Chronoverse
-        </a>
-        <a href="https://trustshield.tech" class="gb-free-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          TrustShield
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="gb-demo-indicator">Preview Mode</div>
-<div id="gb-toast-container"></div>
-
-<script>
-  // Countdown Timer
-  (function(){
-    const targetDate = new Date('June 23, 2026 09:00:00').getTime();
-    function update() {
-      const now = new Date().getTime();
-      const dist = targetDate - now;
-      if (dist < 0) return;
-      document.getElementById('gb-days').innerText = Math.floor(dist / (1000 * 60 * 60 * 24));
-      document.getElementById('gb-hours').innerText = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
-      document.getElementById('gb-mins').innerText = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
-      document.getElementById('gb-secs').innerText = Math.floor((dist % (1000 * 60)) / 1000).toString().padStart(2, '0');
-    }
-    update();
-    setInterval(update, 1000);
-  })();
-
-  // Demo Mode
-  window.enterDemoMode = function() {
-    document.getElementById('glass-blackout-overlay').classList.add('hidden');
-    document.getElementById('gb-demo-indicator').classList.add('visible');
-    
-    // Intercept clicks
-    document.body.addEventListener('click', function(e) {
-      // Find closest anchor or button
-      const target = e.target.closest('a, button');
-      if (!target) return;
+    // Demo Mode — reveals the full app UI
+    window.enterDemoMode = function() {
+      document.getElementById('glass-blackout-overlay').classList.add('hidden');
+      document.getElementById('gb-demo-indicator').classList.add('visible');
       
-      // Allow specific navigation or free links
-      if (target.closest('.gb-modal')) return;
-      if (target.href && (target.href.includes('chronoverse') || target.href.includes('trustshield') || target.href.startsWith('#'))) return;
+      // Navigate to the IDE view so users see the actual app
+      if (window.location.pathname === '/') {
+        window.history.pushState({}, '', '/ide');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
       
-      // Keywords to intercept
-      const text = (target.textContent || '').toLowerCase();
-      const href = (target.href || '').toLowerCase();
-      const isAction = target.tagName === 'BUTTON' || 
-                       href.includes('/buy') || 
+      // Intercept locked actions
+      document.body.addEventListener('click', function(e) {
+        var target = e.target.closest('a, button');
+        if (!target) return;
+        
+        // Allow navigation within the app and free links
+        if (target.closest('.gb-modal')) return;
+        if (target.closest('#gb-demo-indicator')) return;
+        if (target.href && (target.href.includes('chronoverse') || target.href.includes('trustshield') || target.href.startsWith('#'))) return;
+        // Allow internal SPA navigation
+        if (target.href && (target.href.includes(window.location.host))) return;
+        
+        // Block monetized/locked actions
+        var text = (target.textContent || '').toLowerCase();
+        var href = (target.href || '').toLowerCase();
+        var isLocked = href.includes('/buy') || 
                        href.includes('.exe') || 
                        href.includes('.apk') ||
-                       ['save', 'export', 'download', 'deploy', 'generate', 'buy', 'checkout'].some(k => text.includes(k));
-      
-      if (isAction) {
-        e.preventDefault();
-        e.stopPropagation();
-        showToast('🔒 Feature unlocks June 23, 2026');
-      }
-    }, true); // Use capture phase
-  };
+                       href.includes('/checkout') ||
+                       ['save', 'export', 'download', 'deploy', 'generate', 'buy', 'checkout', 'upgrade', 'subscribe'].some(function(k){ return text.includes(k); });
+        
+        if (isLocked) {
+          e.preventDefault();
+          e.stopPropagation();
+          showToast('🔒 Feature unlocks June 23, 2026');
+        }
+      }, true);
+    };
 
-  function showToast(msg) {
-    const container = document.getElementById('gb-toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'gb-toast';
-    toast.textContent = msg;
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.classList.add('hiding');
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
-</script>
+    function showToast(msg) {
+      var container = document.getElementById('gb-toast-container');
+      var toast = document.createElement('div');
+      toast.className = 'gb-toast';
+      toast.textContent = msg;
+      container.appendChild(toast);
+      
+      setTimeout(function() {
+        toast.classList.add('hiding');
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3000);
+    }
+  </script>
 
 </body>
 </html>
