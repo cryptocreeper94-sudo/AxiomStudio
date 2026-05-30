@@ -15,7 +15,7 @@ export default function App() {
   return (
     <>
       <Switch>
-        <Route path="/" component={isElectron ? IDELayout : LandingPage} />
+        <Route path="/" component={IDELayout} />
         <Route path="/ide" component={IDELayout} />
         <Route path="/profile" component={ProfileDashboard} />
         <Route path="/chat" component={AgentPanel} />
@@ -27,7 +27,7 @@ export default function App() {
           <Redirect to={isElectron ? "/ide" : "/"} />
         </Route>
       </Switch>
-      <EcosystemAccountHub />
+      {isElectron && <EcosystemAccountHub />}
     </>
   );
 }
