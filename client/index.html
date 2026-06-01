@@ -273,6 +273,25 @@
   <meta name="description" content="Axiom Studio is the world's first offline-capable, deterministic AI knowledge engine with multi-agent coding. Claude Opus, Sonnet, GPT-4o — all in one IDE.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2322d3ee'/><stop offset='100%25' stop-color='%238b5cf6'/></linearGradient></defs><polygon points='50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5' fill='none' stroke='url(%23g)' stroke-width='6'/><circle cx='50' cy='50' r='18' fill='url(%23g)'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- UNIVERSAL PWA BACK-BUTTON PATCH -->
+  <script>
+    window.addEventListener('load', function() {
+      if (window.history && window.history.pushState) {
+        window.history.pushState({ pwa: true }, '');
+        window.addEventListener('popstate', function(e) {
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27 }));
+          const modals = document.querySelectorAll('.modal, [role="dialog"], .overlay, .popup, [data-state="open"]');
+          modals.forEach(m => {
+            const btn = m.querySelector('button.close, [aria-label="Close"], .close-button, [data-dismiss="modal"]');
+            if (btn && typeof btn.click === 'function') btn.click();
+          });
+          window.history.pushState({ pwa: true }, '');
+        });
+      }
+    });
+  </script>
+
 </head>
 <body>
 
