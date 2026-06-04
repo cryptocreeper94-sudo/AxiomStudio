@@ -194,10 +194,36 @@ export const ANTHROPIC_TOOLS: any[] = [
       required: ["task", "agent"],
     },
   },
+  {
+    name: "edit_file",
+    description: "Make a surgical edit to a file by replacing specific target content with new content. Much more efficient than write_file for small changes.",
+    input_schema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "File path relative to workspace root" },
+        target_content: { type: "string", description: "The EXACT string to find and replace. Must match precisely." },
+        replacement_content: { type: "string", description: "The new content to replace the target with." },
+      },
+      required: ["path", "target_content", "replacement_content"],
+    },
+  },
+  {
+    name: "view_file",
+    description: "View the contents of a file with optional line range. Returns numbered lines. More efficient than read_file for large files.",
+    input_schema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "File path relative to workspace root" },
+        start_line: { type: "number", description: "First line to show (1-based). Defaults to 1." },
+        end_line: { type: "number", description: "Last line to show (1-based, inclusive). Max 500 lines." },
+      },
+      required: ["path"],
+    },
+  },
 ];
 
 // Tools that require user approval before execution
-export const TOOLS_REQUIRING_APPROVAL = new Set(["write_file", "delete_file", "run_command"]);
+export const TOOLS_REQUIRING_APPROVAL = new Set(["write_file", "edit_file", "delete_file", "run_command"]);
 
 // OpenAI function-calling format (wraps Anthropic defs)
 export const OPENAI_TOOLS: any[] = ANTHROPIC_TOOLS.map((t) => ({
@@ -247,6 +273,10 @@ export async function executeTool(
         return await toolDeleteFile(args.path, userId);
       case "delegate_task":
         return await toolDelegateTask(args.task, args.agent, userId, userRole);
+      case "edit_file":
+        return await toolEditFile(args.path, args.target_content, args.replacement_content, userId);
+      case "view_file":
+        return await toolViewFile(args.path, args.start_line, args.end_line, userId);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -894,3 +924,97 @@ async function toolDelegateTask(
   }
 }
 
+// ─── edit_file (surgical edits on DB-backed files) ─────────────────────
+
+async function toolEditFile(
+  filePath: string,
+  targetContent: string,
+  replacementContent: string,
+  userId: string
+): Promise<string> {
+  if (!filePath) return "Error: path is required";
+  if (targetContent == null) return "Error: target_content is required";
+  if (replacementContent == null) return "Error: replacement_content is required";
+
+  const normalized = normalizePath(filePath);
+
+  const result = await db
+    .select({ id: workspaceFiles.id, content: workspaceFiles.content })
+    .from(workspaceFiles)
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
+    .limit(1);
+
+  if (!result.length) {
+    return `Error: File not found: "${normalized}". Use list_directory('') to see available files.`;
+  }
+
+  const content = result[0].content ?? "";
+  
+  // Count occurrences
+  const occurrences = content.split(targetContent).length - 1;
+  if (occurrences === 0) {
+    return `Error: target_content not found in "${normalized}". Make sure it matches EXACTLY, including whitespace.`;
+  }
+  if (occurrences > 1) {
+    return `Error: target_content found ${occurrences} times. Include more context to make it unique.`;
+  }
+
+  // Snapshot old content for history
+  await db.insert(workspaceFileHistory).values({
+    userId,
+    filePath: normalized,
+    content: content,
+    action: "edit",
+    sizeBytes: Buffer.byteLength(content, "utf8"),
+  });
+
+  // Perform replacement
+  const newContent = content.replace(targetContent, replacementContent);
+  const sizeBytes = Buffer.byteLength(newContent, "utf8");
+
+  await db
+    .update(workspaceFiles)
+    .set({ content: newContent, sizeBytes, updatedAt: new Date() })
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)));
+
+  const oldLines = targetContent.split("\n").length;
+  const newLines = replacementContent.split("\n").length;
+  return `Successfully edited "${normalized}" — replaced ${oldLines} line(s) with ${newLines} line(s)`;
+}
+
+// ─── view_file (line-range reading on DB-backed files) ─────────────────
+
+async function toolViewFile(
+  filePath: string,
+  startLine?: number,
+  endLine?: number,
+  userId?: string
+): Promise<string> {
+  if (!filePath) return "Error: path is required";
+  if (!userId) return "Error: userId is required";
+
+  const normalized = normalizePath(filePath);
+
+  const result = await db
+    .select({ content: workspaceFiles.content })
+    .from(workspaceFiles)
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
+    .limit(1);
+
+  if (!result.length) {
+    return `Error: File not found: "${normalized}"`;
+  }
+
+  const content = result[0].content ?? "";
+  const allLines = content.split("\n");
+  const totalLines = allLines.length;
+
+  let start = Math.max(1, startLine || 1);
+  let end = Math.min(totalLines, endLine || totalLines);
+  if (end - start + 1 > 500) end = start + 499;
+
+  const selectedLines = allLines.slice(start - 1, end);
+  const numberedLines = selectedLines.map((line, i) => `${start + i}: ${line}`).join("\n");
+
+  return `File: ${normalized}\nTotal Lines: ${totalLines}\nShowing lines ${start} to ${end}:\n${numberedLines}`;
+}

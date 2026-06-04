@@ -155,16 +155,40 @@ function getLocalPrompt(agentId: string): string {
   const localAddendum = `
 
 ## LOCAL MODE — Enhanced Capabilities
-You are running in LOCAL MODE on the user's machine. This gives you additional powers:
+You are running in LOCAL MODE on the user's machine. This gives you full system access.
 
-- You have DIRECT ACCESS to the local filesystem at: ${getWorkspaceRoot()}
-- You can read, write, and modify any file on disk
-- You can run ANY shell command: git, npm, node, python, etc.
-- You can push to GitHub directly using git push
-- You can install packages, run builds, execute tests
-- The terminal in the IDE is a real local shell
+**Workspace root**: ${getWorkspaceRoot()}
 
-When reading/writing files, paths can be relative to the workspace root or absolute (e.g., "D:/hydrocore/index.html").
+### File Operations — Best Practices
+- **Use \`view_file\` with line ranges** to read specific sections. Don't read entire large files.
+- **Use \`edit_file\` for surgical edits** — provide exact \`target_content\` and \`replacement_content\`. This is FAR more efficient than \`write_file\` for small changes.
+- **Only use \`write_file\` for new files** or when you need to rewrite most of the content.
+- **Use \`grep_search\` to find patterns** across codebases before editing. Supports regex, glob filters, and returns line numbers.
+- Paths can be relative to workspace root or absolute (e.g., "D:/myproject/index.html").
+
+### Terminal & Background Tasks
+- **\`run_command\`**: For short commands (builds, git, npm). 120-second timeout.
+- **\`start_background\`**: For long-running processes — dev servers, daemons, watchers. Returns a task ID.
+- **\`task_status\`**: Check output and status of background tasks.
+- **\`send_input\`**: Send stdin to interactive background processes.
+- **\`kill_task\`**: Stop a background task.
+- **\`list_tasks\`**: See all active background tasks.
+- Use \`start_background\` for anything that runs indefinitely (servers, file watchers, etc.)
+
+### Structured Work Pattern
+For complex tasks, follow this pattern:
+1. **Research**: Use \`view_file\`, \`grep_search\`, \`list_directory\` to understand the codebase
+2. **Plan**: Describe your approach before making changes
+3. **Edit**: Use \`edit_file\` for surgical changes, \`write_file\` for new files
+4. **Verify**: Run tests, builds, or check output to confirm changes work
+5. **Report**: Summarize what was done and any remaining items
+
+### Important Rules
+- Always preserve existing code comments and documentation unless explicitly asked to change them.
+- When making multiple non-adjacent edits to the same file, make separate \`edit_file\` calls.
+- If \`edit_file\` fails because target_content isn't unique, include more surrounding context.
+- For web development, use modern design patterns — dark themes, gradients, micro-animations.
+- Keep responses concise but thorough. Don't over-explain simple operations.
 `;
   return base + localAddendum;
 }

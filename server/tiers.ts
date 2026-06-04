@@ -8,11 +8,11 @@
 // ── Credit Costs Per Agent (~67% gross margin at $0.01/credit) ─────────
 // Based on actual API costs: Sonnet ~$0.018/msg, Opus ~$0.090/msg, GPT-4.1 ~$0.025/msg
 export const AGENT_COSTS: Record<string, { credits: number; label: string }> = {
-  opus:   { credits: 27, label: "Axiom (Opus 4.7)" },
+  opus:   { credits: 27, label: "Axiom (Opus 4.8)" },
   sonnet: { credits: 5,  label: "Axiom Quick (Sonnet 4.6)" },
   gemini: { credits: 15, label: "Axiom Gemini (Gemini 3.1 Pro)" },
   gpt4:   { credits: 8,  label: "Axiom GPT (GPT-4.1)" },
-  lume:   { credits: 27, label: "Lume Agent (Opus 4.7)" },
+  lume:   { credits: 27, label: "Lume Agent (Opus 4.8)" },
   mini:   { credits: 0,  label: "Axiom Free (Mini)" },
   auto:   { credits: 0,  label: "Auto-routed (varies)" },
 };

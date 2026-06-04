@@ -624,7 +624,7 @@ export default function LandingPage() {
                 <tr>
                   <td><div className="matrix-badge">Heavy Architecture</div></td>
                   <td>Cross-file refactors, zero-shot creation, deep structural logic</td>
-                  <td className="agent-opus">Claude Opus 4.7</td>
+                  <td className="agent-opus">Claude Opus 4.8</td>
                 </tr>
                 <tr>
                   <td><div className="matrix-badge">Massive Context</div></td>
