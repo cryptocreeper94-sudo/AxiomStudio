@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from "react";
 import { Brain, ArrowRight, Terminal, GitBranch, Bot, Code2, Zap, Shield, Monitor, Smartphone, ChevronDown, ChevronLeft, ChevronRight, Image, Menu, X, BookOpen, Clock, Sparkles } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
 import "./landing.css";
 
 const BLOG_POSTS = [
@@ -137,6 +138,22 @@ export default function LandingPage() {
   const [waitlistStatus, setWaitlistStatus] = useState<{success: boolean; message: string; position?: number} | null>(null);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const { loginWithGoogle } = useAuth();
+
+  // Beta Tester Login Listener
+  useEffect(() => {
+    const handleBetaLogin = async () => {
+      const error = await loginWithGoogle();
+      if (!error) {
+        localStorage.setItem('beta_tester_unlocked', 'true');
+        window.location.reload();
+      } else {
+        alert("Beta tester login failed: " + error);
+      }
+    };
+    window.addEventListener('betaTesterLogin', handleBetaLogin);
+    return () => window.removeEventListener('betaTesterLogin', handleBetaLogin as EventListener);
+  }, [loginWithGoogle]);
 
   // Detect mobile
   useEffect(() => {
@@ -239,7 +256,7 @@ export default function LandingPage() {
           <a href="#agents">Agents</a>
           <a href="#compare">Compare</a>
           <a href="#blog">Blog</a>
-          <a href="/ide" className="nav-cta">Open Cloud IDE</a>
+          <a href="/ide" className="nav-cta">Launch Web Demo</a>
         </div>
         <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
           {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
