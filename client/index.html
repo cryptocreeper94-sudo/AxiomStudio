@@ -258,6 +258,9 @@
 
 
 
+
+
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axiom Studio — The Apex Predator IDE | DarkWave Studios</title>
@@ -292,6 +295,9 @@
 
   <!-- Glass Blackout Overlay (sits on top of the React app) -->
   
+
+
+
 
 
 <div id="glass-blackout-overlay">
@@ -339,14 +345,14 @@
   (function(){
     var ua = navigator.userAgent.toLowerCase();
     var isNative = ua.indexOf(' electron/') > -1 || ua.indexOf('capacitor') > -1 || ua.indexOf('wv') > -1;
-    var isPwa = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
 
     if (window.location.search.includes('admin_unlock=42')) {
       localStorage.setItem('gb_admin_override', 'true');
     }
     var isWhitelisted = localStorage.getItem('gb_admin_override') === 'true';
 
-    if (isNative || isPwa || isWhitelisted) {
+    // PWA is no longer automatically allowed. Only true native apps (exe/apk) or whitelisted users bypass.
+    if (isNative || isWhitelisted) {
       var overlay = document.getElementById('glass-blackout-overlay');
       if (overlay) overlay.style.display = 'none';
       return;
