@@ -68,6 +68,8 @@ export default function DashboardHome({
     return "Good evening";
   })();
 
+  const isElectron = navigator.userAgent.toLowerCase().includes(' electron/') || !!(window as any).electron;
+
   return (
     <div className="ax-dash">
       {/* ── Top Bar ── */}
@@ -86,7 +88,7 @@ export default function DashboardHome({
           }}>AXIOM STUDIO</span>
         </div>
 
-        <div className="ax-dash-header-right">
+        <div className="ax-dash-header-right" style={{ marginRight: isElectron ? 48 : 0 }}>
           {/* Credit counter - always visible */}
           <div className="ax-dash-credit-pill">
             <Zap size={12} style={{ color: credits > 50 ? "#22c55e" : credits > 10 ? "#eab308" : "#ef4444" }} />
@@ -98,9 +100,11 @@ export default function DashboardHome({
           </div>
 
           {/* User avatar */}
-          <button className="ax-dash-avatar-btn" onClick={() => {}}>
-            <div className="ax-dash-avatar">{initial}</div>
-          </button>
+          {!isElectron && (
+            <button className="ax-dash-avatar-btn" onClick={() => {}}>
+              <div className="ax-dash-avatar">{initial}</div>
+            </button>
+          )}
         </div>
       </header>
 

@@ -99,7 +99,7 @@ export default function ProfileBadge({ user, token, onLogout, onOpenCredits, bio
   };
 
   const s = {
-    badge: { position: "fixed" as const, top: 12, right: 16, zIndex: 900, display: "flex", alignItems: "center", gap: 8, padding: "6px 12px 6px 8px", borderRadius: 14, background: "rgba(8,12,21,0.8)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", backdropFilter: "blur(20px)", transition: "all 0.2s" },
+    badge: { position: "relative" as const, zIndex: 900, display: "flex", alignItems: "center", gap: 8, padding: "6px 12px 6px 8px", borderRadius: 14, background: "rgba(8,12,21,0.8)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer", backdropFilter: "blur(20px)", transition: "all 0.2s" },
     avatar: { width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${color}44, ${color}22)`, border: `1px solid ${color}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color },
     panel: { position: "fixed" as const, top: 56, right: 16, width: 340, maxHeight: "calc(100vh - 80px)", background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, zIndex: 901, boxShadow: "0 20px 60px rgba(0,0,0,0.6)", overflow: "auto" as const },
     overlay: { position: "fixed" as const, inset: 0, zIndex: 899, background: "rgba(0,0,0,0.3)" },

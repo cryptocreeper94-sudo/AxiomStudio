@@ -69,7 +69,7 @@ export const STARTERS: StarterConfig[] = [
     title: "Lume App",
     subtitle: "Speak or type naturally",
     description: "Build with the Lume natural language programming system — describe what you want.",
-    agent: "opus",
+    agent: "lume",
     systemPrompt: `You are the Lume programming assistant inside Axiom Studio. Lume is a deterministic natural-language programming language created by DarkWave Studios LLC. Help the user write Lume code by accepting natural language descriptions (via text or voice transcription) and translating them into valid Lume syntax. Reference the Lume Language Specification (DOI: 10.5281/zenodo.19382282) for syntax and semantics. Always explain what you're generating and why.`,
     checklist: ["Describe your app", "Generate Lume code", "Review & refine", "Compile & test", "Deploy"],
     color: "#f59e0b",

@@ -812,15 +812,17 @@ export default function IDELayout() {
             <Download size={14} />
             Export
           </button>
-          <ProfileBadge
-            user={user}
-            token={token}
-            onLogout={logout}
-            onOpenCredits={() => setShowCreditStore(true)}
-            biometricsAvailable={biometricsAvailable}
-            biometricsEnrolled={biometricsEnrolled}
-            onEnrollBiometrics={enrollBiometrics}
-          />
+          {!((navigator.userAgent.toLowerCase().includes(' electron/') || !!(window as any).electron)) && (
+            <ProfileBadge
+              user={user}
+              token={token}
+              onLogout={logout}
+              onOpenCredits={() => setShowCreditStore(true)}
+              biometricsAvailable={biometricsAvailable}
+              biometricsEnrolled={biometricsEnrolled}
+              onEnrollBiometrics={enrollBiometrics}
+            />
+          )}
         </div>
       </header>
 

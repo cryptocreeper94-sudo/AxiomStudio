@@ -348,7 +348,7 @@ export default function LandingPage() {
               </div>
               <pre>
                 <span className="cm"># Download the native Windows application</span>{"\n"}
-                <span className="prompt" style={{ color: "#38bdf8" }}>$</span> <span className="fn">curl</span> <span className="var">-O https://axiomstudio.dev/Axiom-Studio-Setup.exe</span>{"\n"}
+                <span className="prompt" style={{ color: "#38bdf8" }}>$</span> <span className="fn">curl</span> <span className="var">-O https://axiomstudio.dev/Axiom-Studio-Windows.zip</span>{"\n"}
                 {"\n"}
                 <span className="cm"># Or open the Cloud IDE at axiomstudio.dev</span>{"\n"}
                 <span className="cm"># Same account, same agents, same credits</span>{"\n"}
@@ -811,8 +811,8 @@ export default function LandingPage() {
                 <h3>Desktop App</h3>
               </div>
               <p>Full filesystem access. Native terminal and git. Fast Electron desktop application for Windows.</p>
-              <a href="https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases/latest" target="_blank" rel="noopener noreferrer" className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #38bdf8, #6366f1)", border: "none" }}>
-                Download for Windows (.exe)
+              <a href="/Axiom-Studio-Windows.zip" download className="cta-primary" style={{ width: "100%", justifyContent: "center", fontSize: 14, padding: "12px 24px", background: "linear-gradient(135deg, #38bdf8, #6366f1)", border: "none" }}>
+                Download for Windows (.zip)
               </a>
             </div>
           </div>
@@ -820,7 +820,7 @@ export default function LandingPage() {
           {/* How it works */}
           <div style={{ marginTop: "3rem", display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             {[
-              { step: "1", label: "Download", sub: "Axiom-Studio-Setup.exe" },
+              { step: "1", label: "Download", sub: "Axiom-Studio-Windows.zip" },
               { step: "2", label: "Install", sub: "Double click to run" },
               { step: "3", label: "Login & code", sub: "Native app opens instantly" },
             ].map((s, i) => (
@@ -950,6 +950,7 @@ export default function LandingPage() {
               <a href="https://trustvault.studio" target="_blank" rel="noopener">TrustVault</a>
               <a href="https://trustgen.design" target="_blank" rel="noopener">TrustGen 3D</a>
               <a href="https://trustshield.tech" target="_blank" rel="noopener">TrustShield</a>
+              <a href="https://axiom42.com/news" target="_blank" rel="noopener">Axiom42 News</a>
             </div>
             <div className="footer-col">
               <strong>Legal</strong>

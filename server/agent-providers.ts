@@ -62,13 +62,18 @@ const MAX_TOOL_ITERATIONS = 100;
 
 // ─── Anthropic Provider ────────────────────────────────────────────────
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "missing" });
 
 export async function* streamAnthropic(
   messages: ChatMessage[],
   config: ProviderConfig
 ): AsyncGenerator<StreamChunk> {
   try {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      yield { type: "text", content: "⚠️ **Missing API Key:** Please set `ANTHROPIC_API_KEY` in your environment to use Claude models." };
+      yield { type: "done" };
+      return;
+    }
     // Build conversation as Anthropic-format messages (no system role in array)
     let convoMessages: Anthropic.MessageParam[] = messages
       .filter((m) => m.role !== "system")
@@ -205,7 +210,7 @@ export async function* streamAnthropic(
 
 // ─── OpenAI Provider ───────────────────────────────────────────────────
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "missing" });
 
 export async function* streamOpenAI(
   messages: ChatMessage[],
@@ -213,6 +218,11 @@ export async function* streamOpenAI(
   client: OpenAI = openai
 ): AsyncGenerator<StreamChunk> {
   try {
+    if (client === openai && !process.env.OPENAI_API_KEY) {
+      yield { type: "text", content: "⚠️ **Missing API Key:** Please set `OPENAI_API_KEY` in your environment to use GPT models." };
+      yield { type: "done" };
+      return;
+    }
     type OAIMessage = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; name?: string };
     let convoMessages: OAIMessage[] = [
       { role: "system", content: config.systemPrompt },
@@ -361,9 +371,15 @@ export function getProviderStream(
   if (provider === "anthropic") return streamAnthropic(messages, config);
   if (provider === "google") {
     const googleAI = new OpenAI({ 
-      apiKey: process.env.GEMINI_API_KEY, 
+      apiKey: process.env.GEMINI_API_KEY || "missing", 
       baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/" 
     });
+    if (!process.env.GEMINI_API_KEY) {
+      return async function* () {
+        yield { type: "text", content: "⚠️ **Missing API Key:** Please set `GEMINI_API_KEY` in your environment to use Gemini models." } as StreamChunk;
+        yield { type: "done" } as StreamChunk;
+      }();
+    }
     return streamOpenAI(messages, config, googleAI);
   }
   return streamOpenAI(messages, config);
