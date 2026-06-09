@@ -43,7 +43,7 @@ const SLIDES = ["/bg/slide-1.png", "/bg/slide-2.png", "/bg/slide-3.png", "/bg/sl
 const SLIDE_DURATION = 7000;
 
 const FEATURES = [
-  { image: "/features/multi-agent.png", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, GPT-4o — auto-routed to the best model for each task. No manual switching." },
+  { image: "/features/multi-agent.png", title: "Multi-Agent AI", desc: "Claude Opus, Sonnet, Gemini Pro, GPT-4.1 — auto-routed to the best model for each task. No manual switching." },
   { image: "/features/browser-ide.png", title: "Full IDE in Browser", desc: "Monaco editor, file explorer, real terminal — everything you need without leaving the browser." },
   { image: "/features/terminal.png", title: "Real Terminal", desc: "Not a sandbox. A real shell on your machine. Run git, npm, python — anything." },
   { image: "/features/git.png", title: "Native Git", desc: "Push, pull, branch, merge — directly from the IDE. No copy-pasting commands." },
@@ -53,12 +53,12 @@ const FEATURES = [
 ];
 
 const AGENTS = [
-  { name: "Opus", model: "claude-opus-4-7", img: "/agents/opus.png", border: "rgba(30, 58, 138, 0.4)", cost: "3 credits" },
-  { name: "Gemini", model: "gemini-3.1-pro", img: "/agents/gemini.png", border: "rgba(59, 130, 246, 0.3)", cost: "2 credits" },
-  { name: "Sonnet", model: "claude-sonnet-4-6", img: "/agents/sonnet.png", border: "rgba(6, 182, 212, 0.3)", cost: "1 credit" },
-  { name: "GPT-4o", model: "gpt-4o", img: "/agents/gpt4o.png", border: "rgba(34, 197, 94, 0.3)", cost: "2 credits" },
-  { name: "Lume", model: "lume-agent", img: "/agents/lume.png", border: "rgba(168, 85, 247, 0.3)", cost: "3 credits" },
-  { name: "o3-mini", model: "o3-mini", img: "/agents/o3mini.png", border: "rgba(180, 60, 30, 0.3)", cost: "1 credit" },
+  { name: "Opus", model: "claude-opus-4-8", img: "/agents/opus.png", border: "rgba(30, 58, 138, 0.4)", cost: "10 credits" },
+  { name: "Gemini Pro", model: "gemini-3.1-pro", img: "/agents/gemini.png", border: "rgba(59, 130, 246, 0.3)", cost: "5 credits" },
+  { name: "Sonnet", model: "claude-sonnet-4-6", img: "/agents/sonnet.png", border: "rgba(6, 182, 212, 0.3)", cost: "3 credits" },
+  { name: "DeepSeek V3", model: "deepseek-chat", img: "/agents/gpt4o.png", border: "rgba(56, 189, 248, 0.3)", cost: "2 credits" },
+  { name: "Lume", model: "lume-agent", img: "/agents/lume.png", border: "rgba(168, 85, 247, 0.3)", cost: "10 credits" },
+  { name: "Gemini Flash", model: "gemini-2.0-flash-lite", img: "/agents/o3mini.png", border: "rgba(34, 197, 94, 0.3)", cost: "Free" },
 ];
 
 const AGENT_TRIPLETS = [
@@ -656,7 +656,7 @@ export default function LandingPage() {
                 <tr>
                   <td><div className="matrix-badge">Web & Visual</div></td>
                   <td>Browser automation, DOM scraping, image analysis</td>
-                  <td className="agent-gpt4o">GPT-4o</td>
+                  <td className="agent-gpt4o">GPT-4.1 (Coming Soon)</td>
                 </tr>
                 <tr>
                   <td><div className="matrix-badge">Specialized Ops</div></td>
@@ -666,7 +666,7 @@ export default function LandingPage() {
                 <tr>
                   <td><div className="matrix-badge">Deep Reasoning</div></td>
                   <td>Complex algorithms, math, intense step-by-step logic</td>
-                  <td className="agent-o3mini">o3-mini</td>
+                  <td className="agent-o3mini">Gemini Flash (Free)</td>
                 </tr>
               </tbody>
             </table>
@@ -704,7 +704,7 @@ export default function LandingPage() {
             </thead>
             <tbody>
               {([
-                ["AI Models", "6 agents (Opus, Gemini, Sonnet, GPT-4o, Lume, Mini)", "Claude + GPT", "1 model", "GPT-4o / Claude", "1 model"],
+                ["AI Models", "8 agents (Opus, Gemini Pro, Sonnet, DeepSeek, GPT-4.1, Lume, Flash + more)", "Claude + GPT", "1 model", "GPT-4o / Claude", "1 model"],
                 ["Auto-Routing", "✦ Smart auto-select", "—", "—", "—", "—"],
                 ["Free Credits", "✦ 50 free on signup", "Limited trial", "Limited", "30-day trial", "Limited trial"],
                 ["Pricing", "Pay-per-use from $0.01/credit", "$20/mo minimum", "$25/mo+", "$10–$39/mo", "$15/mo"],
@@ -734,12 +734,12 @@ export default function LandingPage() {
         <div className="switcher-grid">
           <div className="switcher-card">
             <div className="switcher-from">Coming from <strong>Cursor</strong>?</div>
-            <p>You love AI-first coding but you're locked to desktop and paying $20/mo for one model. Axiom gives you <strong>6 agents with auto-routing</strong>, cloud + local hybrid, and pay-per-use pricing — start free with <span className="credit-tooltip" style={{fontWeight: 'bold', color: '#fff', textDecorationColor: "rgba(255,255,255,0.4)"}}>50 credits</span>.</p>
+            <p>You love AI-first coding but you're locked to desktop and paying $20/mo for one model. Axiom gives you <strong>8 agents with auto-routing</strong>, cloud + local hybrid, and pay-per-use pricing — start free with <span className="credit-tooltip" style={{fontWeight: 'bold', color: '#fff', textDecorationColor: "rgba(255,255,255,0.4)"}}>50 credits</span>.</p>
             <a href="/ide" className="switcher-cta">Try Free →</a>
           </div>
           <div className="switcher-card">
             <div className="switcher-from">Coming from <strong>Replit</strong>?</div>
-            <p>You love cloud coding but hit the sandbox ceiling — no real terminal, no git push, one AI model. Axiom gives you a <strong>real shell, native git, 6 AI agents</strong>, and the same browser-based convenience. Plus a full mobile IDE.</p>
+            <p>You love cloud coding but hit the sandbox ceiling — no real terminal, no git push, one AI model. Axiom gives you a <strong>real shell, native git, 8 AI agents</strong>, and the same browser-based convenience. Plus a full mobile IDE.</p>
             <a href="/ide" className="switcher-cta">Try Free →</a>
           </div>
           <div className="switcher-card">
@@ -749,7 +749,7 @@ export default function LandingPage() {
           </div>
           <div className="switcher-card">
             <div className="switcher-from">Coming from <strong>Windsurf</strong>?</div>
-            <p>Windsurf is desktop-only with one model. Axiom gives you <strong>cloud + local hybrid</strong> — code from any device, same account, same credits. Plus 6 agents auto-routed to the right model for every task. More power, less cost.</p>
+            <p>Windsurf is desktop-only with one model. Axiom gives you <strong>cloud + local hybrid</strong> — code from any device, same account, same credits. Plus 8 agents auto-routed to the right model for every task. More power, less cost.</p>
             <a href="/ide" className="switcher-cta">Try Free →</a>
           </div>
         </div>
@@ -767,7 +767,7 @@ export default function LandingPage() {
             <div className="compare-value-item">
               <Bot className="w-5 h-5" style={{ color: "#38bdf8" }} />
               <div>
-                <strong>6 AI agents</strong>
+                <strong>8 AI agents</strong>
                 <span>Auto-routed per task</span>
               </div>
             </div>

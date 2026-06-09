@@ -187,8 +187,8 @@ export const ANTHROPIC_TOOLS: any[] = [
         task: { type: "string", description: "Clear description of the subtask for the subagent to complete" },
         agent: {
           type: "string",
-          enum: ["sonnet", "mini", "gemini"],
-          description: "Which agent to delegate to. 'sonnet' for code tasks, 'mini' for simple Q&A, 'gemini' for large context analysis",
+          enum: ["sonnet", "flash", "gemini", "deepseek"],
+          description: "Which agent to delegate to. 'sonnet' for code tasks, 'deepseek' for budget code tasks, 'flash' for simple Q&A (free), 'gemini' for large context analysis",
         },
       },
       required: ["task", "agent"],

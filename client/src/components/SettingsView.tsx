@@ -214,8 +214,11 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                       <option value="auto">Auto-Route (Recommended)</option>
                       <option value="opus">Claude Opus 4.8 (Best)</option>
                       <option value="sonnet">Claude Sonnet 4.6 (Fast)</option>
-                      <option value="gpt4">GPT-4o</option>
-                      <option value="mini">GPT-4o Mini (Free)</option>
+                      <option value="gemini">Gemini 3.1 Pro</option>
+                      <option value="deepseek">DeepSeek V3 (Best Value)</option>
+                      <option value="flash">Gemini Flash (Free)</option>
+                      <option value="gpt4" disabled>GPT-4.1 (Coming Soon)</option>
+                      <option value="gpt4mini" disabled>GPT-4.1 Mini (Coming Soon)</option>
                     </select>
                   </div>
 
@@ -283,22 +286,34 @@ export default function SettingsView({ onOpenCredits, credits }: Props) {
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom (Opus 4.8)</span>
-                        <span style={{ color: "#38bdf8", fontWeight: 600 }}>27 credits / msg</span>
+                        <span style={{ color: "#38bdf8", fontWeight: 600 }}>10 credits / msg</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Gemini (Gemini 3.1 Pro)</span>
+                        <span style={{ color: "#818cf8", fontWeight: 600 }}>5 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                         <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Quick (Sonnet 4.6)</span>
-                        <span style={{ color: "#06b6d4", fontWeight: 600 }}>5 credits / msg</span>
+                        <span style={{ color: "#06b6d4", fontWeight: 600 }}>3 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom GPT (GPT-4.1)</span>
-                        <span style={{ color: "#4ade80", fontWeight: 600 }}>8 credits / msg</span>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Deep (DeepSeek V3)</span>
+                        <span style={{ color: "#38bdf8", fontWeight: 600 }}>2 credits / msg</span>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Free (Mini)</span>
-                        <span style={{ color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>Free</span>
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>Axiom GPT (GPT-4.1)</span>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600, fontStyle: "italic" }}>4 credits — Coming Soon</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>Axiom GPT Mini (GPT-4.1 Mini)</span>
+                        <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600, fontStyle: "italic" }}>1 credit — Coming Soon</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)" }}>Axiom Free (Gemini Flash)</span>
+                        <span style={{ color: "#22c55e", fontWeight: 600 }}>Always Free</span>
                       </div>
                       <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
-                        $0.01 per credit &middot; Credits never expire
+                        $0.01 per credit &middot; Credits never expire &middot; 50 free credits on signup
                       </div>
                     </div>
                   </div>

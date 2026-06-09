@@ -1,16 +1,14 @@
 /**
  * Axiom Studio — Intelligent Auto-Router
  * Classifies message complexity and routes to the optimal model.
- * Uses GPT-4o-mini as the classifier (~$0.001 per classification).
+ * Uses Gemini 2.0 Flash Lite as the classifier ($0.00 per classification).
  * 
  * DarkWave Studios LLC — Copyright 2026
  */
 
-import OpenAI from "openai";
+import axios from "axios";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-export type RouteTarget = "opus" | "gemini" | "sonnet" | "mini";
+export type RouteTarget = "opus" | "gemini" | "sonnet" | "flash" | "gpt4" | "gpt4mini" | "deepseek";
 
 interface RouteDecision {
   target: RouteTarget;
@@ -42,40 +40,53 @@ export async function classifyMessage(
   conversationLength: number
 ): Promise<RouteDecision> {
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("[AutoRouter] No GEMINI_API_KEY, defaulting to sonnet");
+      return { target: "sonnet", score: 5, reason: "no classifier key" };
+    }
+
     // Build context hints
     let contextHints = "";
     if (hasErrorContext) contextHints += " [ERROR CONTEXT ATTACHED]";
     if (hasFileContext) contextHints += " [FILE CONTEXT ATTACHED]";
     if (conversationLength > 20) contextHints += " [DEEP CONVERSATION: " + conversationLength + " messages]";
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: CLASSIFIER_PROMPT },
-        { role: "user", content: message + contextHints },
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
+
+    const response = await axios.post(url, {
+      contents: [
+        { role: "user", parts: [{ text: CLASSIFIER_PROMPT + "\n\nUser message:\n" + message + contextHints }] }
       ],
-      max_tokens: 80,
-      temperature: 0,
-      response_format: { type: "json_object" },
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0,
+        maxOutputTokens: 80
+      }
+    }, {
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000
     });
 
-    const raw = response.choices[0]?.message?.content || '{"score":5,"reason":"default"}';
+    const raw = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '{"score":5,"reason":"default"}';
     const parsed = JSON.parse(raw);
     const score = Math.min(10, Math.max(1, parsed.score || 5));
     const reason = parsed.reason || "auto-classified";
 
+    const openaiAvailable = !!process.env.OPENAI_API_KEY;
+
     // Route based on score
     let target: RouteTarget;
     if (score <= 3) {
-      target = "mini";
+      target = "flash"; // Simple tasks → Gemini Flash Lite (free)
+    } else if (score <= 5) {
+      target = "deepseek"; // Medium tasks → DeepSeek V3 (2 credits, best value)
     } else if (score <= 6) {
-      target = "sonnet";
+      target = "sonnet"; // Medium-hard → Sonnet (3 credits)
     } else if (hasFileContext) {
-      // 7-10 with files attached -> Gemini
-      target = "gemini";
+      target = "gemini"; // Complex with files → Gemini Pro (2M context)
     } else {
-      // 7-10 pure logic -> Opus
-      target = "opus";
+      target = "opus"; // Complex pure logic → Opus (most capable)
     }
 
     return { target, score, reason };
@@ -88,8 +99,11 @@ export async function classifyMessage(
 
 // Model mapping for each route target
 export const ROUTE_MODELS: Record<RouteTarget, { model: string; provider: string; agentId: string }> = {
-  opus: { model: "claude-opus-4-7", provider: "anthropic", agentId: "opus" },
-  gemini: { model: "gemini-3.1-pro", provider: "google", agentId: "gemini" },
-  sonnet: { model: "claude-sonnet-4-6", provider: "anthropic", agentId: "sonnet" },
-  mini: { model: "gpt-4o-mini", provider: "openai", agentId: "mini" },
+  opus:     { model: "claude-opus-4-7", provider: "anthropic", agentId: "opus" },
+  gemini:   { model: "gemini-3.1-pro", provider: "google", agentId: "gemini" },
+  sonnet:   { model: "claude-sonnet-4-6", provider: "anthropic", agentId: "sonnet" },
+  deepseek: { model: "deepseek-chat", provider: "deepseek", agentId: "deepseek" },
+  flash:    { model: "gemini-2.0-flash-lite", provider: "google", agentId: "flash" },
+  gpt4:     { model: "gpt-4.1", provider: "openai", agentId: "gpt4" },
+  gpt4mini: { model: "gpt-4.1-mini", provider: "openai", agentId: "gpt4mini" },
 };

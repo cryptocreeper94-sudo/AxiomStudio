@@ -5,16 +5,19 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 
-// ── Credit Costs Per Agent (~67% gross margin at $0.01/credit) ─────────
-// Based on actual API costs: Sonnet ~$0.018/msg, Opus ~$0.090/msg, GPT-4.1 ~$0.025/msg
-export const AGENT_COSTS: Record<string, { credits: number; label: string }> = {
-  opus:   { credits: 27, label: "Axiom (Opus 4.8)" },
-  sonnet: { credits: 5,  label: "Axiom Quick (Sonnet 4.6)" },
-  gemini: { credits: 15, label: "Axiom Gemini (Gemini 3.1 Pro)" },
-  gpt4:   { credits: 8,  label: "Axiom GPT (GPT-4.1)" },
-  lume:   { credits: 27, label: "Lume Agent (Opus 4.8)" },
-  mini:   { credits: 0,  label: "Axiom Free (Mini)" },
-  auto:   { credits: 0,  label: "Auto-routed (varies)" },
+// ── Credit Costs Per Agent ─────────────────────────────────────────────
+// Rebalanced for 50-credit signup: enough to build a functioning app
+// Margins: Opus ~11%, Sonnet ~40%, Gemini ~80%, GPT ~37%
+export const AGENT_COSTS: Record<string, { credits: number; label: string; comingSoon?: boolean }> = {
+  opus:     { credits: 10, label: "Axiom (Opus 4.8)" },
+  sonnet:   { credits: 3,  label: "Axiom Quick (Sonnet 4.6)" },
+  gemini:   { credits: 5,  label: "Axiom Gemini (Gemini 3.1 Pro)" },
+  deepseek: { credits: 2,  label: "Axiom Deep (DeepSeek V3)" },
+  gpt4:     { credits: 4,  label: "Axiom GPT (GPT-4.1)", comingSoon: true },
+  gpt4mini: { credits: 1,  label: "Axiom GPT Mini (GPT-4.1 Mini)", comingSoon: true },
+  lume:     { credits: 10, label: "Lume Agent (Opus 4.8)" },
+  flash:    { credits: 0,  label: "Axiom Free (Gemini Flash)" },
+  auto:     { credits: 0,  label: "Auto-routed (varies)" },
 };
 
 // ── Credit Packs (Pay-As-You-Go) ────────────────────────────────────────
@@ -76,7 +79,9 @@ export const CREDIT_PACKS: CreditPack[] = [
 ];
 
 // ── Free Tier ────────────────────────────────────────────────────────────
-export const FREE_MONTHLY_CREDITS = 50; // 10 free Sonnet messages/month
+// One-time signup bonus — NOT monthly. Free agent (Gemini Flash) is always available.
+export const FREE_SIGNUP_CREDITS = 50; // One-time: enough to build a functioning app
+export const FREE_MONTHLY_CREDITS = 0; // No recurring free credits — pay-as-you-go model
 
 // ── Legacy Tier Compat (for existing users) ──────────────────────────────
 export interface TierConfig {

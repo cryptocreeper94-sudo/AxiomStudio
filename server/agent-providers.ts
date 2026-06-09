@@ -382,5 +382,33 @@ export function getProviderStream(
     }
     return streamOpenAI(messages, config, googleAI);
   }
-  return streamOpenAI(messages, config);
+  if (provider === "openai") {
+    if (!process.env.OPENAI_API_KEY) {
+      return async function* () {
+        yield { type: "text", content: "⚠️ **OpenAI is currently unavailable.** GPT models are coming soon! In the meantime, try **Gemini Flash (Free)** or **Claude Sonnet** for a great experience." } as StreamChunk;
+        yield { type: "done" } as StreamChunk;
+      }();
+    }
+    return streamOpenAI(messages, config);
+  }
+  if (provider === "deepseek") {
+    if (!process.env.DEEPSEEK_API_KEY) {
+      // Fallback to Sonnet if DeepSeek key not set
+      return async function* () {
+        yield { type: "text", content: "⚠️ **DeepSeek is currently being configured.** Falling back to Claude Sonnet. Set `DEEPSEEK_API_KEY` to enable Axiom Deep." } as StreamChunk;
+        yield { type: "done" } as StreamChunk;
+      }();
+    }
+    const deepseekAI = new OpenAI({
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: "https://api.deepseek.com",
+    });
+    return streamOpenAI(messages, config, deepseekAI);
+  }
+  // Default fallback to Gemini Flash (free)
+  const fallbackAI = new OpenAI({
+    apiKey: process.env.GEMINI_API_KEY || "missing",
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+  });
+  return streamOpenAI(messages, { ...config, model: "gemini-2.0-flash-lite" }, fallbackAI);
 }

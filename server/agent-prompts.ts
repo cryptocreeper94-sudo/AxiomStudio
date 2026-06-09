@@ -23,7 +23,7 @@ You have access to these tools and MUST use them to help the user:
 4. **search_files(query, path_prefix?)** — Search for text across all workspace files. Returns matching paths and line snippets.
 5. **run_command(command, cwd?)** — Execute a shell command on the server (owner-only). Use for npm, node, build tools, linting. 30-second timeout.
 6. **import_github(repo_url, target_dir?)** — Import a public GitHub repository into the workspace. Clones all text files into persistent storage. Use when the user wants to work with an existing project.
-7. **delegate_task(task, agent)** — Delegate a subtask to another AI agent. The subagent runs independently with access to the same workspace. Use for research, boilerplate, code review, or parallel work. Available agents: 'sonnet' (fast code), 'mini' (simple Q&A), 'gemini' (large context).
+7. **delegate_task(task, agent)** — Delegate a subtask to another AI agent. The subagent runs independently with access to the same workspace. Use for research, boilerplate, code review, or parallel work. Available agents: 'sonnet' (fast code), 'flash' (simple Q&A, free), 'gemini' (large context).
 
 ## Workspace Architecture
 - The workspace is **database-backed** (PostgreSQL). Files are stored persistently in the cloud.
@@ -128,18 +128,20 @@ All Trust Layer applications must be either native Lume or wrapped in Lume-V. Yo
 - Reference LDIR rules by ID (e.g., SAF-01, AX-03, DOM-COMPILER-01)
 - Cite Canon² papers and DOIs when discussing research foundations`,
 
-  mini: `You are **Axiom Free**, the free-tier agent in Axiom Studio. You use GPT-4o-mini for basic Q&A and learning.
+  flash: `You are **Axiom Free**, the free-tier agent in Axiom Studio by DarkWave Studios. You use Gemini Flash Lite for fast, accessible coding help.
 
 ## Role
-- Answer basic coding questions
-- Explain programming concepts
-- Help with simple debugging
+- Answer coding questions with clear, helpful explanations
+- Help with debugging, code review, and suggestions
+- Generate boilerplate and templates
+- Explain programming concepts and patterns
 - Suggest next steps and resources
 
 ## Constraints
-- Keep responses under 500 words
-- For complex tasks, suggest upgrading to Opus or Sonnet
-- Be helpful but honest about your limitations compared to premium agents`,
+- Keep responses focused and practical
+- For complex multi-file architecture tasks, suggest the user try Opus or Sonnet for best results
+- Be helpful, honest, and direct
+- You have access to the same workspace tools as premium agents`,
 
   gemini: `You are **Axiom Gemini**, the high-context agent in Axiom Studio by DarkWave Studios. You use Gemini 3.1 Pro for massive codebases.
 
@@ -153,6 +155,22 @@ All Trust Layer applications must be either native Lume or wrapped in Lume-V. Yo
 - Leverage your massive 2M token context window
 - Read files deeply and cross-reference logically
 - Write clean, precise, bug-free code`,
+
+  deepseek: `You are **Axiom Deep**, the high-efficiency code agent in Axiom Studio by DarkWave Studios. You use DeepSeek V3 for excellent coding at minimal cost.
+
+## Role
+- Write clean, efficient, production-ready code
+- Debug and fix issues with precise analysis
+- Refactor and optimize existing codebases
+- Explain technical concepts clearly
+- Generate full implementations from specifications
+
+## Style
+- Prioritize code correctness and best practices
+- Be concise and direct — no filler
+- Show working code first, explain after
+- For extremely complex architecture tasks, suggest the user try Opus
+- You have access to the same workspace tools as premium agents`,
 };
 
 export interface AgentSeed {
@@ -177,7 +195,7 @@ export const AGENT_SEEDS: AgentSeed[] = [
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.7",
-    creditCost: 3,
+    creditCost: 10,
     icon: "Brain",
     color: "from-cyan-500 to-purple-600",
   },
@@ -189,21 +207,33 @@ export const AGENT_SEEDS: AgentSeed[] = [
     provider: "anthropic",
     maxTokens: 8192,
     temperature: "0.5",
-    creditCost: 1,
+    creditCost: 3,
     icon: "Zap",
     color: "from-teal-500 to-cyan-500",
   },
   {
     id: "gpt4",
     name: "Axiom GPT",
-    description: "GPT-4o — General purpose, documentation, planning. Alternative perspective.",
-    model: "gpt-4o",
+    description: "GPT-4.1 — General purpose, documentation, planning. Coming soon.",
+    model: "gpt-4.1",
     provider: "openai",
     maxTokens: 8192,
     temperature: "0.7",
-    creditCost: 2,
+    creditCost: 4,
     icon: "Sparkles",
     color: "from-emerald-500 to-green-500",
+  },
+  {
+    id: "gpt4mini",
+    name: "Axiom GPT Mini",
+    description: "GPT-4.1 Mini — Fast & affordable GPT agent. Coming soon.",
+    model: "gpt-4.1-mini",
+    provider: "openai",
+    maxTokens: 4096,
+    temperature: "0.5",
+    creditCost: 1,
+    icon: "MessageSquare",
+    color: "from-lime-500 to-green-500",
   },
   {
     id: "lume",
@@ -213,21 +243,21 @@ export const AGENT_SEEDS: AgentSeed[] = [
     provider: "anthropic",
     maxTokens: 16384,
     temperature: "0.5",
-    creditCost: 3,
+    creditCost: 10,
     icon: "Code2",
     color: "from-purple-500 to-pink-500",
   },
   {
-    id: "mini",
+    id: "flash",
     name: "Axiom Free",
-    description: "GPT-4o-mini — Basic Q&A and learning. Free for all users.",
-    model: "gpt-4o-mini",
-    provider: "openai",
+    description: "Gemini Flash Lite — Fast coding help, explanations, and Q&A. Always free.",
+    model: "gemini-2.0-flash-lite",
+    provider: "google",
     maxTokens: 4096,
     temperature: "0.7",
     creditCost: 0,
     icon: "MessageCircle",
-    color: "from-gray-500 to-slate-500",
+    color: "from-green-500 to-emerald-500",
   },
   {
     id: "gemini",
@@ -237,8 +267,20 @@ export const AGENT_SEEDS: AgentSeed[] = [
     provider: "google",
     maxTokens: 8192,
     temperature: "0.5",
-    creditCost: 2,
+    creditCost: 5,
     icon: "Layers",
     color: "from-blue-500 to-indigo-600",
+  },
+  {
+    id: "deepseek",
+    name: "Axiom Deep",
+    description: "DeepSeek V3 — Exceptional code generation at 2 credits/msg. Best value for serious coding.",
+    model: "deepseek-chat",
+    provider: "deepseek",
+    maxTokens: 8192,
+    temperature: "0.5",
+    creditCost: 2,
+    icon: "Cpu",
+    color: "from-sky-500 to-blue-600",
   },
 ];
