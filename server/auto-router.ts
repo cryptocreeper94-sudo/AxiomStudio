@@ -6,8 +6,6 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 
-import axios from "axios";
-
 export type RouteTarget = "opus" | "gemini" | "sonnet" | "flash" | "gpt4" | "gpt4mini" | "deepseek";
 
 interface RouteDecision {
@@ -54,26 +52,27 @@ export async function classifyMessage(
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
 
-    const response = await axios.post(url, {
-      contents: [
-        { role: "user", parts: [{ text: CLASSIFIER_PROMPT + "\n\nUser message:\n" + message + contextHints }] }
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0,
-        maxOutputTokens: 80
-      }
-    }, {
+    const response = await fetch(url, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000
+      body: JSON.stringify({
+        contents: [
+          { role: "user", parts: [{ text: CLASSIFIER_PROMPT + "\n\nUser message:\n" + message + contextHints }] }
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0,
+          maxOutputTokens: 80
+        }
+      }),
+      signal: AbortSignal.timeout(10000),
     });
 
-    const raw = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '{"score":5,"reason":"default"}';
+    const data = await response.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{"score":5,"reason":"default"}';
     const parsed = JSON.parse(raw);
     const score = Math.min(10, Math.max(1, parsed.score || 5));
     const reason = parsed.reason || "auto-classified";
-
-    const openaiAvailable = !!process.env.OPENAI_API_KEY;
 
     // Route based on score
     let target: RouteTarget;
