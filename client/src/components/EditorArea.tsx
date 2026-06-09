@@ -58,7 +58,9 @@ export default function EditorArea({ files, activeFilePath, onSelectFile, onClos
             Open a file from the explorer, or use the AI assistant to generate code.
           </p>
           <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 8, fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
-            <span>Ctrl+K — Command Palette</span>
+            <span>Ctrl+S — Save File</span>
+            <span>Ctrl+Shift+N — New Chat</span>
+            <span>Ctrl+J — Toggle AI Panel</span>
             <span>Ctrl+` — Toggle Terminal</span>
             <span>Ctrl+B — Toggle Sidebar</span>
           </div>

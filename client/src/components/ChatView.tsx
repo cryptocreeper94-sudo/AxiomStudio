@@ -765,8 +765,8 @@ export default function ChatView({
                       </span>
                     )}
                     {routeInfo && (
-                      <span style={{ fontSize: 8, padding: "1px 6px", borderRadius: 4, background: "rgba(14,165,233,0.08)", color: "rgba(14,165,233,0.5)", fontFamily: "'JetBrains Mono', monospace" }}>
-                        routed · {routeInfo.score}/10
+                      <span title={routeInfo.reason || `Routed to ${routeInfo.agent}`} style={{ fontSize: 8, padding: "1px 6px", borderRadius: 4, background: "rgba(14,165,233,0.08)", color: "rgba(14,165,233,0.5)", fontFamily: "'JetBrains Mono', monospace", cursor: "help" }}>
+                        routed → {routeInfo.agent} · {routeInfo.score}/10
                       </span>
                     )}
                   </div>

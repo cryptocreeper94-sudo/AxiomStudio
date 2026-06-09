@@ -155,10 +155,22 @@ export default function IDELayout() {
         e.preventDefault();
         setTerminalVisible(v => !v);
       }
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        if (activeFilePath) handleSaveFile(activeFilePath);
+      }
+      if (e.ctrlKey && e.shiftKey && e.key === "N") {
+        e.preventDefault();
+        handleNewChat();
+      }
+      if (e.ctrlKey && e.key === "j") {
+        e.preventDefault();
+        setChatCollapsed(c => !c);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [activeFilePath, handleSaveFile, handleNewChat]);
 
   // Cockpit clock
   useEffect(() => {

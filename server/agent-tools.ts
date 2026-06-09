@@ -133,12 +133,13 @@ export const ANTHROPIC_TOOLS: any[] = [
   },
   {
     name: "generate_image",
-    description: "Generate an image using DALL-E 3. Returns the URL of the generated image.",
+    description: "Generate an image. Defaults to Gemini Imagen 3 (free). Use provider='openai' for DALL-E 3 (higher quality, costs 2 credits).",
     input_schema: {
       type: "object",
       properties: {
         prompt: { type: "string", description: "Text description of the image to generate" },
-        size: { type: "string", description: "Optional size, default is 1024x1024" }
+        size: { type: "string", description: "Optional size. For Gemini: '1:1','16:9','9:16','4:3','3:4'. For DALL-E: '1024x1024','1792x1024','1024x1792'. Defaults to square." },
+        provider: { type: "string", enum: ["gemini", "openai"], description: "Image provider. 'gemini' = Imagen 3 (free), 'openai' = DALL-E 3 (premium, 2 credits). Defaults to gemini." }
       },
       required: ["prompt"],
     },
@@ -264,7 +265,7 @@ export async function executeTool(
         }
         return await toolImportGitHub(args.repo_url, args.target_dir, userId);
       case "generate_image":
-        return await toolGenerateImage(args.prompt, args.size);
+        return await toolGenerateImage(args.prompt, args.size, args.provider);
       case "push_to_depot":
         return await toolPushToDepot(args.repo_name, args.message, userId);
       case "search_web":
@@ -700,30 +701,88 @@ async function toolImportGitHub(
   }
 }
 
-// ─── generate_image ────────────────────────────────────────────────────
+// ─── generate_image (dual provider) ────────────────────────────────────
 
-async function toolGenerateImage(prompt: string, size?: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return "Error: OPENAI_API_KEY not set. Image generation requires an OpenAI API key.";
-  
+async function toolGenerateImage(prompt: string, size?: string, provider?: string): Promise<string> {
+  const useOpenAI = provider === "openai";
+
+  // DALL-E 3 (premium)
+  if (useOpenAI) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return "Error: OpenAI is not available. Use provider='gemini' for free image generation.";
+    try {
+      const res = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({ prompt, n: 1, size: size || "1024x1024", model: "dall-e-3" }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      return `Image generated with DALL-E 3 (premium)!\nURL: ${data.data[0].url}`;
+    } catch (err: any) {
+      return `Error generating image with DALL-E 3: ${err.message}`;
+    }
+  }
+
+  // Gemini Imagen 3 (free default)
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) return "Error: GEMINI_API_KEY not set. Cannot generate images.";
+
   try {
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        prompt,
-        n: 1,
-        size: size || "1024x1024",
-        model: "dall-e-3",
-      }),
-    });
+    // Map friendly aspect ratios
+    const aspectRatio = size === "16:9" ? "16:9"
+      : size === "9:16" ? "9:16"
+      : size === "4:3" ? "4:3"
+      : size === "3:4" ? "3:4"
+      : "1:1";
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instances: [{ prompt }],
+          parameters: { sampleCount: 1, aspectRatio },
+        }),
+      }
+    );
     const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const imageUrl = data.data[0].url;
-    return `Image generated successfully!\nURL: ${imageUrl}`;
+
+    if (data.error) {
+      // Fallback: try Gemini 2.0 Flash for image generation
+      const fallbackRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Generate an image: ${prompt}` }] }],
+            generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+          }),
+        }
+      );
+      const fallbackData = await fallbackRes.json();
+      if (fallbackData.error) throw new Error(fallbackData.error.message || "Gemini image generation failed");
+
+      // Extract image from multimodal response
+      const parts = fallbackData.candidates?.[0]?.content?.parts || [];
+      const imgPart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
+      if (imgPart) {
+        const dataUrl = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+        return `Image generated with Gemini (free)!\nURL: ${dataUrl}`;
+      }
+      return "Image generation completed but no image was returned. Try a more descriptive prompt.";
+    }
+
+    // Imagen 3 returns predictions with bytesBase64Encoded
+    const prediction = data.predictions?.[0];
+    if (prediction?.bytesBase64Encoded) {
+      const dataUrl = `data:image/png;base64,${prediction.bytesBase64Encoded}`;
+      return `Image generated with Imagen 3 (free)!\nURL: ${dataUrl}`;
+    }
+
+    return "Image generation completed but no image data received. Try rephrasing your prompt.";
   } catch (err: any) {
     return `Error generating image: ${err.message}`;
   }
