@@ -13,6 +13,7 @@ export const AGENT_COSTS: Record<string, { credits: number; label: string; comin
   sonnet:   { credits: 3,  label: "Axiom Quick (Sonnet 4.6)" },
   gemini:   { credits: 5,  label: "Axiom Gemini (Gemini 3.1 Pro)" },
   deepseek: { credits: 2,  label: "Axiom Deep (DeepSeek V3)" },
+  fable:    { credits: 15, label: "Axiom Ultra (Claude Fable 5)" },
   gpt4:     { credits: 4,  label: "Axiom GPT (GPT-4.1)", comingSoon: true },
   gpt4mini: { credits: 1,  label: "Axiom GPT Mini (GPT-4.1 Mini)", comingSoon: true },
   lume:     { credits: 10, label: "Lume Agent (Opus 4.8)" },

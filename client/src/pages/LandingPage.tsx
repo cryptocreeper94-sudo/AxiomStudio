@@ -53,6 +53,7 @@ const FEATURES = [
 ];
 
 const AGENTS = [
+  { name: "Fable 5", model: "claude-fable-5", img: "/agents/opus.png", border: "rgba(245, 158, 11, 0.5)", cost: "15 credits" },
   { name: "Opus", model: "claude-opus-4-8", img: "/agents/opus.png", border: "rgba(30, 58, 138, 0.4)", cost: "10 credits" },
   { name: "Gemini Pro", model: "gemini-3.1-pro", img: "/agents/gemini.png", border: "rgba(59, 130, 246, 0.3)", cost: "5 credits" },
   { name: "Sonnet", model: "claude-sonnet-4-6", img: "/agents/sonnet.png", border: "rgba(6, 182, 212, 0.3)", cost: "3 credits" },
@@ -64,6 +65,7 @@ const AGENTS = [
 const AGENT_TRIPLETS = [
   [AGENTS[0], AGENTS[1], AGENTS[2]],
   [AGENTS[3], AGENTS[4], AGENTS[5]],
+  [AGENTS[6]],
 ];
 
 const DEMO_CODE_LINES = [
@@ -639,6 +641,11 @@ export default function LandingPage() {
               </thead>
               <tbody>
                 <tr>
+                  <td><div className="matrix-badge" style={{background: 'rgba(245,158,11,0.15)', color: '#f59e0b', borderColor: 'rgba(245,158,11,0.3)'}}>Mission Critical</div></td>
+                  <td>Deep architecture, security audits, multi-system debugging, hardest problems</td>
+                  <td style={{color: '#f59e0b', fontWeight: 700}}>Claude Fable 5 ✦</td>
+                </tr>
+                <tr>
                   <td><div className="matrix-badge">Heavy Architecture</div></td>
                   <td>Cross-file refactors, zero-shot creation, deep structural logic</td>
                   <td className="agent-opus">Claude Opus 4.8</td>
@@ -704,7 +711,7 @@ export default function LandingPage() {
             </thead>
             <tbody>
               {([
-                ["AI Models", "8 agents (Opus, Gemini Pro, Sonnet, DeepSeek, GPT-4.1, Lume, Flash + more)", "Claude + GPT", "1 model", "GPT-4o / Claude", "1 model"],
+                ["AI Models", "9 agents (Fable 5, Opus, Gemini Pro, Sonnet, DeepSeek, GPT-4.1, Lume, Flash + more)", "Claude + GPT", "1 model", "GPT-4o / Claude", "1 model"],
                 ["Auto-Routing", "✦ Smart auto-select", "—", "—", "—", "—"],
                 ["Free Credits", "✦ 50 free on signup", "Limited trial", "Limited", "30-day trial", "Limited trial"],
                 ["Pricing", "Pay-per-use from $0.01/credit", "$20/mo minimum", "$25/mo+", "$10–$39/mo", "$15/mo"],
@@ -767,7 +774,7 @@ export default function LandingPage() {
             <div className="compare-value-item">
               <Bot className="w-5 h-5" style={{ color: "#38bdf8" }} />
               <div>
-                <strong>8 AI agents</strong>
+                <strong>9 AI agents</strong>
                 <span>Auto-routed per task</span>
               </div>
             </div>

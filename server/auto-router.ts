@@ -6,7 +6,7 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 
-export type RouteTarget = "opus" | "gemini" | "sonnet" | "flash" | "gpt4" | "gpt4mini" | "deepseek";
+export type RouteTarget = "opus" | "gemini" | "sonnet" | "flash" | "gpt4" | "gpt4mini" | "deepseek" | "fable";
 
 interface RouteDecision {
   target: RouteTarget;
@@ -82,10 +82,12 @@ export async function classifyMessage(
       target = "deepseek"; // Medium tasks → DeepSeek V3 (2 credits, best value)
     } else if (score <= 6) {
       target = "sonnet"; // Medium-hard → Sonnet (3 credits)
-    } else if (hasFileContext) {
+    } else if (score <= 8 && hasFileContext) {
       target = "gemini"; // Complex with files → Gemini Pro (2M context)
-    } else {
+    } else if (score <= 8) {
       target = "opus"; // Complex pure logic → Opus (most capable)
+    } else {
+      target = "fable"; // Score 9-10 → Fable 5 (Mythos-class, hardest problems)
     }
 
     return { target, score, reason };
@@ -98,7 +100,8 @@ export async function classifyMessage(
 
 // Model mapping for each route target
 export const ROUTE_MODELS: Record<RouteTarget, { model: string; provider: string; agentId: string }> = {
-  opus:     { model: "claude-opus-4-7", provider: "anthropic", agentId: "opus" },
+  fable:    { model: "claude-fable-5", provider: "anthropic", agentId: "fable" },
+  opus:     { model: "claude-opus-4-8", provider: "anthropic", agentId: "opus" },
   gemini:   { model: "gemini-3.1-pro", provider: "google", agentId: "gemini" },
   sonnet:   { model: "claude-sonnet-4-6", provider: "anthropic", agentId: "sonnet" },
   deepseek: { model: "deepseek-chat", provider: "deepseek", agentId: "deepseek" },

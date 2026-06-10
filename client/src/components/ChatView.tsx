@@ -239,7 +239,8 @@ function MessageBubble({ msg, agentName, onApply, activeFileName }: {
     });
   }, [msg.content, isUser, onApply, activeFileName]);
 
-  const modelShort = msg.model?.includes("claude-opus") ? "Claude Opus"
+  const modelShort = msg.model?.includes("claude-fable") ? "Claude Fable 5"
+    : msg.model?.includes("claude-opus") ? "Claude Opus"
     : msg.model?.includes("claude-sonnet") ? "Claude Sonnet"
     : msg.model?.includes("claude-haiku") ? "Claude Haiku"
     : msg.model?.includes("deepseek") ? "DeepSeek V3"
