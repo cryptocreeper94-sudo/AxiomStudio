@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/axiom-studio?color=06b6d4&label=npm)](https://npmjs.com/package/axiom-studio)
 [![License](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
-[![Version](https://img.shields.io/badge/version-3.1.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases)
 
 Multi-agent AI coding environment with full filesystem access. Use in the cloud or install locally — same agents, same power.
 
@@ -17,7 +17,7 @@ Multi-agent AI coding environment with full filesystem access. Use in the cloud 
 Go to **[axiomstudio.dev](https://axiomstudio.dev)** — sign in and start coding.
 
 ### Desktop (full power)
-Download **Axiom Studio Setup 3.1.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
+Download **Axiom Studio Setup 1.0.0.exe** from [Releases](https://github.com/cryptocreeper94-sudo/Axiom-Studio/releases) and run the installer.
 
 ### Local CLI (developers)
 ```bash
@@ -55,14 +55,15 @@ Requires Node.js 18+ (v24 fully supported). Browser opens automatically. Full fi
 
 | Agent | Model | Credits | Status |
 |-------|-------|---------|--------|
-| Axiom (Opus) | `claude-opus-4-8` | 10 / message | ✅ Live |
-| Axiom Gemini | `gemini-3.1-pro` | 5 / message | ✅ Live |
-| Axiom Quick (Sonnet) | `claude-sonnet-4-6` | 3 / message | ✅ Live |
-| Axiom Deep (DeepSeek) | `deepseek-chat` | 2 / message | ✅ Live |
-| Axiom GPT | `gpt-4.1` | 4 / message | 🔜 Coming Soon |
-| Axiom GPT Mini | `gpt-4.1-mini` | 1 / message | 🔜 Coming Soon |
-| Lume Agent | `claude-opus-4-8` | 10 / message | ✅ Live |
-| Axiom Free (Flash) | `gemini-2.0-flash-lite` | Free | ✅ Always Free |
+| **Axiom Ultra** | `claude-fable-5` | 15 / message | ✅ Live — Anthropic's Mythos-class model |
+| **Axiom** (Opus) | `claude-opus-4-8` | 10 / message | ✅ Live |
+| **Axiom Gemini** | `gemini-3.1-pro` | 5 / message | ✅ Live — 2M token context |
+| **Axiom Quick** (Sonnet) | `claude-sonnet-4-6` | 3 / message | ✅ Live |
+| **Axiom Deep** (DeepSeek) | `deepseek-chat` | 2 / message | ✅ Live |
+| **Axiom GPT** | `gpt-4.1` | 4 / message | 🔜 Coming Soon |
+| **Axiom GPT Mini** | `gpt-4.1-mini` | 1 / message | 🔜 Coming Soon |
+| **Lume Agent** | `claude-opus-4-8` | 10 / message | ✅ Live — Lume language specialist |
+| **Axiom Free** (Flash) | `gemini-2.0-flash-lite` | Free | ✅ Always Free |
 | Auto-Router | Gemini Flash classifier | Free | ✅ Live |
 
 **50 free credits on signup** — enough to build a functioning app before you buy. Gemini Flash is always free, no credits needed.
