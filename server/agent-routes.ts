@@ -894,6 +894,7 @@ export function registerAgentRoutes(app: Express): void {
       systemPrompt: agent.systemPrompt,
       userId,
       userRole,
+      conversationId,
       signal: controller.signal,
     });
 

@@ -164,15 +164,22 @@ pool.query("SELECT 1").then(async () => {
       CREATE TABLE IF NOT EXISTS workspace_files (
         id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id TEXT NOT NULL,
+        conversation_id TEXT NOT NULL DEFAULT 'default-workspace',
         file_path TEXT NOT NULL,
         content TEXT NOT NULL DEFAULT '',
         is_directory BOOLEAN NOT NULL DEFAULT false,
         size_bytes INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(user_id, file_path)
+        UNIQUE(user_id, conversation_id, file_path)
       );
       CREATE INDEX IF NOT EXISTS idx_ws_files_user ON workspace_files(user_id);
+
+      -- Safe migration for existing workspace_files table
+      ALTER TABLE workspace_files ADD COLUMN IF NOT EXISTS conversation_id TEXT NOT NULL DEFAULT 'default-workspace';
+      ALTER TABLE workspace_files DROP CONSTRAINT IF EXISTS workspace_files_user_id_file_path_key;
+      ALTER TABLE workspace_files DROP CONSTRAINT IF EXISTS workspace_files_user_convo_file_unique;
+      ALTER TABLE workspace_files ADD CONSTRAINT workspace_files_user_convo_file_unique UNIQUE (user_id, conversation_id, file_path);
     `);
     console.log("[DB] Agent tables verified/created");
   } catch (migErr: any) {

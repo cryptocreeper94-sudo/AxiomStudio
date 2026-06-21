@@ -14,7 +14,18 @@ try {
 
 export function setupTerminalWebSocket(server: any) {
   if (!pty) {
-    console.warn("[PTY] Terminal WebSocket disabled — node-pty not installed");
+    const fallbackWss = new WebSocketServer({ noServer: true });
+    server.on("upgrade", (request: any, socket: any, head: any) => {
+      if (request.url.startsWith("/ws/terminal")) {
+        fallbackWss.handleUpgrade(request, socket, head, (ws) => {
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Terminal requires native build tools. Run: npm rebuild node-pty'
+          }));
+          ws.close();
+        });
+      }
+    });
     return;
   }
 
@@ -25,6 +36,7 @@ export function setupTerminalWebSocket(server: any) {
     if (request.url.startsWith("/ws/terminal")) {
       const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
       const token = url.searchParams.get("token");
+      const convoId = url.searchParams.get("convoId") || "default-workspace";
 
       if (!token) {
         socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -47,6 +59,7 @@ export function setupTerminalWebSocket(server: any) {
       wss.handleUpgrade(request, socket, head, (ws) => {
         // Pass decoded user info via request object
         (request as any).user = decoded;
+        (request as any).convoId = convoId;
         wss.emit("connection", ws, request);
       });
     }
@@ -58,7 +71,8 @@ export function setupTerminalWebSocket(server: any) {
     let ptyProcess: any = null;
     try {
       const userId = req.user?.id || "anonymous";
-      const userWorkspace = path.join(BASE_WORKSPACES_DIR, userId);
+      const convoId = req.convoId || "default-workspace";
+      const userWorkspace = path.join(BASE_WORKSPACES_DIR, userId, convoId);
       
       // Ensure directory exists synchronously (or fallback to cwd)
       if (!fs.existsSync(userWorkspace)) {

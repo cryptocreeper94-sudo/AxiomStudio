@@ -54,6 +54,7 @@ export interface ProviderConfig {
   systemPrompt: string;
   userId: string;
   userRole: string;
+  conversationId: string;
   signal?: AbortSignal;
   trustMode?: boolean; // If true, skip approval prompts
 }
@@ -171,7 +172,8 @@ export async function* streamAnthropic(
               toolUse.name,
               args,
               config.userId,
-              config.userRole
+              config.userRole,
+              config.conversationId
             );
           } else {
             result = "User rejected this action. Do not retry — ask the user what they'd like instead.";
@@ -327,7 +329,7 @@ export async function* streamOpenAI(
 
           let result: string;
           if (shouldExecute) {
-            result = await executeTool(name, args, config.userId, config.userRole);
+            result = await executeTool(name, args, config.userId, config.userRole, config.conversationId);
           } else {
             result = "User rejected this action. Do not retry — ask the user what they'd like instead.";
           }

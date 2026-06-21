@@ -13,11 +13,12 @@ import "@xterm/xterm/css/xterm.css";
 
 interface Props {
   token: string;
+  convoId?: string;
   visible: boolean;
   onClose: () => void;
 }
 
-export default function TerminalPanel({ token, visible, onClose }: Props) {
+export default function TerminalPanel({ token, convoId, visible, onClose }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -86,7 +87,7 @@ export default function TerminalPanel({ token, visible, onClose }: Props) {
 
     // Connect WebSocket
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws/terminal?token=${token}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/terminal?token=${token}&convoId=${convoId || 'default-workspace'}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -124,7 +125,7 @@ export default function TerminalPanel({ token, visible, onClose }: Props) {
     return () => {
       ro.disconnect();
     };
-  }, [visible, token]);
+  }, [visible, token, convoId]);
 
   if (!visible) return null;
 

@@ -245,7 +245,7 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "gpt4",
     name: "Axiom GPT",
-    description: "GPT-4.1 — General purpose, documentation, planning. Coming soon.",
+    description: "GPT-4.1 — General purpose coding, documentation, and planning.",
     model: "gpt-4.1",
     provider: "openai",
     maxTokens: 8192,
@@ -257,7 +257,7 @@ export const AGENT_SEEDS: AgentSeed[] = [
   {
     id: "gpt4mini",
     name: "Axiom GPT Mini",
-    description: "GPT-4.1 Mini — Fast & affordable GPT agent. Coming soon.",
+    description: "GPT-4.1 Mini — Fast & affordable GPT agent.",
     model: "gpt-4.1-mini",
     provider: "openai",
     maxTokens: 4096,

@@ -144,33 +144,7 @@ export default function IDELayout() {
     setStreamingContent("");
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "b") {
-        e.preventDefault();
-        setSidePanel(prev => prev ? null : "files");
-      }
-      if (e.ctrlKey && e.key === "`") {
-        e.preventDefault();
-        setTerminalVisible(v => !v);
-      }
-      if (e.ctrlKey && e.key === "s") {
-        e.preventDefault();
-        if (activeFilePath) handleSaveFile(activeFilePath);
-      }
-      if (e.ctrlKey && e.shiftKey && e.key === "N") {
-        e.preventDefault();
-        handleNewChat();
-      }
-      if (e.ctrlKey && e.key === "j") {
-        e.preventDefault();
-        setChatCollapsed(c => !c);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [activeFilePath, handleSaveFile, handleNewChat]);
+
 
   // Cockpit clock
   useEffect(() => {
@@ -315,6 +289,34 @@ export default function IDELayout() {
     setMessages([]);
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
   }, [token, activeAgentId, agents, queryClient]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "b") {
+        e.preventDefault();
+        setSidePanel(prev => prev ? null : "files");
+      }
+      if (e.ctrlKey && e.key === "`") {
+        e.preventDefault();
+        setTerminalVisible(v => !v);
+      }
+      if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        if (activeFilePath) handleSaveFile(activeFilePath);
+      }
+      if (e.ctrlKey && e.shiftKey && e.key === "N") {
+        e.preventDefault();
+        handleNewChat();
+      }
+      if (e.ctrlKey && e.key === "j") {
+        e.preventDefault();
+        setChatCollapsed(c => !c);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [activeFilePath, handleSaveFile, handleNewChat]);
 
   const handleSendMessage = useCallback(async (content: string, contextFilePaths?: string[]) => {
     if (!token || !content.trim()) return;
@@ -1005,7 +1007,7 @@ export default function IDELayout() {
             {/* Tab content */}
             <div className="ax-bp-content">
               {bottomTab === 'terminal' && (
-                <TerminalPanel token={token} visible={true} onClose={() => setTerminalVisible(false)} />
+                <TerminalPanel token={token} convoId={activeConvoId || undefined} visible={true} onClose={() => setTerminalVisible(false)} />
               )}
               {bottomTab === 'problems' && (
                 <div className="ax-problems-list">

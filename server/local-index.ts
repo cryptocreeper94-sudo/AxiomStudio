@@ -46,7 +46,9 @@ if (!process.env.JWT_SECRET) {
 
 // ── Determine mode ──
 const HAS_OWN_KEYS = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
-const IS_OWNER_MODE = true; // FORCED TO TRUE TO BYPASS PAYWALL
+// ⚠️  DISTRIBUTION NOTE: Remove the override below before public release.
+// In public builds, IS_OWNER_MODE should be derived from HAS_OWN_KEYS.
+const IS_OWNER_MODE = true; // TEMPORARY — owner personal build only
 
 // ── API key cache (for tenant mode) ──
 let cachedKeys: { anthropic: string | null; openai: string | null; expires: number } | null = null;
@@ -149,6 +151,10 @@ app.use((_req, res, next) => {
   res.header("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   if (_req.method === "OPTIONS") { res.sendStatus(200); return; }
   next();
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', mode: 'local', timestamp: Date.now() });
 });
 
 // ── Local mode prompt injection ──
@@ -572,7 +578,7 @@ async function startServer() {
       publicDir = publicDir.replace("app.asar", "app.asar.unpacked");
     }
     app.use(express.static(publicDir));
-    app.get("/{*splat}", (_req, res) => {
+    app.get(/.*/, (_req, res) => {
       try {
         const html = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
         res.send(html);

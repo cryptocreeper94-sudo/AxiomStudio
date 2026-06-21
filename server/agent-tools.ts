@@ -242,18 +242,19 @@ export async function executeTool(
   name: string,
   args: Record<string, any>,
   userId: string,
-  userRole: string
+  userRole: string,
+  conversationId: string
 ): Promise<string> {
   try {
     switch (name) {
       case "read_file":
-        return await toolReadFile(args.path, userId);
+        return await toolReadFile(args.path, userId, conversationId);
       case "write_file":
-        return await toolWriteFile(args.path, args.content, userId);
+        return await toolWriteFile(args.path, args.content, userId, conversationId);
       case "list_directory":
-        return await toolListDirectory(args.path ?? "", userId);
+        return await toolListDirectory(args.path ?? "", userId, conversationId);
       case "search_files":
-        return await toolSearchFiles(args.query, args.path_prefix ?? "", userId);
+        return await toolSearchFiles(args.query, args.path_prefix ?? "", userId, conversationId);
       case "run_command":
         if (userRole !== "owner") {
           return "Error: run_command is restricted to owner accounts only.";
@@ -263,21 +264,21 @@ export async function executeTool(
         if (userRole !== "owner") {
           return "Error: import_github is restricted to owner accounts only.";
         }
-        return await toolImportGitHub(args.repo_url, args.target_dir, userId);
+        return await toolImportGitHub(args.repo_url, args.target_dir, userId, conversationId);
       case "generate_image":
         return await toolGenerateImage(args.prompt, args.size, args.provider);
       case "push_to_depot":
-        return await toolPushToDepot(args.repo_name, args.message, userId);
+        return await toolPushToDepot(args.repo_name, args.message, userId, conversationId);
       case "search_web":
         return await toolSearchWeb(args.query, args.num_results);
       case "delete_file":
-        return await toolDeleteFile(args.path, userId);
+        return await toolDeleteFile(args.path, userId, conversationId);
       case "delegate_task":
-        return await toolDelegateTask(args.task, args.agent, userId, userRole);
+        return await toolDelegateTask(args.task, args.agent, userId, userRole, conversationId);
       case "edit_file":
-        return await toolEditFile(args.path, args.target_content, args.replacement_content, userId);
+        return await toolEditFile(args.path, args.target_content, args.replacement_content, userId, conversationId);
       case "view_file":
-        return await toolViewFile(args.path, args.start_line, args.end_line, userId);
+        return await toolViewFile(args.path, args.start_line, args.end_line, userId, conversationId);
       default:
         return `Error: Unknown tool "${name}"`;
     }
@@ -288,14 +289,14 @@ export async function executeTool(
 
 // ─── read_file ─────────────────────────────────────────────────────────
 
-async function toolReadFile(filePath: string, userId: string): Promise<string> {
+async function toolReadFile(filePath: string, userId: string, conversationId: string): Promise<string> {
   if (!filePath) return "Error: path is required";
   const normalized = normalizePath(filePath);
 
   const result = await db
     .select({ content: workspaceFiles.content })
     .from(workspaceFiles)
-    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, normalized)))
     .limit(1);
 
   if (!result.length) {
@@ -314,7 +315,8 @@ async function toolReadFile(filePath: string, userId: string): Promise<string> {
 async function toolWriteFile(
   filePath: string,
   content: string,
-  userId: string
+  userId: string,
+  conversationId: string
 ): Promise<string> {
   if (!filePath) return "Error: path is required";
   if (content == null) return "Error: content is required";
@@ -328,11 +330,12 @@ async function toolWriteFile(
     const exists = await db
       .select({ id: workspaceFiles.id })
       .from(workspaceFiles)
-      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, dirPath)))
+      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, dirPath)))
       .limit(1);
     if (!exists.length) {
       await db.insert(workspaceFiles).values({
         userId,
+        conversationId,
         filePath: dirPath,
         isDirectory: true,
         content: "",
@@ -345,7 +348,7 @@ async function toolWriteFile(
   const existingRows = await db
     .select({ id: workspaceFiles.id, content: workspaceFiles.content })
     .from(workspaceFiles)
-    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, normalized)))
     .limit(1);
 
   const oldContent = existingRows.length ? (existingRows[0].content ?? "") : null;
@@ -355,6 +358,7 @@ async function toolWriteFile(
   if (oldContent !== null) {
     await db.insert(workspaceFileHistory).values({
       userId,
+      conversationId,
       filePath: normalized,
       content: oldContent,
       action: "write",
@@ -385,10 +389,11 @@ async function toolWriteFile(
     await db
       .update(workspaceFiles)
       .set({ content, sizeBytes, updatedAt: new Date() })
-      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)));
+      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, normalized)));
   } else {
     await db.insert(workspaceFiles).values({
       userId,
+      conversationId,
       filePath: normalized,
       isDirectory: false,
       content,
@@ -401,13 +406,13 @@ async function toolWriteFile(
 
 // ─── list_directory ────────────────────────────────────────────────────
 
-async function toolListDirectory(dirPath: string, userId: string): Promise<string> {
+async function toolListDirectory(dirPath: string, userId: string, conversationId: string): Promise<string> {
   const normalized = dirPath === "." || dirPath === "/" ? "" : normalizePath(dirPath);
 
   const allFiles = await db
     .select({ filePath: workspaceFiles.filePath, isDirectory: workspaceFiles.isDirectory })
     .from(workspaceFiles)
-    .where(eq(workspaceFiles.userId, userId));
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId)));
 
   const children = allFiles.filter((f) => {
     if (normalized === "") {
@@ -443,7 +448,8 @@ async function toolListDirectory(dirPath: string, userId: string): Promise<strin
 async function toolSearchFiles(
   query: string,
   pathPrefix: string,
-  userId: string
+  userId: string,
+  conversationId: string
 ): Promise<string> {
   if (!query) return "Error: query is required";
 
@@ -451,6 +457,7 @@ async function toolSearchFiles(
 
   const conditions: any[] = [
     eq(workspaceFiles.userId, userId),
+    eq(workspaceFiles.conversationId, conversationId),
     eq(workspaceFiles.isDirectory, false),
     ilike(workspaceFiles.content, `%${query}%`),
   ];
@@ -557,7 +564,8 @@ const MAX_FILES = 2000;
 async function toolImportGitHub(
   repoUrl: string,
   targetDir: string | undefined,
-  userId: string
+  userId: string,
+  conversationId: string
 ): Promise<string> {
   if (!repoUrl) return "Error: repo_url is required";
 
@@ -652,6 +660,7 @@ async function toolImportGitHub(
         const dirPath = parts.slice(0, i).join("/");
         await db.insert(workspaceFiles).values({
           userId,
+          conversationId,
           filePath: dirPath,
           isDirectory: true,
           content: "",
@@ -663,17 +672,18 @@ async function toolImportGitHub(
       const existing = await db
         .select({ id: workspaceFiles.id })
         .from(workspaceFiles)
-        .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, file.path)))
+        .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, file.path)))
         .limit(1);
 
       if (existing.length) {
         await db
           .update(workspaceFiles)
           .set({ content: file.content, sizeBytes, updatedAt: new Date() })
-          .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, file.path)));
+          .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, file.path)));
       } else {
         await db.insert(workspaceFiles).values({
           userId,
+          conversationId,
           filePath: file.path,
           isDirectory: false,
           content: file.content,
@@ -790,7 +800,7 @@ async function toolGenerateImage(prompt: string, size?: string, provider?: strin
 
 // ─── push_to_depot ─────────────────────────────────────────────────────
 
-async function toolPushToDepot(repoName: string, message: string, userId: string): Promise<string> {
+async function toolPushToDepot(repoName: string, message: string, userId: string, conversationId: string): Promise<string> {
   if (!repoName) return "Error: repo_name is required";
   
   try {
@@ -798,7 +808,7 @@ async function toolPushToDepot(repoName: string, message: string, userId: string
     const files = await db
       .select({ path: workspaceFiles.filePath, content: workspaceFiles.content, isDirectory: workspaceFiles.isDirectory })
       .from(workspaceFiles)
-      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.isDirectory, false)));
+      .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.isDirectory, false)));
       
     if (!files.length) return "Error: Workspace is empty. Nothing to push.";
 
@@ -928,7 +938,7 @@ async function toolSearchWeb(query: string, numResults?: number): Promise<string
 
 // ─── delete_file ───────────────────────────────────────────────────────
 
-async function toolDeleteFile(filePath: string, userId: string): Promise<string> {
+async function toolDeleteFile(filePath: string, userId: string, conversationId: string): Promise<string> {
   if (!filePath) return "Error: path is required";
   const normalized = normalizePath(filePath);
 
@@ -938,6 +948,7 @@ async function toolDeleteFile(filePath: string, userId: string): Promise<string>
     .from(workspaceFiles)
     .where(and(
       eq(workspaceFiles.userId, userId),
+      eq(workspaceFiles.conversationId, conversationId),
       eq(workspaceFiles.filePath, normalized),
     ));
 
@@ -945,6 +956,7 @@ async function toolDeleteFile(filePath: string, userId: string): Promise<string>
     if (!f.isDirectory) {
       await db.insert(workspaceFileHistory).values({
         userId,
+        conversationId,
         filePath: f.filePath,
         content: f.content ?? "",
         action: "delete",
@@ -956,7 +968,7 @@ async function toolDeleteFile(filePath: string, userId: string): Promise<string>
   // Delete the file and any children (if directory)
   const pattern = `${normalized}/%`;
   await db.execute(
-    sql`DELETE FROM workspace_files WHERE user_id = ${userId} AND (file_path = ${normalized} OR file_path LIKE ${pattern})`
+    sql`DELETE FROM workspace_files WHERE user_id = ${userId} AND conversation_id = ${conversationId} AND (file_path = ${normalized} OR file_path LIKE ${pattern})`
   );
 
   return `Deleted "${normalized}" from workspace.`;
@@ -968,7 +980,8 @@ async function toolDelegateTask(
   task: string,
   agentId: string,
   userId: string,
-  userRole: string
+  userRole: string,
+  conversationId: string
 ): Promise<string> {
   if (!task) return "Error: task description is required";
   if (!agentId) return "Error: agent is required (sonnet, mini, or gemini)";
@@ -976,7 +989,7 @@ async function toolDelegateTask(
   try {
     // Dynamic import to avoid circular dependency
     const { executeSubagent } = await import("./subagent-executor.js");
-    const result = await executeSubagent(task, agentId, userId, userRole);
+    const result = await executeSubagent(task, agentId, userId, userRole, conversationId);
     return result;
   } catch (err: any) {
     return `Error delegating task: ${err.message}`;
@@ -989,7 +1002,8 @@ async function toolEditFile(
   filePath: string,
   targetContent: string,
   replacementContent: string,
-  userId: string
+  userId: string,
+  conversationId: string
 ): Promise<string> {
   if (!filePath) return "Error: path is required";
   if (targetContent == null) return "Error: target_content is required";
@@ -1000,7 +1014,7 @@ async function toolEditFile(
   const result = await db
     .select({ id: workspaceFiles.id, content: workspaceFiles.content })
     .from(workspaceFiles)
-    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, normalized)))
     .limit(1);
 
   if (!result.length) {
@@ -1021,6 +1035,7 @@ async function toolEditFile(
   // Snapshot old content for history
   await db.insert(workspaceFileHistory).values({
     userId,
+    conversationId,
     filePath: normalized,
     content: content,
     action: "edit",
@@ -1034,7 +1049,7 @@ async function toolEditFile(
   await db
     .update(workspaceFiles)
     .set({ content: newContent, sizeBytes, updatedAt: new Date() })
-    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)));
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, normalized)));
 
   const oldLines = targetContent.split("\n").length;
   const newLines = replacementContent.split("\n").length;
@@ -1047,17 +1062,18 @@ async function toolViewFile(
   filePath: string,
   startLine?: number,
   endLine?: number,
-  userId?: string
+  userId?: string,
+  conversationId?: string
 ): Promise<string> {
   if (!filePath) return "Error: path is required";
-  if (!userId) return "Error: userId is required";
+  if (!userId || !conversationId) return "Error: userId and conversationId are required";
 
   const normalized = normalizePath(filePath);
 
   const result = await db
     .select({ content: workspaceFiles.content })
     .from(workspaceFiles)
-    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.filePath, normalized)))
+    .where(and(eq(workspaceFiles.userId, userId), eq(workspaceFiles.conversationId, conversationId), eq(workspaceFiles.filePath, normalized)))
     .limit(1);
 
   if (!result.length) {

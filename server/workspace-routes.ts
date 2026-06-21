@@ -12,6 +12,7 @@ import { workspaceFiles } from "../shared/schema.js";
 import { eq, and, like, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import path from "path";
+import archiver from "archiver";
 
 const router = Router();
 
@@ -78,12 +79,9 @@ function getConvoId(req: any): string {
   return typeof id === 'string' && id.trim() ? id.trim() : 'default';
 }
 
-// Combine convoId and normalized path safely
-function getIsolatedPath(req: any, p: string): string {
-  const convoId = getConvoId(req);
-  const norm = normalizePath(p);
-  return norm ? `${convoId}/${norm}` : convoId;
-}
+// Combine convoId and normalized path safely is no longer needed since we use native conversation_id column
+// but we keep normalizePath
+
 
 // GET /api/workspace/tree — Directory tree
 router.get("/tree", requireAuth, async (req: any, res) => {
@@ -97,15 +95,12 @@ router.get("/tree", requireAuth, async (req: any, res) => {
     }).from(workspaceFiles).where(
       and(
         eq(workspaceFiles.userId, req.uid),
-        like(workspaceFiles.filePath, `${prefix}%`)
+        eq(workspaceFiles.conversationId, convoId)
       )
     );
 
-    // Strip prefix so frontend sees isolated root
-    files = files.map(f => ({
-      ...f,
-      filePath: f.filePath.substring(prefix.length)
-    })).filter(f => f.filePath !== ""); // exclude the root dir record itself if any
+    // Filter out root dir record if any
+    files = files.filter(f => f.filePath !== "");
 
     // Build tree structure
     const root: any = { name: "workspace", path: ".", type: "directory", children: [] };
@@ -174,14 +169,16 @@ router.get("/file", requireAuth, async (req: any, res) => {
   const rawPath = req.query.path as string;
   if (!isSafePath(normalizePath(rawPath))) { res.status(400).json({ error: "Invalid path" }); return; }
   
-  const isolatedPath = getIsolatedPath(req, rawPath);
+  const convoId = getConvoId(req);
+  const normPath = normalizePath(rawPath);
   
   try {
     const records = await db.select()
       .from(workspaceFiles)
       .where(and(
         eq(workspaceFiles.userId, req.uid),
-        eq(workspaceFiles.filePath, isolatedPath)
+        eq(workspaceFiles.conversationId, convoId),
+        eq(workspaceFiles.filePath, normPath)
       ))
       .limit(1);
 
@@ -202,20 +199,22 @@ router.put("/file", requireAuth, async (req: any, res) => {
   const content = req.body.content || "";
   if (!isSafePath(normalizePath(rawPath)) || normalizePath(rawPath) === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
-  const isolatedPath = getIsolatedPath(req, rawPath);
+  const convoId = getConvoId(req);
+  const normPath = normalizePath(rawPath);
   
   try {
     // Upsert the file
     await db.insert(workspaceFiles)
       .values({
         userId: req.uid,
-        filePath: isolatedPath,
+        conversationId: convoId,
+        filePath: normPath,
         content: content,
         isDirectory: false,
         sizeBytes: Buffer.byteLength(content, 'utf8')
       })
       .onConflictDoUpdate({
-        target: [workspaceFiles.userId, workspaceFiles.filePath],
+        target: [workspaceFiles.userId, workspaceFiles.conversationId, workspaceFiles.filePath],
         set: { 
           content: content,
           sizeBytes: Buffer.byteLength(content, 'utf8'),
@@ -224,7 +223,7 @@ router.put("/file", requireAuth, async (req: any, res) => {
       });
 
     // Also optionally ensure parent directories exist
-    const parentParts = isolatedPath.split("/");
+    const parentParts = normPath.split("/");
     parentParts.pop(); // Remove file name
     let currentPath = "";
     
@@ -233,6 +232,7 @@ router.put("/file", requireAuth, async (req: any, res) => {
       await db.insert(workspaceFiles)
         .values({
           userId: req.uid,
+          conversationId: convoId,
           filePath: currentPath,
           isDirectory: true
         })
@@ -251,13 +251,15 @@ router.post("/mkdir", requireAuth, async (req: any, res) => {
   const rawPath = req.body.path;
   if (!isSafePath(normalizePath(rawPath)) || normalizePath(rawPath) === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
-  const isolatedPath = getIsolatedPath(req, rawPath);
+  const convoId = getConvoId(req);
+  const normPath = normalizePath(rawPath);
 
   try {
     await db.insert(workspaceFiles)
       .values({
         userId: req.uid,
-        filePath: isolatedPath,
+        conversationId: convoId,
+        filePath: normPath,
         isDirectory: true
       })
       .onConflictDoNothing();
@@ -273,17 +275,60 @@ router.delete("/file", requireAuth, async (req: any, res) => {
   const rawPath = req.query.path as string;
   if (!isSafePath(normalizePath(rawPath)) || normalizePath(rawPath) === "") { res.status(400).json({ error: "Invalid path" }); return; }
   
-  const isolatedPath = getIsolatedPath(req, rawPath);
+  const convoId = getConvoId(req);
+  const normPath = normalizePath(rawPath);
   
   try {
     // Delete the file itself and any nested children if it's a directory
-    const pattern = `${isolatedPath}/%`;
+    const pattern = `${normPath}/%`;
     await db.execute(
-      sql`DELETE FROM workspace_files WHERE user_id = ${req.uid} AND (file_path = ${isolatedPath} OR file_path LIKE ${pattern})`
+      sql`DELETE FROM workspace_files WHERE user_id = ${req.uid} AND conversation_id = ${convoId} AND (file_path = ${normPath} OR file_path LIKE ${pattern})`
     );
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/workspace/export — Export workspace as ZIP
+router.get("/export", requireAuth, async (req: any, res: any) => {
+  const convoId = getConvoId(req);
+
+  try {
+    const files = await db.select()
+      .from(workspaceFiles)
+      .where(and(
+        eq(workspaceFiles.userId, req.uid),
+        eq(workspaceFiles.conversationId, convoId),
+        eq(workspaceFiles.isDirectory, false)
+      ));
+
+    if (files.length === 0) {
+      res.status(404).send("Workspace is empty. Nothing to export.");
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="workspace-${convoId}.zip"`);
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    
+    archive.on('error', (err: any) => {
+      console.error("[ZIP Export Error]", err);
+      if (!res.headersSent) res.status(500).send("Error generating zip");
+    });
+
+    archive.pipe(res);
+
+    for (const file of files) {
+      if (file.content !== null) {
+        archive.append(file.content, { name: file.filePath });
+      }
+    }
+
+    await archive.finalize();
+  } catch (err: any) {
+    if (!res.headersSent) res.status(500).send(err.message);
   }
 });
 
@@ -300,12 +345,11 @@ router.post("/depot-push", requireAuth, async (req: any, res: any) => {
 
   try {
     // 1. Get all workspace files for this convo
-    const prefix = `${convoId}/`;
     const files = await db.select()
       .from(workspaceFiles)
       .where(and(
         eq(workspaceFiles.userId, userId),
-        like(workspaceFiles.filePath, `${prefix}%`),
+        eq(workspaceFiles.conversationId, convoId),
         eq(workspaceFiles.isDirectory, false)
       ));
 
@@ -347,7 +391,7 @@ router.post("/depot-push", requireAuth, async (req: any, res: any) => {
     await db.execute(sql`DELETE FROM depot_files WHERE repo_id = ${repoId}`);
     
     for (const file of files) {
-      const relativePath = file.filePath.substring(prefix.length);
+      const relativePath = file.filePath;
       const ext = relativePath.match(/\.[a-z]+$/i)?.[0] || '';
       
       await db.execute(sql`
@@ -388,14 +432,16 @@ router.get("/serve/*filepath", requireAuth, async (req: any, res: any) => {
     return;
   }
   
-  const isolatedPath = getIsolatedPath(req, rawPath);
+  const convoId = getConvoId(req);
+  const normPath = normalizePath(rawPath);
   
   try {
     const records = await db.select()
       .from(workspaceFiles)
       .where(and(
         eq(workspaceFiles.userId, req.uid),
-        eq(workspaceFiles.filePath, isolatedPath)
+        eq(workspaceFiles.conversationId, convoId),
+        eq(workspaceFiles.filePath, normPath)
       ))
       .limit(1);
 
@@ -436,14 +482,14 @@ router.get("/search", requireAuth, async (req: any, res: any) => {
     }).from(workspaceFiles).where(
       and(
         eq(workspaceFiles.userId, req.uid),
+        eq(workspaceFiles.conversationId, convoId),
         eq(workspaceFiles.isDirectory, false),
-        like(workspaceFiles.filePath, `${prefix}%`),
         sql`LOWER(${workspaceFiles.content}) LIKE LOWER(${'%' + query + '%'})`
       )
     ).limit(20);
 
     const results = files.map(file => {
-      const displayPath = file.filePath.substring(prefix.length);
+      const displayPath = file.filePath;
       const lines = (file.content || '').split('\n');
       const matches = lines
         .map((line, i) => ({ line: i + 1, text: line.trim() }))

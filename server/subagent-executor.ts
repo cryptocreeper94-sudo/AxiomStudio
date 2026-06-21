@@ -27,7 +27,8 @@ export async function executeSubagent(
   task: string,
   agentId: string,
   userId: string,
-  userRole: string
+  userRole: string,
+  conversationId: string
 ): Promise<string> {
   const model = SUBAGENT_MODELS[agentId] || "claude-sonnet-4-6";
   const systemPrompt = AGENT_PROMPTS[agentId] || AGENT_PROMPTS.sonnet || "";
@@ -93,7 +94,7 @@ You are running as a SUBAGENT delegated by the primary Axiom agent. Complete the
         const toolResults: Anthropic.ToolResultBlockParam[] = [];
         for (const toolUse of toolUseBlocks) {
           const args = toolUse.input as Record<string, any>;
-          const result = await executeTool(toolUse.name, args, userId, userRole);
+          const result = await executeTool(toolUse.name, args, userId, userRole, conversationId);
           toolResults.push({
             type: "tool_result",
             tool_use_id: toolUse.id,

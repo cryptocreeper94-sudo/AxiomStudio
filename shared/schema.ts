@@ -149,6 +149,7 @@ export const AGENT_CREDIT_COSTS = {
 export const workspaceFiles = pgTable("workspace_files", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("user_id").notNull(), // References chat_users(id)
+  conversationId: text("conversation_id").notNull().default('default-workspace'),
   filePath: text("file_path").notNull(),
   content: text("content").notNull().default(""),
   isDirectory: boolean("is_directory").notNull().default(false),

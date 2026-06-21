@@ -6,7 +6,7 @@
  * DarkWave Studios LLC — Copyright 2026
  */
 
-export type RouteTarget = "opus" | "gemini" | "sonnet" | "flash" | "gpt4" | "gpt4mini" | "deepseek" | "fable";
+export type RouteTarget = "opus" | "gemini" | "sonnet" | "flash" | "gpt4" | "gpt4mini" | "deepseek" | "fable" | "lume";
 
 interface RouteDecision {
   target: RouteTarget;
@@ -74,20 +74,29 @@ export async function classifyMessage(
     const score = Math.min(10, Math.max(1, parsed.score || 5));
     const reason = parsed.reason || "auto-classified";
 
-    // Route based on score
+    // Route based on score and context
     let target: RouteTarget;
-    if (score <= 3) {
+    const msgLower = message.toLowerCase();
+    
+    // Explicit routing for Lume/Trust Layer domains
+    if (msgLower.includes("lume") || msgLower.includes("ldir") || msgLower.includes("trust layer") || msgLower.includes("canon²")) {
+      target = "lume";
+    } else if (score <= 2) {
       target = "flash"; // Simple tasks → Gemini Flash Lite (free)
+    } else if (score <= 3) {
+      target = "gpt4mini"; // Quick logic → GPT-4.1 Mini
+    } else if (score <= 4) {
+      target = "deepseek"; // Medium tasks → DeepSeek V3
     } else if (score <= 5) {
-      target = "deepseek"; // Medium tasks → DeepSeek V3 (2 credits, best value)
+      target = "sonnet"; // Medium-hard → Sonnet
     } else if (score <= 6) {
-      target = "sonnet"; // Medium-hard → Sonnet (3 credits)
+      target = "gpt4"; // General purpose coding/planning → GPT-4.1
     } else if (score <= 8 && hasFileContext) {
       target = "gemini"; // Complex with files → Gemini Pro (2M context)
     } else if (score <= 8) {
-      target = "opus"; // Complex pure logic → Opus (most capable)
+      target = "opus"; // Complex pure logic → Opus
     } else {
-      target = "fable"; // Score 9-10 → Fable 5 (Mythos-class, hardest problems)
+      target = "fable"; // Score 9-10 → Fable 5 (Mythos-class)
     }
 
     return { target, score, reason };
@@ -108,4 +117,5 @@ export const ROUTE_MODELS: Record<RouteTarget, { model: string; provider: string
   flash:    { model: "gemini-2.0-flash-lite", provider: "google", agentId: "flash" },
   gpt4:     { model: "gpt-4.1", provider: "openai", agentId: "gpt4" },
   gpt4mini: { model: "gpt-4.1-mini", provider: "openai", agentId: "gpt4mini" },
+  lume:     { model: "claude-opus-4-8", provider: "anthropic", agentId: "lume" },
 };

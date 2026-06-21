@@ -18,3 +18,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </React.StrictMode>
 );
+
+if ((window as any).__axiomReady) {
+  (window as any).__axiomReady();
+}
