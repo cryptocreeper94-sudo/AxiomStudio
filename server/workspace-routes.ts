@@ -12,7 +12,9 @@ import { workspaceFiles } from "../shared/schema.js";
 import { eq, and, like, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import path from "path";
-import archiver from "archiver";
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const archiver = require('archiver');
 
 const router = Router();
 
