@@ -16,3 +16,4 @@ release3/
 *.dmg
 *.AppImage
 client/public/Axiom-Studio-Windows.zip
+.env

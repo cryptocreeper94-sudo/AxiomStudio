@@ -565,6 +565,18 @@ app.get("/api/analytics/costs", (_req, res) => res.json({ total: 0 }));
 
 // ── Serve frontend ──
 async function startServer() {
+  const REQUIRED_ENV = [
+    "JWT_SECRET", "DATABASE_URL", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+    "FIREBASE_SERVICE_ACCOUNT", "APP_URL", "NODE_ENV", "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_STARTER", "STRIPE_PRICE_BUILDER",
+    "STRIPE_PRICE_POWER", "STRIPE_PRICE_STUDIO", "WORKSPACE_ROOT"
+  ];
+  const missing = REQUIRED_ENV.filter(key => !process.env[key]);
+  if (missing.length > 0) {
+    console.error(`\n  [CRITICAL ERROR] Missing required environment variables: \n  ${missing.join(', ')}\n\n  Please configure your local .env file before starting the local engine.\n`);
+    process.exit(1);
+  }
+
   // Auth init for tenant mode (skip in Electron — no terminal for interactive login)
   const authed = await initAuth();
   if (!authed) {
