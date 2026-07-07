@@ -54,8 +54,14 @@
         "files": [
             "dist/**/*",
             "public/**/*",
-            "build/**/*",
             "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "build",
+                "to": "build",
+                "filter": ["**/*"]
+            }
         ],
         "mac": {
             "icon": "build/icon.png"
