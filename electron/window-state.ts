@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron';
+import { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';

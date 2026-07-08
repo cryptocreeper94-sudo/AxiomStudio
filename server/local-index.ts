@@ -565,16 +565,20 @@ app.get("/api/analytics/costs", (_req, res) => res.json({ total: 0 }));
 
 // ── Serve frontend ──
 async function startServer() {
-  const REQUIRED_ENV = [
-    "JWT_SECRET", "DATABASE_URL", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
-    "FIREBASE_SERVICE_ACCOUNT", "APP_URL", "NODE_ENV", "STRIPE_SECRET_KEY",
-    "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_STARTER", "STRIPE_PRICE_BUILDER",
-    "STRIPE_PRICE_POWER", "STRIPE_PRICE_STUDIO", "WORKSPACE_ROOT"
-  ];
-  const missing = REQUIRED_ENV.filter(key => !process.env[key]);
-  if (missing.length > 0) {
-    console.error(`\n  [CRITICAL ERROR] Missing required environment variables: \n  ${missing.join(', ')}\n\n  Please configure your local .env file before starting the local engine.\n`);
-    process.exit(1);
+  // In Electron local mode, cloud infrastructure env vars aren't needed
+  // (no Stripe, no Firebase auth, no remote DB — uses local-db.ts / SQLite)
+  if (!process.env.IS_ELECTRON) {
+    const REQUIRED_ENV = [
+      "JWT_SECRET", "DATABASE_URL", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+      "FIREBASE_SERVICE_ACCOUNT", "APP_URL", "NODE_ENV", "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_STARTER", "STRIPE_PRICE_BUILDER",
+      "STRIPE_PRICE_POWER", "STRIPE_PRICE_STUDIO", "WORKSPACE_ROOT"
+    ];
+    const missing = REQUIRED_ENV.filter(key => !process.env[key]);
+    if (missing.length > 0) {
+      console.error(`\n  [CRITICAL ERROR] Missing required environment variables: \n  ${missing.join(', ')}\n\n  Please configure your local .env file before starting the local engine.\n`);
+      process.exit(1);
+    }
   }
 
   // Auth init for tenant mode (skip in Electron — no terminal for interactive login)
@@ -586,8 +590,13 @@ async function startServer() {
 
   if (process.env.NODE_ENV === "production" || process.env.IS_ELECTRON) {
     let publicDir = path.resolve(__dirname, "../public");
+    // Inside asar, Node's fs can read directly — only use unpacked if it exists
     if (publicDir.includes("app.asar")) {
-      publicDir = publicDir.replace("app.asar", "app.asar.unpacked");
+      const unpackedDir = publicDir.replace("app.asar", "app.asar.unpacked");
+      if (fs.existsSync(unpackedDir)) {
+        publicDir = unpackedDir;
+      }
+      // else: leave as-is, Node can serve from inside asar
     }
     app.use(express.static(publicDir));
     app.get(/.*/, (_req, res) => {

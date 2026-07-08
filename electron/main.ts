@@ -75,6 +75,10 @@ function createWindow() {
     if (mainWindow) {
       mainWindow.loadURL(`http://localhost:${port}/`);
     }
+    if (splashWindow) {
+      splashWindow.close();
+      splashWindow = null;
+    }
   });
 
   mainWindow.once('ready-to-show', () => {
@@ -182,11 +186,6 @@ app.whenReady().then(async () => {
   createSplash();
   await startServer();
   createWindow();
-  const ready = await waitForServer(process.env.PORT || '5100');
-  if (ready) {
-    splashWindow?.close();
-    splashWindow = null;
-  }
 
   setTimeout(() => {
     autoUpdater.checkForUpdatesAndNotify();
