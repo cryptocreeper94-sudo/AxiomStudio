@@ -370,7 +370,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Early Access Waitlist ── */}
-      <section className="waitlist-section" id="waitlist">
+      <section className="waitlist-section creme-bg" id="waitlist">
         <div className="waitlist-container">
           <div className="waitlist-content">
             <div className="waitlist-badge">
@@ -498,7 +498,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features Carousel ── */}
-      <section className="landing-section" id="features">
+      <section className="landing-section creme-bg" id="features">
         <span className="section-label">Capabilities</span>
         <h2 className="section-title">Everything You Need to Ship</h2>
         <p className="section-sub">
@@ -682,7 +682,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Competitor Comparison ── */}
-      <section className="landing-section" id="compare">
+      <section className="landing-section creme-bg" id="compare">
         <span className="section-label">Why Switch</span>
         <h2 className="section-title">How Axiom Studio Stacks Up</h2>
         <p className="section-sub">
@@ -850,7 +850,7 @@ export default function LandingPage() {
       )}
 
       {/* ── Blog ── */}
-      <section className="landing-section" id="blog">
+      <section className="landing-section creme-bg" id="blog">
         <span className="section-label">Engineering Blog</span>
         <h2 className="section-title">From the Lab</h2>
         <p className="section-sub">
