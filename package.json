@@ -30,7 +30,7 @@
         "local": "cross-env AXIOM_LOCAL=true tsx server/local-index.ts",
         "prepublishOnly": "npm run build",
         "build": "npx vite build && npx tsc -p tsconfig.server.json",
-        "start": "node dist/server/index.js",
+        "start": "cross-env NODE_ENV=production node dist/server/local-index.js",
         "check": "tsc --noEmit",
         "db:push": "drizzle-kit push",
         "electron:dev": "npm run build && electron .",

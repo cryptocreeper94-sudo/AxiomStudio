@@ -567,7 +567,7 @@ app.get("/api/analytics/costs", (_req, res) => res.json({ total: 0 }));
 async function startServer() {
   // In Electron local mode, cloud infrastructure env vars aren't needed
   // (no Stripe, no Firebase auth, no remote DB — uses local-db.ts / SQLite)
-  if (!process.env.IS_ELECTRON) {
+  if (!process.env.IS_ELECTRON && !IS_OWNER_MODE) {
     const REQUIRED_ENV = [
       "JWT_SECRET", "DATABASE_URL", "ANTHROPIC_API_KEY", "OPENAI_API_KEY",
       "FIREBASE_SERVICE_ACCOUNT", "APP_URL", "NODE_ENV", "STRIPE_SECRET_KEY",

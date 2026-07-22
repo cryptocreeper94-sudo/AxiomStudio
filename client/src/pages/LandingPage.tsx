@@ -375,12 +375,12 @@ export default function LandingPage() {
           <div className="waitlist-content">
             <div className="waitlist-badge">
               <Zap className="w-4 h-4" />
-              {waitlistCount > 0 ? `${waitlistCount} developers signed up` : "Launching June 23, 2026"}
+              {waitlistCount > 0 ? `${waitlistCount} developers signed up` : "Now Available — Open Access"}
             </div>
             <h2 className="waitlist-title">Get Early Access</h2>
             <p className="waitlist-sub">
-              The first 500 signups get access on launch day — June 23, 2026.
-              Everyone gets <strong>50 free credits</strong> to start building immediately.
+              Sign up to get **50 free credits** and start building immediately.
+              Cloud IDE, desktop app, and mobile — same account, same power.
             </p>
 
             {waitlistStatus?.success ? (
