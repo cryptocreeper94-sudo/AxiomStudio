@@ -2,6 +2,7 @@ import { Route, Switch, Redirect } from "wouter";
 import IDELayout from "./components/IDELayout";
 import AgentPanel from "./pages/AgentPanel";
 import LandingPage from "./pages/LandingPage";
+import Dashboard from "./pages/Dashboard";
 import ProfileDashboard from "./pages/ProfileDashboard";
 import AxiomDepot from "./pages/AxiomDepot";
 import AxiomDepotRepo from "./pages/AxiomDepotRepo";
@@ -15,7 +16,8 @@ export default function App() {
   return (
     <>
       <Switch>
-        <Route path="/" component={isElectron ? IDELayout : LandingPage} />
+        <Route path="/" component={isElectron ? Dashboard : LandingPage} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/ide" component={IDELayout} />
         <Route path="/profile" component={ProfileDashboard} />
         <Route path="/chat" component={AgentPanel} />
@@ -24,11 +26,10 @@ export default function App() {
         <Route path="/depot/repo/:slug" component={AxiomDepotRepo} />
         <Route path="/depot" component={AxiomDepot} />
         <Route>
-          <Redirect to={isElectron ? "/ide" : "/"} />
+          <Redirect to={isElectron ? "/dashboard" : "/"} />
         </Route>
       </Switch>
       {isElectron && <EcosystemAccountHub />}
     </>
   );
 }
-

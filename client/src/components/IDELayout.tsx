@@ -21,7 +21,7 @@ import LibraryPanel from "./LibraryPanel";
 import ConversationHistory from "./ConversationHistory";
 import ArtifactPanel from "./ArtifactPanel";
 import ProfileBadge from "./ProfileBadge";
-import DashboardHome from "./DashboardHome";
+// DashboardHome removed — now a standalone route at /dashboard
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import DepotPushModal from "./DepotPushModal";
 import { useAuth } from "../hooks/useAuth";
@@ -49,7 +49,7 @@ export default function IDELayout() {
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showCreditStore, setShowCreditStore] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(true);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [showDepotModal, setShowDepotModal] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
 
@@ -658,7 +658,7 @@ export default function IDELayout() {
       {/* ── Cockpit Status Bar ── */}
       <header className="ax-cockpit-status">
         <div className="ax-cs-left">
-          <div className="ax-cs-brand" onClick={() => setShowDashboard(true)} style={{ cursor: "pointer" }} title="Home">
+          <div className="ax-cs-brand" onClick={() => window.location.href = '/dashboard'} style={{ cursor: "pointer" }} title="Dashboard">
             <div style={{
               width: 26, height: 26, borderRadius: 7,
               background: "linear-gradient(135deg, #06b6d4, #38bdf8)",
