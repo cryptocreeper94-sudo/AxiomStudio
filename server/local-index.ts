@@ -401,7 +401,6 @@ app.post("/api/agent/chat", async (req, res) => {
         const stream = anthropic.messages.stream({
           model: agent.model,
           max_tokens: agent.maxTokens,
-          temperature: parseFloat(agent.temperature),
           system: systemPrompt,
           messages: convoMessages,
           tools: LOCAL_ANTHROPIC_TOOLS,

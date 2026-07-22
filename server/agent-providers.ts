@@ -92,7 +92,6 @@ export async function* streamAnthropic(
       const stream = anthropic.messages.stream({
         model: config.model,
         max_tokens: config.maxTokens,
-        temperature: config.temperature,
         system: config.systemPrompt,
         messages: convoMessages,
         tools: ANTHROPIC_TOOLS,
