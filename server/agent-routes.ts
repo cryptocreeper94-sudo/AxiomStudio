@@ -1016,35 +1016,9 @@ export function registerAgentRoutes(app: Express): void {
     res.json({ success });
   });
 
-  // GET /api/agent/api-keys — Returns provider API keys after auth validation
-  app.get("/api/agent/api-keys", async (req: Request, res: Response) => {
-    const userId = requireAuth(req, res);
-    if (!userId) return;
-
-    // Verify user exists and has an active account
-    const [user] = await db.select().from(chatUsers).where(eq(chatUsers.id, userId)).limit(1);
-    if (!user) {
-      res.status(403).json({ error: "User not found" });
-      return;
-    }
-
-    // Check credits (must have at least 1 or be owner/free-tier)
-    const [balance] = await db.select().from(aiCreditBalances).where(eq(aiCreditBalances.userId, userId)).limit(1);
-    const hasCredits = user.role === "owner" || (balance?.credits ?? 0) > 0;
-
-    if (!hasCredits) {
-      res.status(403).json({ error: "No credits available. Purchase credits at axiomstudio.dev" });
-      return;
-    }
-
-    // Return keys — these are only held in memory on the client, never written to disk
-    res.json({
-      anthropic: process.env.ANTHROPIC_API_KEY || null,
-      openai: process.env.OPENAI_API_KEY || null,
-      gemini: process.env.GEMINI_API_KEY || null,
-      expires: Date.now() + 3600000, // Keys valid for 1 hour, re-fetch after
-    });
-  });
+  // SECURITY: former GET /api/agent/api-keys endpoint removed. It leaked raw
+  // provider API keys to any authenticated user with credits. All model calls are
+  // proxied server-side in agent-providers.ts; clients never need raw keys.
 
   console.log("[Axiom Studio] Agent routes registered");
 }
