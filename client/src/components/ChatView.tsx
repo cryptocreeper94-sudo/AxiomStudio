@@ -659,11 +659,29 @@ export default function ChatView({
           </button>
         )}
         {messages.length === 0 && !isStreaming ? (
-          <StarterHub
-            onSelectStarter={(starter) => onSelectStarter?.(starter)}
-            agentName={agentName}
-          />
-        ) : (
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "40px 20px", gap: 16,
+            minHeight: 300,
+          }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(6,182,212,0.06)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#06b6d4", fontSize: 20,
+            }}>⬡</div>
+            <div style={{
+              fontSize: 18, fontWeight: 800, color: "#e2e8f0",
+              letterSpacing: "-0.02em",
+            }}>{agentName || "Axiom"}</div>
+            <div style={{
+              fontSize: 13, color: "#334155",
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: "0.04em",
+            }}>Ready. Describe what you want to build.</div>
+          </div>) : (
           <div>
             {/* Progress Tracker — shown when a starter is active */}
             {activeStarter && progressChecklist && (
