@@ -1,203 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<style id="glass-blackout-style">
-  /* GLASS BLACKOUT STYLES - MODAL ONLY */
-  #glass-blackout-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 2147483647; /* Max z-index */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(2, 6, 23, 0.4);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    font-family: 'Inter', system-ui, sans-serif;
-    color: #fff;
-    transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
-  }
-  #glass-blackout-overlay.hidden {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-    pointer-events: none;
-  }
-  .gb-modal {
-    background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(2,6,23,0.95) 100%);
-    border: 1px solid rgba(34,211,238,0.2);
-    border-radius: 24px;
-    padding: 48px;
-    max-width: 600px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 0 20px rgba(34,211,238,0.05);
-    transform: translateY(0);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  #glass-blackout-overlay.hidden .gb-modal {
-    transform: translateY(-20px) scale(0.95);
-  }
-  .gb-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    border-radius: 999px;
-    background: rgba(34,211,238,0.1);
-    color: #22d3ee;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(34,211,238,0.2);
-  }
-  .gb-title {
-    font-size: 32px;
-    font-weight: 900;
-    color: #fff;
-    margin: 0 0 16px 0;
-    letter-spacing: -1px;
-    line-height: 1.1;
-  }
-  .gb-subtitle {
-    font-size: 16px;
-    color: #94a3b8;
-    margin: 0 0 36px 0;
-    line-height: 1.6;
-  }
-  .gb-ctas {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 24px;
-  }
-  .gb-btn-primary {
-    background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-    color: #000;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: inherit;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .gb-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(34,211,238,0.3);
-  }
-  .gb-btn-secondary {
-    background: rgba(255,255,255,0.05);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 14px 28px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: inherit;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .gb-btn-secondary:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(34,211,238,0.3);
-  }
-  .gb-free-banner {
-    margin-top: 36px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
-  .gb-free-banner p {
-    font-size: 12px;
-    color: #94a3b8;
-    margin: 0 0 16px 0;
-  }
-  .gb-free-links {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-  }
-  .gb-free-link {
-    font-size: 12px;
-    color: #22d3ee;
-    text-decoration: none;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(34,211,238,0.05);
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(34,211,238,0.15);
-    transition: all 0.2s;
-  }
-  .gb-free-link:hover {
-    background: rgba(34,211,238,0.1);
-    border-color: rgba(34,211,238,0.3);
-    color: #fff;
-  }
-
-  /* Toast Notification */
-  #gb-toast-container {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2147483647;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  .gb-toast {
-    background: rgba(15,23,42,0.95);
-    border: 1px solid rgba(34,211,238,0.3);
-    color: #fff;
-    padding: 12px 24px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    backdrop-filter: blur(10px);
-    animation: gb-toast-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .gb-toast.hiding {
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
-    transition: all 0.3s;
-  }
-  @keyframes gb-toast-in {
-    0% { transform: translateY(20px) scale(0.9); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-  }
-</style>
-
-
-
-
-
-
-
-
-
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axiom Studio — The Apex Predator IDE | DarkWave Studios</title>
@@ -222,7 +25,6 @@
       }
     });
   </script>
-
 </head>
 <body>
 
@@ -230,153 +32,40 @@
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 
-  <!-- Glass Blackout Overlay (sits on top of the React app) -->
-  
-
-
-
-
-
-
-
-
-<div id="glass-blackout-overlay" class="hidden">
-  <div class="gb-modal" style="max-height: 90vh; overflow-y: auto;">
-    <div class="gb-badge">🔒 Ecosystem Unlock <span style="opacity:0.5; margin:0 8px;">|</span> June 23, 2026</div>
-    <h1 class="gb-title">Downloads Locked</h1>
-    <p class="gb-subtitle">The executable builds of Axiom Studio are restricted to authorized Beta Testers until our public launch. You may continue exploring the Web Demo without an account.</p>
-    
-    <!-- Promotional Video -->
-    <div style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
-      <video controls preload="metadata" style="width: 100%; height: 100%; object-fit: cover;">
-        <source src="/assets/axiom_studio_marketing_video.mp4" type="video/mp4" />
-      </video>
+  <!-- Electron Startup Overlay -->
+  <div id="electron-startup-overlay" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #0d1117;
+    z-index: 99999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: Inter, system-ui, sans-serif;
+    color: #e6edf3;
+  ">
+    <div style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">
+      AXIOM <span style="color:#22d3ee">STUDIO</span>
     </div>
-
-    <!-- Waitlist -->
-    <div style="background: rgba(34,211,238,0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(34,211,238,0.2); margin-bottom: 24px; text-align: left;">
-      <p style="color: #22d3ee; font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 0 0 8px 0;">Join the June 23rd Waitlist</p>
-      <div style="display: flex; gap: 8px;">
-        <input type="email" placeholder="Enter your email" style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 12px; color: #fff; outline: none;" />
-        <button style="background: #22d3ee; color: #000; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="alert('Thanks for joining the Axiom Studio waitlist!')">Join</button>
-      </div>
-    </div>
-
-    <div class="gb-ctas">
-      <button class="gb-btn-primary" onclick="triggerBetaLogin()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-        Beta Testers Enter Here
-      </button>
-      <button class="gb-btn-secondary" onclick="closeBlackoutModal()">
-        Return to Open Demo
-      </button>
-    </div>
-
-    <div class="gb-free-banner">
-      <p>While you wait, download our 100% Free & Ad-Free platforms today:</p>
-      <div class="gb-free-links">
-        <a href="https://chronoverse.tlid.io" class="gb-free-link">Chronoverse</a>
-        <a href="https://trustshield.tech" class="gb-free-link">TrustShield</a>
-      </div>
+    <div id="electron-startup-status" style="font-size: 12px; color: #8b949e; margin-bottom: 24px;">
+      Starting local engine...
     </div>
   </div>
-</div>
-
-<div id="gb-toast-container"></div>
-
-<script>
-  window.closeBlackoutModal = function() {
-    document.getElementById('glass-blackout-overlay').classList.add('hidden');
-  };
-
-  window.triggerBetaLogin = function() {
-    window.closeBlackoutModal();
-    window.dispatchEvent(new CustomEvent('betaTesterLogin'));
-    showToast('🔑 Please sign in with your authorized Google account.');
-  };
-
-  function showToast(msg) {
-    const container = document.getElementById('gb-toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'gb-toast';
-    toast.textContent = msg;
-    container.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.classList.add('hiding');
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
-
-  // Intercept Download Clicks
-  (function(){
-    if (window.location.search.includes('admin_unlock=42')) {
-      localStorage.setItem('gb_admin_override', 'true');
-    }
-
-    document.body.addEventListener('click', function(e) {
-      const target = e.target.closest('a, button');
-      if (!target) return;
-      
-      const text = (target.textContent || '').toLowerCase();
-      const href = (target.href || '').toLowerCase();
-      
-      // Target Executables and APKs
-      const isDownloadAction = href.includes('.exe') || 
-                               href.includes('.zip') ||
-                               href.includes('.apk') || 
-                               href.includes('.dmg') ||
-                               href.includes('.appimage') ||
-                               (target.hasAttribute('download'));
-      
-      if (isDownloadAction) {
-        var isWhitelisted = localStorage.getItem('gb_admin_override') === 'true' || localStorage.getItem('beta_tester_unlocked') === 'true';
-        var isNative = navigator.userAgent.toLowerCase().includes(' electron/') || navigator.userAgent.toLowerCase().includes('capacitor') || navigator.userAgent.toLowerCase().includes('wv');
-        
-        if (!isWhitelisted && !isNative) {
-          e.preventDefault();
-          e.stopPropagation();
-          document.getElementById('glass-blackout-overlay').classList.remove('hidden');
+  <script>
+    if (navigator.userAgent.includes('Electron')) {
+      const overlay = document.getElementById('electron-startup-overlay');
+      overlay.style.display = 'flex';
+      window.__axiomReady = () => { overlay.style.display = 'none'; };
+      setTimeout(() => {
+        const status = document.getElementById('electron-startup-status');
+        if (status && overlay.style.display !== 'none') {
+          status.textContent = 'Engine is taking longer than expected. Check that port 5100 is available.';
+          status.style.color = '#f87171';
         }
-      }
-    }, true);
-  })();
-</script>
-
-<!-- Electron Startup Overlay -->
-<div id="electron-startup-overlay" style="
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #0d1117;
-  z-index: 99999;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: Inter, system-ui, sans-serif;
-  color: #e6edf3;
-">
-  <div style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">
-    AXIOM <span style="color:#22d3ee">STUDIO</span>
-  </div>
-  <div id="electron-startup-status" style="font-size: 12px; color: #8b949e; margin-bottom: 24px;">
-    Starting local engine...
-  </div>
-</div>
-<script>
-  if (navigator.userAgent.includes('Electron')) {
-    const overlay = document.getElementById('electron-startup-overlay');
-    overlay.style.display = 'flex';
-    window.__axiomReady = () => { overlay.style.display = 'none'; };
-    setTimeout(() => {
-      const status = document.getElementById('electron-startup-status');
-      if (status && overlay.style.display !== 'none') {
-        status.textContent = 'Engine is taking longer than expected. Check that port 5100 is available.';
-        status.style.color = '#f87171';
-      }
-    }, 15000);
-  }
-</script>
+      }, 15000);
+    }
+  </script>
   <script src="https://nexus.tlid.io/beacon.js" defer></script>
 </body>
 </html>

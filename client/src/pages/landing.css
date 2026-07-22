@@ -1898,58 +1898,57 @@ html { scroll-behavior: smooth; }
   .waitlist-title { font-size: 1.8rem; }
   .waitlist-inputs { flex-direction: column; }
 }
- 
- / *   - - -   A l t e r n a t i n g   C r e m e / D a r k   S e c t i o n s   - - -   * /  
- . c r e m e - b g   {  
-     b a c k g r o u n d - c o l o r :   # f 5 f 0 e b   ! i m p o r t a n t ;  
-     c o l o r :   # 1 1 1 1 1 1   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . s e c t i o n - t i t l e ,   . c r e m e - b g   . s e c t i o n - l a b e l ,   . c r e m e - b g   . w a i t l i s t - t i t l e ,   . c r e m e - b g   . f e a t u r e - t i t l e ,   . c r e m e - b g   . s w i t c h e r - f r o m   {  
-     c o l o r :   # 0 5 0 5 0 5   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . s e c t i o n - s u b ,   . c r e m e - b g   . w a i t l i s t - s u b ,   . c r e m e - b g   . f e a t u r e - d e s c ,   . c r e m e - b g   . s w i t c h e r - c a r d   p   {  
-     c o l o r :   # 5 5 5 5 5 5   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . w a i t l i s t - b a d g e   {  
-     b a c k g r o u n d :   r g b a ( 0 , 0 , 0 , 0 . 0 5 )   ! i m p o r t a n t ;  
-     c o l o r :   # 1 1 1   ! i m p o r t a n t ;  
-     b o r d e r - c o l o r :   r g b a ( 0 , 0 , 0 , 0 . 1 )   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . w a i t l i s t - i n p u t   {  
-     b a c k g r o u n d :   r g b a ( 0 , 0 , 0 , 0 . 0 3 )   ! i m p o r t a n t ;  
-     c o l o r :   # 1 1 1   ! i m p o r t a n t ;  
-     b o r d e r - c o l o r :   r g b a ( 0 , 0 , 0 , 0 . 1 )   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . w a i t l i s t - i n p u t : : p l a c e h o l d e r   {  
-     c o l o r :   # 8 8 8   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . f e a t u r e - s l i d e ,   . c r e m e - b g   . s w i t c h e r - c a r d ,   . c r e m e - b g   . c o m p a r e - t a b l e - w r a p ,   . c r e m e - b g   . b l o g - c a r d   {  
-     b a c k g r o u n d :   r g b a ( 2 5 5 , 2 5 5 , 2 5 5 , 0 . 6 )   ! i m p o r t a n t ;  
-     b o r d e r - c o l o r :   r g b a ( 0 , 0 , 0 , 0 . 0 8 )   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . f e a t u r e - s l i d e : h o v e r ,   . c r e m e - b g   . s w i t c h e r - c a r d : h o v e r ,   . c r e m e - b g   . b l o g - c a r d : h o v e r   {  
-     b a c k g r o u n d :   r g b a ( 2 5 5 , 2 5 5 , 2 5 5 , 1 )   ! i m p o r t a n t ;  
-     b o r d e r - c o l o r :   r g b a ( 0 , 0 , 0 , 0 . 1 5 )   ! i m p o r t a n t ;  
-     b o x - s h a d o w :   0   1 0 p x   3 0 p x   r g b a ( 0 , 0 , 0 , 0 . 0 5 )   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . c o m p a r e - l a b e l   {  
-     c o l o r :   # 1 1 1   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . c o m p a r e - t a b l e   t h   {  
-     c o l o r :   # 0 5 0 5 0 5   ! i m p o r t a n t ;  
-     b o r d e r - c o l o r :   r g b a ( 0 , 0 , 0 , 0 . 1 )   ! i m p o r t a n t ;  
- }  
-  
- . c r e m e - b g   . c o m p a r e - t a b l e   t d   {  
-     b o r d e r - c o l o r :   r g b a ( 0 , 0 , 0 , 0 . 0 5 )   ! i m p o r t a n t ;  
- }  
- 
+
+/* --- Alternating Creme/Dark Sections --- */
+.creme-bg {
+  background-color: #f5f0eb !important;
+  color: #111111 !important;
+}
+
+.creme-bg .section-title, .creme-bg .section-label, .creme-bg .waitlist-title, .creme-bg .feature-title, .creme-bg .switcher-from {
+  color: #050505 !important;
+}
+
+.creme-bg .section-sub, .creme-bg .waitlist-sub, .creme-bg .feature-desc, .creme-bg .switcher-card p {
+  color: #555555 !important;
+}
+
+.creme-bg .waitlist-badge {
+  background: rgba(0,0,0,0.05) !important;
+  color: #111 !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+
+.creme-bg .waitlist-input {
+  background: rgba(0,0,0,0.03) !important;
+  color: #111 !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+
+.creme-bg .waitlist-input::placeholder {
+  color: #888 !important;
+}
+
+.creme-bg .feature-slide, .creme-bg .switcher-card, .creme-bg .compare-table-wrap, .creme-bg .blog-card {
+  background: rgba(255,255,255,0.6) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+.creme-bg .feature-slide:hover, .creme-bg .switcher-card:hover, .creme-bg .blog-card:hover {
+  background: rgba(255,255,255,1) !important;
+  border-color: rgba(0,0,0,0.15) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+}
+
+.creme-bg .compare-label {
+  color: #111 !important;
+}
+
+.creme-bg .compare-table th {
+  color: #050505 !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+
+.creme-bg .compare-table td {
+  border-color: rgba(0,0,0,0.05) !important;
+}
