@@ -258,7 +258,7 @@ export default function LandingPage() {
           <a href="#agents">Agents</a>
           <a href="#compare">Compare</a>
           <a href="#blog">Blog</a>
-          <a href="/ide" className="nav-cta">Launch Web Demo</a>
+          <a href="/ide" className="nav-cta">Launch IDE</a>
         </div>
         <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
           {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -322,13 +322,13 @@ export default function LandingPage() {
           </p>
 
           <div className="hero-ctas">
-            <a href="#waitlist" className="cta-primary">
-              {isMobile ? "Join Waitlist" : "Join Waitlist"} <ArrowRight className="w-4 h-4" />
+            <a href="/ide" className="cta-primary">
+              {isMobile ? "Launch Cloud IDE" : "Launch Cloud IDE"} <ArrowRight className="w-4 h-4" />
             </a>
             {!isMobile && (
               <a href="#install" className="cta-secondary">
                 <Monitor className="w-4 h-4" />
-                Download App
+                Download Desktop App
               </a>
             )}
             {isMobile && (

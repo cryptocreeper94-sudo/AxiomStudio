@@ -362,7 +362,7 @@ app.post("/api/agent/chat", async (req, res) => {
       const hasFiles = !!contextFiles?.length;
       const history = localDb.getMessages(conversationId);
       routeDecision = await classifyMessage(message, hasError, hasFiles, history.length);
-      const routeTarget = ROUTE_MODELS[routeDecision.target];
+      const routeTarget = ROUTE_MODELS[routeDecision.target as keyof typeof ROUTE_MODELS];
       agent = AGENT_SEEDS.find(s => s.id === routeTarget.agentId) || AGENT_SEEDS[0];
       console.log(`[AutoRouter] Score ${routeDecision.score}/10 → ${agent.name} (${agent.model}) — ${routeDecision.reason}`);
     } catch (routeErr) {
