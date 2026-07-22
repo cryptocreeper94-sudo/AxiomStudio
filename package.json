@@ -60,7 +60,9 @@
             {
                 "from": "build",
                 "to": "build",
-                "filter": ["**/*"]
+                "filter": [
+                    "**/*"
+                ]
             }
         ],
         "mac": {
@@ -103,7 +105,7 @@
         "drizzle-zod": "^0.7.1",
         "electron-updater": "^6.8.9",
         "express": "^5.2.1",
-        "express-rate-limit": "^8.4.1",
+        "express-rate-limit": "^8.6.0",
         "firebase": "^12.12.1",
         "firebase-admin": "^13.8.0",
         "framer-motion": "^12.23.24",
