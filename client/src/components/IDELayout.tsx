@@ -21,7 +21,7 @@ import LibraryPanel from "./LibraryPanel";
 import ConversationHistory from "./ConversationHistory";
 import ArtifactPanel from "./ArtifactPanel";
 import ProfileBadge from "./ProfileBadge";
-// DashboardHome removed — now a standalone route at /dashboard
+import DashboardHome from "./DashboardHome";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 import DepotPushModal from "./DepotPushModal";
 import { useAuth } from "../hooks/useAuth";
