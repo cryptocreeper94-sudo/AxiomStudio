@@ -24,6 +24,9 @@ import { readFileSync } from "fs";
 import { classifyMessage, ROUTE_MODELS } from "./auto-router.js";
 import { localDb } from "./local-db.js";
 import { LOCAL_ANTHROPIC_TOOLS, LOCAL_OPENAI_TOOLS, executeLocalTool, getWorkspaceRoot } from "./local-tools.js";
+import { randomUUID } from "crypto";
+import { pendingApprovals, resolveApproval } from "./agent-providers.js";
+import { TOOLS_REQUIRING_APPROVAL } from "./agent-tools.js";
 import localWorkspaceRoutes from "./local-workspace-routes.js";
 import exportRoutes from "./export-routes.js";
 import depotRoutes from "./depot-routes.js";
@@ -49,6 +52,37 @@ const HAS_OWN_KEYS = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_
 // ⚠️  DISTRIBUTION NOTE: Remove the override below before public release.
 // In public builds, IS_OWNER_MODE should be derived from HAS_OWN_KEYS.
 const IS_OWNER_MODE = true; // TEMPORARY — owner personal build only
+
+// ── Approval gate (Trust Layer) ──
+// Destructive tools (write_file, edit_file, delete_file, run_command) pause and
+// wait for explicit user approval before executing. This is the local/desktop
+// counterpart to the cloud approval gate in agent-providers.ts, and it reuses
+// the same shared pendingApprovals store + resolveApproval() so the existing
+// POST /api/agent/approve/:approvalId endpoint resolves both paths.
+// Set AXIOM_TRUST_MODE=true to auto-approve (skip prompts). Default = gated.
+const TRUST_MODE = process.env.AXIOM_TRUST_MODE === "true";
+const APPROVAL_TIMEOUT_MS = 5 * 60 * 1000; // 5 min → auto-reject if no response
+
+// Emits an approval_required SSE event and blocks until the user resolves it
+// (via the approve endpoint) or the timeout auto-rejects. Returns true=proceed.
+async function requestApproval(
+  res: express.Response,
+  tool: string,
+  args: Record<string, any>
+): Promise<boolean> {
+  if (TRUST_MODE || !TOOLS_REQUIRING_APPROVAL.has(tool)) return true;
+  const approvalId = randomUUID();
+  res.write(`data: ${JSON.stringify({ type: "approval_required", tool, args, approvalId })}\n\n`);
+  console.log(`[Local Approval] ⏳ ${tool} — awaiting user (${approvalId})`);
+  return await new Promise<boolean>((resolve) => {
+    const timeout = setTimeout(() => {
+      pendingApprovals.delete(approvalId);
+      console.log(`[Local Approval] ⏱ ${tool} timed out — auto-rejected (${approvalId})`);
+      resolve(false);
+    }, APPROVAL_TIMEOUT_MS);
+    pendingApprovals.set(approvalId, { resolve, tool, args, timeout });
+  });
+}
 
 // ── API key cache (for tenant mode) ──
 let cachedKeys: { anthropic: string | null; openai: string | null; expires: number } | null = null;
@@ -437,8 +471,14 @@ app.post("/api/agent/chat", async (req, res) => {
         for (const tool of toolBlocks) {
           const args = tool.input as Record<string, any>;
           res.write(`data: ${JSON.stringify({ type: "tool_call", tool: tool.name, args })}\n\n`);
-          const result = await executeLocalTool(tool.name, args, conversationId);
-          res.write(`data: ${JSON.stringify({ type: "tool_result", tool: tool.name, result: result.slice(0, 2000) })}\n\n`);
+          const approved = await requestApproval(res, tool.name, args);
+          let result: string;
+          if (approved) {
+            result = await executeLocalTool(tool.name, args, conversationId);
+          } else {
+            result = `Action rejected by user: ${tool.name} was not executed.`;
+          }
+          res.write(`data: ${JSON.stringify({ type: "tool_result", tool: tool.name, result: result.slice(0, 2000), isError: !approved })}\n\n`);
           toolResults.push({ type: "tool_result", tool_use_id: tool.id, content: result });
         }
 
@@ -507,8 +547,14 @@ app.post("/api/agent/chat", async (req, res) => {
         for (const [idx, tc] of Object.entries(toolCallsMap)) {
           const args = (() => { try { return JSON.parse(tc.arguments); } catch { return {}; } })();
           res.write(`data: ${JSON.stringify({ type: "tool_call", tool: tc.name, args })}\n\n`);
-          const result = await executeLocalTool(tc.name, args, conversationId);
-          res.write(`data: ${JSON.stringify({ type: "tool_result", tool: tc.name, result: result.slice(0, 2000) })}\n\n`);
+          const approved = await requestApproval(res, tc.name, args);
+          let result: string;
+          if (approved) {
+            result = await executeLocalTool(tc.name, args, conversationId);
+          } else {
+            result = `Action rejected by user: ${tc.name} was not executed.`;
+          }
+          res.write(`data: ${JSON.stringify({ type: "tool_result", tool: tc.name, result: result.slice(0, 2000), isError: !approved })}\n\n`);
           convoMessages.push({ role: "tool", content: result, tool_call_id: `call_${idx}`, name: tc.name });
         }
       }
@@ -543,6 +589,17 @@ app.post("/api/agent/chat", async (req, res) => {
 app.use("/api/workspace", localWorkspaceRoutes);
 app.use("/api/workspace/export", exportRoutes);
 app.use("/api/depot", depotRoutes);
+
+// ── Approval resolution (Trust Layer) ──
+// Resolves a pending approval created by requestApproval() in the agent loop.
+app.post("/api/agent/approve/:approvalId", (req, res) => {
+  const { approvalId } = req.params;
+  const approved = req.body?.approved === true;
+  const resolved = resolveApproval(approvalId, approved);
+  if (!resolved) return res.status(404).json({ error: "Approval not found or already resolved" });
+  console.log(`[Local Approval] ${approvalId} => ${approved ? "ACCEPTED" : "REJECTED"}`);
+  res.json({ success: true, approved });
+});
 
 // ── Health ──
 app.get("/api/health", (_req, res) => {
