@@ -356,14 +356,32 @@ app.post("/api/agent/chat", async (req, res) => {
   let routeDecision: any = null;
 
   if (agentId === "auto") {
-    // FORCE ALL AUTO-ROUTING TO CLAUDE TO BYPASS DRAINED OPENAI/GEMINI KEYS
-    agent = AGENT_SEEDS.find(s => s.id === "opus");
+    // Actually use the auto-router — classify and route to cheapest appropriate model
+    try {
+      const hasError = !!req.body.errorContext;
+      const hasFiles = !!contextFiles?.length;
+      const history = localDb.getMessages(conversationId);
+      routeDecision = await classifyMessage(message, hasError, hasFiles, history.length);
+      const routeTarget = ROUTE_MODELS[routeDecision.target];
+      agent = AGENT_SEEDS.find(s => s.id === routeTarget.agentId) || AGENT_SEEDS[0];
+      console.log(`[AutoRouter] Score ${routeDecision.score}/10 → ${agent.name} (${agent.model}) — ${routeDecision.reason}`);
+    } catch (routeErr) {
+      console.warn("[AutoRouter] Failed, falling back to Sonnet:", routeErr);
+      agent = AGENT_SEEDS.find(s => s.id === "sonnet") || AGENT_SEEDS[0];
+    }
   }
   if (!agent) agent = AGENT_SEEDS[0];
-  
-  // FORCE ALL AGENTS TO USE ANTHROPIC TO PREVENT CRASHES
-  if (agent.provider !== "anthropic") {
-      agent = AGENT_SEEDS.find(s => s.id === "opus") || agent;
+
+  // Route to the correct provider — only fall back to Anthropic if provider keys are missing
+  if (agent.provider === "openai" && !process.env.OPENAI_API_KEY) {
+    console.warn(`[Chat] No OpenAI key, falling back to Sonnet for ${agent.name}`);
+    agent = AGENT_SEEDS.find(s => s.id === "sonnet") || AGENT_SEEDS[0];
+  } else if (agent.provider === "google" && !process.env.GEMINI_API_KEY) {
+    console.warn(`[Chat] No Gemini key, falling back to Sonnet for ${agent.name}`);
+    agent = AGENT_SEEDS.find(s => s.id === "sonnet") || AGENT_SEEDS[0];
+  } else if (agent.provider === "deepseek" && !process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    console.warn(`[Chat] No DeepSeek key, falling back to Sonnet for ${agent.name}`);
+    agent = AGENT_SEEDS.find(s => s.id === "sonnet") || AGENT_SEEDS[0];
   }
 
   // Credit check for tenant mode
@@ -385,7 +403,13 @@ app.post("/api/agent/chat", async (req, res) => {
   localDb.addMessage(conversationId, "user", message);
 
   const history = localDb.getMessages(conversationId);
-  const chatMessages: any[] = history.map((m: any) => ({
+  // ── Truncate conversation history to limit token usage ──
+  // Keep the last 20 messages max (~40K tokens worst case instead of unbounded)
+  const MAX_HISTORY = 20;
+  const trimmedHistory = history.length > MAX_HISTORY
+    ? history.slice(history.length - MAX_HISTORY)
+    : history;
+  const chatMessages: any[] = trimmedHistory.map((m: any) => ({
     role: m.role as "user" | "assistant",
     content: m.content,
   }));
@@ -431,7 +455,7 @@ app.post("/api/agent/chat", async (req, res) => {
         content: m.content,
       }));
 
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 25; i++) {
         const stream = anthropic.messages.stream({
           model: agent.model,
           max_tokens: agent.maxTokens,
@@ -496,7 +520,7 @@ app.post("/api/agent/chat", async (req, res) => {
         ...chatMessages,
       ];
 
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 25; i++) {
         const stream = await openai.chat.completions.create({
           model: agent.model,
           messages: convoMessages,
