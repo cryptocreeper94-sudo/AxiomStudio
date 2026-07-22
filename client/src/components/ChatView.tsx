@@ -515,10 +515,15 @@ export default function ChatView({
     }
   }, [messages, streamingContent, userScrolledUp]);
 
-  // When a new user message is sent, always scroll to bottom
+  // When a NEW USER message is sent, always scroll to bottom.
+  // Do NOT force-scroll when an assistant message completes — that would
+  // override the user's scroll position mid-read (the "jump to bottom" bug).
   useEffect(() => {
-    setUserScrolledUp(false);
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const last = messages[messages.length - 1];
+    if (last?.role === "user") {
+      setUserScrolledUp(false);
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages.length]);
 
   // Detect manual scroll: if user scrolls up, pause auto-scroll
