@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+*.log
+.DS_Store
+.cache
+release
+release2
+release3
+*.exe
+*.zip
+*.apk
+*.msi
+*.dmg
+*.AppImage
+.git
