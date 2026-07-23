@@ -43,6 +43,7 @@ app.use(express.urlencoded({ extended: true }));
 // CORS + COOP (allow Firebase OAuth popups to communicate back)
 const ALLOWED_ORIGINS = [
   "https://axiomstudio.dev",
+  "https://app.axiomstudio.dev",
   "https://axiom-studio.app",
   "http://localhost:5100",
   "http://localhost:5101",
